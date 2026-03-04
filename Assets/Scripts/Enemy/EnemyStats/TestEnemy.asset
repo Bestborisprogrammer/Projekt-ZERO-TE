@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 349a4d0a74bff2e4fa15891083cd5fb8, type: 3}
   m_Name: TestEnemy
   m_EditorClassIdentifier: 
-  enemyName: Slime
+  enemyName: TestEnemy1
   sprite: {fileID: 0}
   maxHP: 40
   attack: 6
