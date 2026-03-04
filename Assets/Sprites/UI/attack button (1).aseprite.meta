@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: db0d2d0b3d2e5394dae24dec36039816
+guid: 2ba6eaacc2bb45a449a0c08dc234221f
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -127,7 +127,7 @@ ScriptedImporter:
     tessellationDetail: 0
     uvTransform: {x: 0, y: 0}
   animatedSpriteImportData:
-  - name: attack button
+  - name: attack button (1)
     originalName: 
     pivot: {x: 0.5, y: -0.051724136}
     alignment: 9
@@ -139,7 +139,7 @@ ScriptedImporter:
       y: 4
       width: 58
       height: 58
-    spriteID: f24f0bd25156767408f5ee183de0b994
+    spriteID: ec29bbf58c47084489991be3f3423f5d
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -153,17 +153,17 @@ ScriptedImporter:
   asepriteLayers:
   - layerIndex: 0
     uuid:
-      value0: 3201555974
+      value0: 2482448444
       value1: 0
       value2: 0
       value3: 0
     guid: 0
-    name: attack button
+    name: attack button (1)
     layerFlags: 0
     layerType: 0
     blendMode: 0
     cells:
-    - name: attack button
+    - name: attack button (1)
       frameIndex: 0
       additiveSortOrder: 0
       cellRect:
@@ -171,7 +171,7 @@ ScriptedImporter:
         y: 3
         width: 58
         height: 58
-      spriteId: f24f0bd25156767408f5ee183de0b994
+      spriteId: ec29bbf58c47084489991be3f3423f5d
     linkedCells: []
     tileCells: []
     tileSetIndex: 0
