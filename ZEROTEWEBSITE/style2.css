@@ -1,0 +1,117 @@
+/* Reset & Base */
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-family: 'Georgia', serif;
+    background: #0d0d0f;
+    color: #e0e0e0;
+}
+
+/* Particle Canvas */
+#particleCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* behind everything */
+}
+
+/* Header */
+header {
+    position: fixed;
+    width: 97%;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(10,10,15,0.8);
+    z-index: 100; /* above canvas */
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+header .logo {
+    font-size: 26px;
+    color: #a8a8a8;
+    font-weight: bold;
+}
+
+/* Navbar Links */
+header nav a {
+    color: #ccc;
+    text-decoration: none;
+    margin-left: 20px;
+    transition: 0.3s;
+}
+
+/* Subtle Home Button */
+header nav a.home-button {
+    padding: 5px 15px;
+    background-color: rgba(168,85,247,0.3);
+    color: #e0e0e0 !important;
+    border-radius: 4px;
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 0 0 5px rgba(168,85,247,0.2);
+    transition: 0.3s, box-shadow 0.3s, background-color 0.3s;
+}
+
+header nav a.home-button:hover {
+    background-color: rgba(168,85,247,0.5);
+    box-shadow: 0 0 10px rgba(168,85,247,0.4);
+}
+
+/* Hero Section */
+.lore-hero {
+    height: 50vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: column;
+    padding-top: 60px;
+    position: relative;
+    z-index: 1;
+}
+
+.lore-title {
+    font-size: 64px;
+    color: #d0d0d0;
+    text-shadow: 0 0 20px #7a7a7a, 0 0 40px #4f4f4f;
+}
+
+/* Lore Content */
+.lore-content {
+    max-width: 850px;
+    margin: 60px auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.lore-paragraph {
+    background: rgba(20,20,35,0.7);
+    padding: 35px 30px;
+    margin-bottom: 50px;
+    border-left: 6px solid #9f9f9f;
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.8s ease-out;
+}
+
+.lore-paragraph.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 40px 0;
+    background: #0b0b0f;
+    margin-top: 60px;
+    position: relative;
+    z-index: 1;
+}
