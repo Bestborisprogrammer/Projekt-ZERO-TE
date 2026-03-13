@@ -1,12 +1,14 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class EncounterManager : MonoBehaviour
 {
     public static EncounterManager Instance;
     public string combatSceneName = "CombatScene";
 
-    public static EnemyStatsSO CurrentEnemy { get; private set; }
+    public static List<EnemyStatsSO> CurrentEnemies { get; private set; } = new();
+    public static Vector3 PlayerReturnPosition { get; private set; }
 
     void Awake()
     {
@@ -18,10 +20,14 @@ public class EncounterManager : MonoBehaviour
         else { Destroy(gameObject); }
     }
 
-    public void StartEncounter(EnemyStatsSO enemyData)
+    public void StartEncounter(List<EnemyStatsSO> enemies)
     {
-        CurrentEnemy = enemyData;
-        Debug.Log($"Encounter mit: {enemyData.enemyName}");
+        // Save player position before leaving
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            PlayerReturnPosition = player.transform.position;
+
+        CurrentEnemies = enemies;
         SceneManager.LoadScene(combatSceneName);
     }
 }

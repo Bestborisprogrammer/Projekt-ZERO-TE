@@ -9,10 +9,13 @@ public class TurnCombatManager : MonoBehaviour
     [Header("UI")]
     public CombatUI combatUI;
 
-    // Alle Kämpfer in der Runde
     private List<Combatant> turnOrder = new();
     private int currentTurnIndex = 0;
     private bool combatActive = false;
+
+    public int selectedEnemyIndex = 0;
+    public List<Combatant> enemies = new();
+    public List<Combatant> party = new();
 
     void Awake()
     {
@@ -28,28 +31,34 @@ public class TurnCombatManager : MonoBehaviour
     void SetupCombat()
     {
         turnOrder.Clear();
+        enemies.Clear();
+        party.Clear();
 
-        // Party hinzufügen
         foreach (var member in PartyManager.Instance.activeParty)
         {
             if (member.IsAlive)
-                turnOrder.Add(new Combatant(member));
+            {
+                var c = new Combatant(member);
+                turnOrder.Add(c);
+                party.Add(c);
+            }
         }
 
-        // Enemy aus EncounterManager holen
-        EnemyStatsSO enemyData = EncounterManager.CurrentEnemy;
-        if (enemyData != null)
+        foreach (var enemyData in EncounterManager.CurrentEnemies)
         {
-            EnemyInstance enemy = new EnemyInstance { baseData = enemyData };
-            enemy.Initialize();
-            turnOrder.Add(new Combatant(enemy));
+            var enemyInstance = new EnemyInstance { baseData = enemyData };
+            enemyInstance.Initialize();
+            var c = new Combatant(enemyInstance);
+            turnOrder.Add(c);
+            enemies.Add(c);
         }
 
-        // Nach Speed sortieren (höchster zuerst)
         turnOrder = turnOrder.OrderByDescending(c => c.Speed).ToList();
-
         combatActive = true;
-        Debug.Log("Combat gestartet!");
+        selectedEnemyIndex = 0;
+
+        combatUI.BuildEnemyTargetButtons(enemies);
+        combatUI.UpdateAllHP(party, enemies);
         StartTurn();
     }
 
@@ -58,41 +67,58 @@ public class TurnCombatManager : MonoBehaviour
         if (!combatActive) return;
 
         Combatant current = turnOrder[currentTurnIndex];
-        Debug.Log($"--- {current.Name}'s Turn ---");
         combatUI.UpdateTurnText(current.Name);
+        combatUI.UpdateAllHP(party, enemies);
 
         if (current.IsEnemy)
         {
-            // Enemy macht automatisch seinen Zug
             combatUI.SetPlayerButtonsActive(false);
-            Invoke(nameof(EnemyTurn), 1f); // kurze Pause damit es sich natürlich anfühlt
+            Invoke(nameof(EnemyTurn), 1f);
         }
         else
         {
-            // Spieler wartet auf Input
             combatUI.SetPlayerButtonsActive(true);
+            combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         }
     }
 
-    // Spieler drückt Basic Attack
+    public void SelectEnemy(int index)
+    {
+        selectedEnemyIndex = index;
+        combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+    }
+
     public void PlayerBasicAttack()
     {
         Combatant attacker = turnOrder[currentTurnIndex];
-        Combatant target = GetFirstAliveEnemy();
 
-        if (target == null) return;
+        while (selectedEnemyIndex < enemies.Count && !enemies[selectedEnemyIndex].IsAlive)
+            selectedEnemyIndex++;
 
+        if (selectedEnemyIndex >= enemies.Count) return;
+
+        Combatant target = enemies[selectedEnemyIndex];
         int damage = Mathf.Max(1, attacker.Attack - target.Defense);
         target.TakeDamage(damage);
 
-        Debug.Log($"{attacker.Name} greift {target.Name} an! {damage} Schaden!");
-        combatUI.ShowDamageText(target.Name, damage);
-        combatUI.UpdateEnemyHP(target.CurrentHP, target.MaxHP);
+        combatUI.ShowCombatLog($"{attacker.Name} attacks {target.Name} for {damage} damage!");
+        combatUI.UpdateAllHP(party, enemies);
+        combatUI.BuildEnemyTargetButtons(enemies);
+        combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
 
         if (!target.IsAlive)
         {
-            HandleEnemyDeath(target);
-            return;
+            combatUI.ShowCombatLog($"{target.Name} was defeated!");
+
+            if (enemies.All(e => !e.IsAlive))
+            {
+                HandleVictory();
+                return;
+            }
+
+            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+            combatUI.BuildEnemyTargetButtons(enemies);
+            combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         }
 
         NextTurn();
@@ -101,20 +127,20 @@ public class TurnCombatManager : MonoBehaviour
     void EnemyTurn()
     {
         Combatant attacker = turnOrder[currentTurnIndex];
-        Combatant target = GetFirstAlivePartyMember();
+        if (!attacker.IsAlive) { NextTurn(); return; }
 
-        if (target == null) return;
+        List<Combatant> aliveParty = party.Where(p => p.IsAlive).ToList();
+        if (aliveParty.Count == 0) return;
 
+        Combatant target = aliveParty[Random.Range(0, aliveParty.Count)];
         int damage = Mathf.Max(1, attacker.Attack - target.Defense);
         target.TakeDamage(damage);
 
-        Debug.Log($"{attacker.Name} greift {target.Name} an! {damage} Schaden!");
-        combatUI.ShowDamageText(target.Name, damage);
-        combatUI.UpdatePartyHP(target.Name, target.CurrentHP, target.MaxHP);
+        combatUI.ShowCombatLog($"{attacker.Name} attacks {target.Name} for {damage} damage!");
+        combatUI.UpdateAllHP(party, enemies);
 
         if (PartyManager.Instance.IsGameOver())
         {
-            Debug.Log("GAME OVER");
             combatUI.ShowGameOver();
             combatActive = false;
             return;
@@ -125,7 +151,6 @@ public class TurnCombatManager : MonoBehaviour
 
     void NextTurn()
     {
-        // Tote Kämpfer überspringen
         int attempts = 0;
         do
         {
@@ -137,26 +162,11 @@ public class TurnCombatManager : MonoBehaviour
         StartTurn();
     }
 
-    void HandleEnemyDeath(Combatant enemy)
+    void HandleVictory()
     {
-        Debug.Log($"{enemy.Name} wurde besiegt!");
-
-        // Merken welcher Enemy besiegt wurde
-        EnemyEncounter.DefeatedEnemyID = enemy.Name;
-
-        int xp = enemy.XPReward;
-        PartyManager.Instance.GiveXPToAll(xp);
-        combatUI.ShowVictory(xp);
+        int totalXP = enemies.Sum(e => e.XPReward);
+        PartyManager.Instance.GiveXPToAll(totalXP);
+        combatUI.ShowVictory(totalXP);
         combatActive = false;
-    }
-
-    Combatant GetFirstAliveEnemy()
-    {
-        return turnOrder.FirstOrDefault(c => c.IsEnemy && c.IsAlive);
-    }
-
-    Combatant GetFirstAlivePartyMember()
-    {
-        return turnOrder.FirstOrDefault(c => !c.IsEnemy && c.IsAlive);
     }
 }

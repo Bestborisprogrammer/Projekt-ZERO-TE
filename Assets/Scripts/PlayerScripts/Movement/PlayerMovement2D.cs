@@ -21,12 +21,18 @@ public class PlayerMovement2D : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
     }
 
+    void Start()
+    {
+        // Restore position after combat
+        if (EncounterManager.PlayerReturnPosition != Vector3.zero)
+            transform.position = EncounterManager.PlayerReturnPosition;
+    }
+
     void Update()
     {
         movement.x = Input.GetAxisRaw("Horizontal");
         movement.y = Input.GetAxisRaw("Vertical");
         movement = movement.normalized;
-
         UpdateSprite();
     }
 
@@ -38,17 +44,10 @@ public class PlayerMovement2D : MonoBehaviour
     void UpdateSprite()
     {
         if (movement == Vector2.zero)
-        {
             sr.sprite = spriteIdle;
-        }
         else if (Mathf.Abs(movement.x) > Mathf.Abs(movement.y))
-        {
-            // Links/Rechts hat Priorität über Oben/Unten
             sr.sprite = movement.x > 0 ? spriteRight : spriteLeft;
-        }
         else
-        {
             sr.sprite = movement.y > 0 ? spriteUp : spriteDown;
-        }
     }
 }

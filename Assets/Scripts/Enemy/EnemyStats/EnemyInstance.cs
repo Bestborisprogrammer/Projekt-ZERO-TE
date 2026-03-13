@@ -5,7 +5,6 @@ public class EnemyInstance
 {
     public EnemyStatsSO baseData;
 
-    // Runtime
     public int currentHP;
     public int currentMana;
 
@@ -24,9 +23,8 @@ public class EnemyInstance
         currentMana = MaxMana;
     }
 
-    public void TakeDamage(int rawDamage)
+    public void TakeDamage(int damage)
     {
-        int damage = Mathf.Max(1, rawDamage - Defense);
         currentHP = Mathf.Max(0, currentHP - damage);
         Debug.Log($"{Name} took {damage} damage! HP: {currentHP}/{MaxHP}");
     }

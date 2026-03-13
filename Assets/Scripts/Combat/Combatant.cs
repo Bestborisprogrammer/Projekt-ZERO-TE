@@ -1,4 +1,3 @@
-// Einheitliche Klasse damit Turn Order für beide funktioniert
 public class Combatant
 {
     public string Name { get; private set; }
@@ -11,26 +10,23 @@ public class Combatant
     public bool IsEnemy { get; private set; }
     public bool IsAlive => CurrentHP > 0;
 
-    // Referenzen für spätere Updates
     private CharacterInstance characterRef;
     private EnemyInstance enemyRef;
 
-    // Party Member Konstruktor
     public Combatant(CharacterInstance c)
     {
         characterRef = c;
         IsEnemy = false;
-        Refresh();
         XPReward = 0;
+        Refresh();
     }
 
-    // Enemy Konstruktor
     public Combatant(EnemyInstance e)
     {
         enemyRef = e;
         IsEnemy = true;
-        Refresh();
         XPReward = e.XPReward;
+        Refresh();
     }
 
     public void TakeDamage(int damage)
@@ -40,8 +36,7 @@ public class Combatant
         Refresh();
     }
 
-    // Stats aktuell halten
-    void Refresh()
+    public void Refresh()
     {
         if (IsEnemy)
         {

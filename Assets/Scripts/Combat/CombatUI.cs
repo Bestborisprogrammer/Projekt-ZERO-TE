@@ -3,42 +3,40 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 public class CombatUI : MonoBehaviour
 {
     [Header("Turn Info")]
     public TextMeshProUGUI turnText;
 
-    [Header("Enemy Info")]
-    public TextMeshProUGUI enemyNameText;
-    public TextMeshProUGUI enemyHPText;
-    public Slider enemyHPSlider;
-
-    [Header("Party Info")]
-    public TextMeshProUGUI partyHPText;
-
     [Header("Combat Log")]
     public TextMeshProUGUI combatLogText;
 
-    [Header("Buttons")]
+    [Header("Party HP Panel")]
+    public Transform partyHPParent;
+    public GameObject partyHPEntryPrefab;
+
+    [Header("Enemy Target Buttons")]
+    public Transform enemyButtonParent;
+    public GameObject enemyButtonPrefab;
+
+    [Header("Action Buttons")]
     public Button basicAttackButton;
 
-    [Header("Result Panels")]
+    [Header("Result Panel")]
     public GameObject victoryPanel;
     public TextMeshProUGUI victoryXPText;
-    public GameObject gameOverPanel;
 
     [Header("Scene")]
     public string overworldScene = "OverworldScene";
 
+    private List<Button> enemyButtons = new();
+    private int highlightedIndex = 0;
+
     void Start()
     {
         victoryPanel.SetActive(false);
-        gameOverPanel.SetActive(false);
-
-        if (EncounterManager.CurrentEnemy != null)
-            enemyNameText.text = EncounterManager.CurrentEnemy.enemyName;
-
         basicAttackButton.onClick.AddListener(TurnCombatManager.Instance.PlayerBasicAttack);
     }
 
@@ -47,41 +45,88 @@ public class CombatUI : MonoBehaviour
         turnText.text = $"{name}'s Turn";
     }
 
-    public void ShowDamageText(string target, int damage)
+    public void ShowCombatLog(string message)
     {
-        combatLogText.text = $"{target} erhielt {damage} Schaden!";
+        combatLogText.text = message;
     }
 
-    public void UpdateEnemyHP(int current, int max)
+    public void UpdateAllHP(List<Combatant> party, List<Combatant> enemies)
     {
-        enemyHPText.text = $"HP: {current}/{max}";
-        enemyHPSlider.maxValue = max;
-        enemyHPSlider.value = current;
+        foreach (Transform child in partyHPParent)
+            Destroy(child.gameObject);
+
+        foreach (var member in party)
+        {
+            GameObject entry = Instantiate(partyHPEntryPrefab, partyHPParent);
+            var tmp = entry.GetComponent<TextMeshProUGUI>();
+            tmp.text = $"{member.Name}  HP: {member.CurrentHP}/{member.MaxHP}";
+            tmp.color = member.IsAlive ? Color.white : Color.red;
+        }
     }
 
-    public void UpdatePartyHP(string name, int current, int max)
+    public void BuildEnemyTargetButtons(List<Combatant> enemies)
     {
-        partyHPText.text = $"{name} HP: {current}/{max}";
+        foreach (Transform child in enemyButtonParent)
+            Destroy(child.gameObject);
+        enemyButtons.Clear();
+
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            if (!enemies[i].IsAlive) continue;
+
+            int enemyIndex = i;
+
+            GameObject btn = Instantiate(enemyButtonPrefab, enemyButtonParent);
+            var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
+            tmp.text = $"{enemies[i].Name}\nHP: {enemies[i].CurrentHP}/{enemies[i].MaxHP}";
+
+            var button = btn.GetComponent<Button>();
+            button.onClick.AddListener(() => TurnCombatManager.Instance.SelectEnemy(enemyIndex));
+
+            enemyButtons.Add(button);
+        }
+
+        HighlightSelectedEnemy(highlightedIndex);
+    }
+
+    public void HighlightSelectedEnemy(int index)
+    {
+        highlightedIndex = index;
+
+        for (int i = 0; i < enemyButtons.Count; i++)
+        {
+            var colors = enemyButtons[i].colors;
+            colors.normalColor = (i == index) ? Color.yellow : Color.white;
+            colors.highlightedColor = (i == index) ? Color.yellow : new Color(0.9f, 0.9f, 0.9f);
+            enemyButtons[i].colors = colors;
+        }
     }
 
     public void SetPlayerButtonsActive(bool active)
     {
         basicAttackButton.interactable = active;
+        foreach (var btn in enemyButtons)
+            btn.interactable = active;
     }
 
     public void ShowVictory(int xp)
     {
         victoryPanel.SetActive(true);
-        victoryXPText.text = $"Sieg! +{xp} XP";
-        StartCoroutine(ReturnToOverworldAfterDelay(1.5f));
+        victoryXPText.text = $"Victory! +{xp} XP";
+        StartCoroutine(ReturnAfterDelay(2.5f));
     }
 
     public void ShowGameOver()
     {
-        gameOverPanel.SetActive(true);
+        foreach (var member in PartyManager.Instance.activeParty)
+            member.currentHP = 1;
+
+        victoryPanel.SetActive(true);
+        victoryXPText.text = "Your party has been defeated...";
+        StartCoroutine(ReturnAfterDelay(3f));
     }
 
-    IEnumerator ReturnToOverworldAfterDelay(float delay)
+    IEnumerator ReturnAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
         SceneManager.LoadScene(overworldScene);
