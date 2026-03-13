@@ -68,6 +68,11 @@ public class PartyStatusUI : MonoBehaviour
         var member = PartyManager.Instance.activeParty[index];
         float xpPercent = (float)member.currentXP / member.xpToNextLevel * 100f;
 
+        // Build affinity string
+        string affinities = member.baseData.affinities.Count > 0
+            ? string.Join(", ", member.baseData.affinities)
+            : "None";
+
         memberInfoText.text =
             $"══════════════════\n" +
             $"{member.Name}  |  Lv. {member.level}\n" +
@@ -77,6 +82,7 @@ public class PartyStatusUI : MonoBehaviour
             $"ATK: {member.Attack}\n" +
             $"DEF: {member.Defense}\n" +
             $"SPD: {member.Speed}\n" +
+            $"Affinity: {affinities}\n" +
             $"XP:  {member.currentXP} / {member.xpToNextLevel}  ({xpPercent:F1}%)";
 
         pageText.text = $"{index + 1} / {PartyManager.Instance.activeParty.Count}";

@@ -165,7 +165,7 @@ public class CombatUI : MonoBehaviour
         }
 
         int totalPages = Mathf.Max(1, Mathf.CeilToInt((float)currentSpells.Count / spellsPerPage));
-        skillPageText.text = $"{spellPage + 1} / {totalPages}";
+        skillPageText.text = $"{spellPage + 1}/{totalPages}";
 
         bool multiPage = totalPages > 1;
         skillPrevButton.gameObject.SetActive(multiPage);
