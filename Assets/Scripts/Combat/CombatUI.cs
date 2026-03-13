@@ -23,6 +23,15 @@ public class CombatUI : MonoBehaviour
 
     [Header("Action Buttons")]
     public Button basicAttackButton;
+    public Button skillsButton;
+
+    [Header("Skill Panel")]
+    public GameObject skillPanel;
+    public Transform skillButtonParent;
+    public GameObject skillButtonPrefab;
+    public Button skillPrevButton;
+    public Button skillNextButton;
+    public TextMeshProUGUI skillPageText;
 
     [Header("Result Panel")]
     public GameObject victoryPanel;
@@ -34,20 +43,138 @@ public class CombatUI : MonoBehaviour
     private List<Button> enemyButtons = new();
     private int highlightedIndex = 0;
 
+    private List<ManaAttackSO> currentSpells = new();
+    private int spellPage = 0;
+    private const int spellsPerPage = 3;
+    private int currentMana = 0;
+
+    // Log queue
+    private Queue<string> logQueue = new Queue<string>();
+    private bool isShowingLog = false;
+    private float logDelay = 1.2f;
+
     void Start()
     {
         victoryPanel.SetActive(false);
-        basicAttackButton.onClick.AddListener(TurnCombatManager.Instance.PlayerBasicAttack);
+        skillPanel.SetActive(false);
+        skillPrevButton.gameObject.SetActive(false);
+        skillNextButton.gameObject.SetActive(false);
+        skillPageText.gameObject.SetActive(false);
+
+        basicAttackButton.onClick.AddListener(OnBasicAttack);
+        skillsButton.onClick.AddListener(ToggleSkillPanel);
+        skillPrevButton.onClick.AddListener(SpellPagePrev);
+        skillNextButton.onClick.AddListener(SpellPageNext);
+    }
+
+    // Queue a message instead of showing instantly
+    public void ShowCombatLog(string message)
+    {
+        logQueue.Enqueue(message);
+        if (!isShowingLog)
+            StartCoroutine(ProcessLogQueue());
+    }
+
+    IEnumerator ProcessLogQueue()
+    {
+        isShowingLog = true;
+        while (logQueue.Count > 0)
+        {
+            combatLogText.text = logQueue.Dequeue();
+            yield return new WaitForSeconds(logDelay);
+        }
+        isShowingLog = false;
+    }
+
+    void OnBasicAttack()
+    {
+        skillPanel.SetActive(false);
+        skillPageText.gameObject.SetActive(false);
+        skillPrevButton.gameObject.SetActive(false);
+        skillNextButton.gameObject.SetActive(false);
+        TurnCombatManager.Instance.PlayerBasicAttack();
+    }
+
+    void ToggleSkillPanel()
+    {
+        bool isOpening = !skillPanel.activeSelf;
+        skillPanel.SetActive(isOpening);
+        skillPageText.gameObject.SetActive(isOpening);
+
+        if (!isOpening)
+        {
+            skillPrevButton.gameObject.SetActive(false);
+            skillNextButton.gameObject.SetActive(false);
+        }
+        else
+        {
+            RebuildSpellPage();
+        }
+    }
+
+    public void ShowSpellButtons(List<ManaAttackSO> spells, int mana)
+    {
+        currentSpells = spells ?? new List<ManaAttackSO>();
+        currentMana = mana;
+        spellPage = 0;
+    }
+
+    void SpellPagePrev()
+    {
+        if (spellPage > 0) spellPage--;
+        RebuildSpellPage();
+    }
+
+    void SpellPageNext()
+    {
+        int maxPage = Mathf.CeilToInt((float)currentSpells.Count / spellsPerPage) - 1;
+        if (spellPage < maxPage) spellPage++;
+        RebuildSpellPage();
+    }
+
+    void RebuildSpellPage()
+    {
+        foreach (Transform child in skillButtonParent)
+            Destroy(child.gameObject);
+
+        int start = spellPage * spellsPerPage;
+        int end = Mathf.Min(start + spellsPerPage, currentSpells.Count);
+
+        for (int i = start; i < end; i++)
+        {
+            var spell = currentSpells[i];
+            GameObject btn = Instantiate(skillButtonPrefab, skillButtonParent);
+            var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
+            bool canAfford = currentMana >= spell.manaCost;
+
+            tmp.text = $"{spell.spellName}  |  MP: {spell.manaCost}\n{spell.description}";
+            tmp.color = canAfford ? Color.white : Color.grey;
+
+            var button = btn.GetComponent<Button>();
+            button.interactable = canAfford;
+
+            var capturedSpell = spell;
+            button.onClick.AddListener(() =>
+            {
+                skillPanel.SetActive(false);
+                skillPageText.gameObject.SetActive(false);
+                skillPrevButton.gameObject.SetActive(false);
+                skillNextButton.gameObject.SetActive(false);
+                TurnCombatManager.Instance.PlayerManaAttack(capturedSpell);
+            });
+        }
+
+        int totalPages = Mathf.Max(1, Mathf.CeilToInt((float)currentSpells.Count / spellsPerPage));
+        skillPageText.text = $"{spellPage + 1} / {totalPages}";
+
+        bool multiPage = totalPages > 1;
+        skillPrevButton.gameObject.SetActive(multiPage);
+        skillNextButton.gameObject.SetActive(multiPage);
     }
 
     public void UpdateTurnText(string name)
     {
         turnText.text = $"{name}'s Turn";
-    }
-
-    public void ShowCombatLog(string message)
-    {
-        combatLogText.text = message;
     }
 
     public void UpdateAllHP(List<Combatant> party, List<Combatant> enemies)
@@ -59,7 +186,7 @@ public class CombatUI : MonoBehaviour
         {
             GameObject entry = Instantiate(partyHPEntryPrefab, partyHPParent);
             var tmp = entry.GetComponent<TextMeshProUGUI>();
-            tmp.text = $"{member.Name}  HP: {member.CurrentHP}/{member.MaxHP}";
+            tmp.text = $"{member.Name}  HP: {member.CurrentHP}/{member.MaxHP}  MP: {member.GetCurrentMana()}";
             tmp.color = member.IsAlive ? Color.white : Color.red;
         }
     }
@@ -81,7 +208,11 @@ public class CombatUI : MonoBehaviour
             tmp.text = $"{enemies[i].Name}\nHP: {enemies[i].CurrentHP}/{enemies[i].MaxHP}";
 
             var button = btn.GetComponent<Button>();
-            button.onClick.AddListener(() => TurnCombatManager.Instance.SelectEnemy(enemyIndex));
+            button.onClick.AddListener(() =>
+            {
+                TurnCombatManager.Instance.SelectEnemy(enemyIndex);
+                HighlightSelectedEnemy(enemyButtons.IndexOf(button));
+            });
 
             enemyButtons.Add(button);
         }
@@ -96,8 +227,9 @@ public class CombatUI : MonoBehaviour
         for (int i = 0; i < enemyButtons.Count; i++)
         {
             var colors = enemyButtons[i].colors;
-            colors.normalColor = (i == index) ? Color.yellow : Color.white;
-            colors.highlightedColor = (i == index) ? Color.yellow : new Color(0.9f, 0.9f, 0.9f);
+            colors.normalColor = (i == index) ? Color.green : Color.white;
+            colors.highlightedColor = (i == index) ? Color.green : new Color(0.9f, 0.9f, 0.9f);
+            colors.selectedColor = (i == index) ? Color.green : Color.white;
             enemyButtons[i].colors = colors;
         }
     }
@@ -105,6 +237,14 @@ public class CombatUI : MonoBehaviour
     public void SetPlayerButtonsActive(bool active)
     {
         basicAttackButton.interactable = active;
+        skillsButton.interactable = active;
+        if (!active)
+        {
+            skillPanel.SetActive(false);
+            skillPageText.gameObject.SetActive(false);
+            skillPrevButton.gameObject.SetActive(false);
+            skillNextButton.gameObject.SetActive(false);
+        }
         foreach (var btn in enemyButtons)
             btn.interactable = active;
     }

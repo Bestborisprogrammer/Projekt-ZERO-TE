@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: Hero
   portrait: {fileID: 0}
-  maxHP: 40
+  startingLevel: 1
+  maxHP: 4000
   attack: 10
   defense: 5
   speed: 8
@@ -25,3 +26,6 @@ MonoBehaviour:
   speedGrowth: 1
   manaGrowth: 5
   baseXPToNextLevel: 100
+  affinities: 02000000
+  spells:
+  - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}

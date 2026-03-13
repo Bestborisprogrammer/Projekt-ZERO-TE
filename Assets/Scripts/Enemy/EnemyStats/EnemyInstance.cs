@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class EnemyInstance
@@ -8,7 +9,11 @@ public class EnemyInstance
     public int currentHP;
     public int currentMana;
 
+    public List<ActiveStatusEffect> activeEffects = new();
+    public bool isFrozen => activeEffects.Exists(e => e.type == StatusEffectType.Freeze && e.turnsRemaining > 0);
+
     public string Name => baseData.enemyName;
+    public int Level => baseData.level;
     public int MaxHP => baseData.maxHP;
     public int Attack => baseData.attack;
     public int Defense => baseData.defense;
@@ -26,7 +31,6 @@ public class EnemyInstance
     public void TakeDamage(int damage)
     {
         currentHP = Mathf.Max(0, currentHP - damage);
-        Debug.Log($"{Name} took {damage} damage! HP: {currentHP}/{MaxHP}");
     }
 
     public bool UseMana(int cost)
@@ -34,5 +38,14 @@ public class EnemyInstance
         if (currentMana < cost) return false;
         currentMana -= cost;
         return true;
+    }
+
+    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration, float dotPercent)
+    {
+        if (UnityEngine.Random.value <= chance)
+        {
+            activeEffects.RemoveAll(e => e.type == type);
+            activeEffects.Add(new ActiveStatusEffect(type, duration, dotPercent));
+        }
     }
 }

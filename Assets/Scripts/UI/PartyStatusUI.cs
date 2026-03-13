@@ -1,44 +1,88 @@
 ﻿using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class PartyStatusUI : MonoBehaviour
 {
     public GameObject statusPanel;
     public TextMeshProUGUI memberInfoText;
+    public TextMeshProUGUI pageText;
+    public Button prevButton;
+    public Button nextButton;
+
+    private bool isOpen = false;
+    private int currentIndex = 0;
 
     void Start()
     {
         statusPanel.SetActive(false);
         memberInfoText.gameObject.SetActive(false);
+        pageText.gameObject.SetActive(false);
+        prevButton.gameObject.SetActive(false);
+        nextButton.gameObject.SetActive(false);
+
+        prevButton.onClick.AddListener(PrevMember);
+        nextButton.onClick.AddListener(NextMember);
     }
 
     public void TogglePanel()
     {
-        bool isOpening = !statusPanel.activeSelf;
-        statusPanel.SetActive(isOpening);
-        memberInfoText.gameObject.SetActive(isOpening);
+        isOpen = !isOpen;
 
-        if (isOpening) RefreshStats();
+        statusPanel.SetActive(isOpen);
+        memberInfoText.gameObject.SetActive(isOpen);
+        pageText.gameObject.SetActive(isOpen);
+
+        if (isOpen)
+        {
+            currentIndex = 0;
+            ShowMember(currentIndex);
+        }
+        else
+        {
+            prevButton.gameObject.SetActive(false);
+            nextButton.gameObject.SetActive(false);
+        }
     }
 
-    void RefreshStats()
+    void PrevMember()
+    {
+        currentIndex--;
+        if (currentIndex < 0)
+            currentIndex = PartyManager.Instance.activeParty.Count - 1;
+        ShowMember(currentIndex);
+    }
+
+    void NextMember()
+    {
+        currentIndex++;
+        if (currentIndex >= PartyManager.Instance.activeParty.Count)
+            currentIndex = 0;
+        ShowMember(currentIndex);
+    }
+
+    void ShowMember(int index)
     {
         if (PartyManager.Instance == null) return;
 
-        string info = "";
-        foreach (var member in PartyManager.Instance.activeParty)
-        {
-            float xpPercent = (float)member.currentXP / member.xpToNextLevel * 100f;
-            info += $"══════════════════\n";
-            info += $"{member.Name}  |  Lv. {member.level}\n";
-            info += $"══════════════════\n";
-            info += $"HP:  {member.currentHP} / {member.MaxHP}\n";
-            info += $"MP:  {member.currentMana} / {member.MaxMana}\n";
-            info += $"ATK: {member.Attack}\n";
-            info += $"DEF: {member.Defense}\n";
-            info += $"SPD: {member.Speed}\n";
-            info += $"XP:  {member.currentXP} / {member.xpToNextLevel}  ({xpPercent:F1}%)\n\n";
-        }
-        memberInfoText.text = info;
+        var member = PartyManager.Instance.activeParty[index];
+        float xpPercent = (float)member.currentXP / member.xpToNextLevel * 100f;
+
+        memberInfoText.text =
+            $"══════════════════\n" +
+            $"{member.Name}  |  Lv. {member.level}\n" +
+            $"══════════════════\n" +
+            $"HP:  {member.currentHP} / {member.MaxHP}\n" +
+            $"MP:  {member.currentMana} / {member.MaxMana}\n" +
+            $"ATK: {member.Attack}\n" +
+            $"DEF: {member.Defense}\n" +
+            $"SPD: {member.Speed}\n" +
+            $"XP:  {member.currentXP} / {member.xpToNextLevel}  ({xpPercent:F1}%)";
+
+        pageText.text = $"{index + 1} / {PartyManager.Instance.activeParty.Count}";
+
+        bool multipleMembers = PartyManager.Instance.activeParty.Count > 1;
+        prevButton.gameObject.SetActive(multipleMembers);
+        nextButton.gameObject.SetActive(multipleMembers);
     }
 }

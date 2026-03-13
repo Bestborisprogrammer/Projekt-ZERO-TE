@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [CreateAssetMenu(fileName = "NewCharacter", menuName = "Zero-Te/Character")]
 public class CharacterStatsSO : ScriptableObject
@@ -6,6 +7,9 @@ public class CharacterStatsSO : ScriptableObject
     [Header("Identity")]
     public string characterName = "Hero";
     public Sprite portrait;
+
+    [Header("Starting Level")]
+    public int startingLevel = 1;
 
     [Header("Base Stats")]
     public int maxHP = 100;
@@ -23,4 +27,10 @@ public class CharacterStatsSO : ScriptableObject
 
     [Header("XP")]
     public int baseXPToNextLevel = 100;
+
+    [Header("Affinities")]
+    public List<SpellAffinity> affinities = new();
+
+    [Header("Spells")]
+    public List<ManaAttackSO> spells = new();
 }

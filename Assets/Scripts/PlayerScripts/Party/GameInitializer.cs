@@ -2,8 +2,6 @@ using UnityEngine;
 
 public class GameInitializer : MonoBehaviour
 {
-    // This runs once when the game starts fresh from the OverworldScene
-    // It clears all defeated enemies so they respawn each Play session
     static bool hasInitialized = false;
 
     void Awake()
@@ -11,7 +9,7 @@ public class GameInitializer : MonoBehaviour
         if (!hasInitialized)
         {
             PlayerPrefs.DeleteAll();
-            hasInitialized = false;
+            hasInitialized = true;
         }
     }
 }

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: RinItoshi
   portrait: {fileID: 0}
-  maxHP: 40
+  startingLevel: 2
+  maxHP: 4000
   attack: 10
   defense: 5
   speed: 8
@@ -25,3 +26,11 @@ MonoBehaviour:
   speedGrowth: 1
   manaGrowth: 5
   baseXPToNextLevel: 100
+  affinities: 01000000
+  spells:
+  - {fileID: 11400000, guid: df4b5e78e500c5e4c8a3690ee932d2fd, type: 2}
+  - {fileID: 11400000, guid: 02705b5242f336849abeec47d96fef04, type: 2}
+  - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}
+  - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}
+  - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}
+  - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}

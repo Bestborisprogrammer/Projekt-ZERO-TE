@@ -57,6 +57,9 @@ public class TurnCombatManager : MonoBehaviour
         combatActive = true;
         selectedEnemyIndex = 0;
 
+        Debug.Log("=== COMBAT STARTED ===");
+        Debug.Log("Turn order: " + string.Join(" -> ", turnOrder.Select(c => c.Name)));
+
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.UpdateAllHP(party, enemies);
         StartTurn();
@@ -67,17 +70,32 @@ public class TurnCombatManager : MonoBehaviour
         if (!combatActive) return;
 
         Combatant current = turnOrder[currentTurnIndex];
+        Debug.Log($"--- {current.Name}'s Turn --- HP:{current.CurrentHP}/{current.MaxHP} MP:{current.GetCurrentMana()}");
+
         combatUI.UpdateTurnText(current.Name);
         combatUI.UpdateAllHP(party, enemies);
+
+        // Check freeze at start of turn
+        if (current.IsFrozen)
+        {
+            Debug.Log($"{current.Name} is frozen and skips their turn!");
+            current.ConsumeFreezeIfActive();
+            combatUI.ShowCombatLog($"{current.Name} is frozen and cannot move!");
+            NextTurn();
+            return;
+        }
 
         if (current.IsEnemy)
         {
             combatUI.SetPlayerButtonsActive(false);
-            Invoke(nameof(EnemyTurn), 1f);
+            Invoke(nameof(EnemyTurn), 5f);
         }
         else
         {
             combatUI.SetPlayerButtonsActive(true);
+            combatUI.ShowSpellButtons(
+                current.GetPartySpells(current.GetCurrentLevel()),
+                current.GetCurrentMana());
             combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         }
     }
@@ -86,6 +104,7 @@ public class TurnCombatManager : MonoBehaviour
     {
         selectedEnemyIndex = index;
         combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+        Debug.Log($"Selected enemy: {enemies[index].Name}");
     }
 
     public void PlayerBasicAttack()
@@ -101,6 +120,8 @@ public class TurnCombatManager : MonoBehaviour
         int damage = Mathf.Max(1, attacker.Attack - target.Defense);
         target.TakeDamage(damage);
 
+        Debug.Log($"{attacker.Name} basic attacks {target.Name} for {damage} damage! (ATK:{attacker.Attack} - DEF:{target.Defense}) | {target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
         combatUI.ShowCombatLog($"{attacker.Name} attacks {target.Name} for {damage} damage!");
         combatUI.UpdateAllHP(party, enemies);
         combatUI.BuildEnemyTargetButtons(enemies);
@@ -108,14 +129,65 @@ public class TurnCombatManager : MonoBehaviour
 
         if (!target.IsAlive)
         {
+            Debug.Log($"{target.Name} was defeated!");
             combatUI.ShowCombatLog($"{target.Name} was defeated!");
+            if (enemies.All(e => !e.IsAlive)) { HandleVictory(); return; }
+            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+            combatUI.BuildEnemyTargetButtons(enemies);
+            combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+        }
 
-            if (enemies.All(e => !e.IsAlive))
-            {
-                HandleVictory();
-                return;
-            }
+        NextTurn();
+    }
 
+    public void PlayerManaAttack(ManaAttackSO spell)
+    {
+        Combatant attacker = turnOrder[currentTurnIndex];
+
+        if (!attacker.SpendMana(spell.manaCost))
+        {
+            Debug.Log($"{attacker.Name} tried to use {spell.spellName} but not enough mana! ({attacker.GetCurrentMana()}/{spell.manaCost})");
+            combatUI.ShowCombatLog("Not enough mana!");
+            return;
+        }
+
+        while (selectedEnemyIndex < enemies.Count && !enemies[selectedEnemyIndex].IsAlive)
+            selectedEnemyIndex++;
+
+        if (selectedEnemyIndex >= enemies.Count) return;
+
+        Combatant target = enemies[selectedEnemyIndex];
+
+        float affinityMult = attacker.Affinities.Contains(spell.affinity) && spell.affinity != SpellAffinity.None ? 1.5f : 1f;
+        int damage = Mathf.Max(1, Mathf.RoundToInt((spell.flatDamage - target.Defense) * affinityMult));
+        target.TakeDamage(damage);
+
+        string affinityNote = affinityMult > 1f ? " (Affinity Bonus!)" : "";
+        Debug.Log($"{attacker.Name} uses {spell.spellName} on {target.Name} for {damage} damage!{affinityNote} | {target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
+        combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName} on {target.Name} for {damage} damage!{affinityNote}");
+
+        if (spell.statusEffect != StatusEffectType.None)
+        {
+            target.ApplyStatusEffect(spell.statusEffect, spell.statusChance, spell.statusDuration, spell.dotPercent);
+            bool wasApplied = target.HasStatusEffect(spell.statusEffect);
+            Debug.Log($"Status effect {spell.statusEffect} on {target.Name}: applied={wasApplied} chance={spell.statusChance}");
+
+            if (wasApplied)
+                combatUI.ShowCombatLog($"{target.Name} is afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
+            else
+                combatUI.ShowCombatLog($"{spell.spellName} effect missed on {target.Name}!");
+        }
+
+        combatUI.UpdateAllHP(party, enemies);
+        combatUI.BuildEnemyTargetButtons(enemies);
+        combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+
+        if (!target.IsAlive)
+        {
+            Debug.Log($"{target.Name} was defeated!");
+            combatUI.ShowCombatLog($"{target.Name} was defeated!");
+            if (enemies.All(e => !e.IsAlive)) { HandleVictory(); return; }
             selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
             combatUI.BuildEnemyTargetButtons(enemies);
             combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
@@ -133,14 +205,67 @@ public class TurnCombatManager : MonoBehaviour
         if (aliveParty.Count == 0) return;
 
         Combatant target = aliveParty[Random.Range(0, aliveParty.Count)];
-        int damage = Mathf.Max(1, attacker.Attack - target.Defense);
-        target.TakeDamage(damage);
 
-        combatUI.ShowCombatLog($"{attacker.Name} attacks {target.Name} for {damage} damage!");
+        var availableSpells = GetEnemyAvailableSpells();
+        bool useSpell = availableSpells != null && availableSpells.Count > 0 && Random.value > 0.5f;
+
+        if (useSpell)
+        {
+            var spell = availableSpells[Random.Range(0, availableSpells.Count)];
+            attacker.SpendMana(spell.manaCost);
+
+            float affinityMult = attacker.Affinities.Contains(spell.affinity) && spell.affinity != SpellAffinity.None ? 1.5f : 1f;
+            int damage = Mathf.Max(1, Mathf.RoundToInt((spell.flatDamage - target.Defense) * affinityMult));
+            target.TakeDamage(damage);
+
+            Debug.Log($"{attacker.Name} uses {spell.spellName} on {target.Name} for {damage} damage! | {target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+            combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName} on {target.Name} for {damage} damage!");
+
+            if (spell.statusEffect != StatusEffectType.None)
+            {
+                target.ApplyStatusEffect(spell.statusEffect, spell.statusChance, spell.statusDuration, spell.dotPercent);
+                if (target.HasStatusEffect(spell.statusEffect))
+                {
+                    Debug.Log($"{target.Name} afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
+                    combatUI.ShowCombatLog($"{target.Name} is afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
+                }
+            }
+        }
+        else
+        {
+            int damage = Mathf.Max(1, attacker.Attack - target.Defense);
+            target.TakeDamage(damage);
+            Debug.Log($"{attacker.Name} basic attacks {target.Name} for {damage} damage! | {target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+            combatUI.ShowCombatLog($"{attacker.Name} attacks {target.Name} for {damage} damage!");
+        }
+
         combatUI.UpdateAllHP(party, enemies);
+
+        // Dot ticks AFTER enemy does their action
+        Debug.Log($"Processing dots for {attacker.Name} after action...");
+        var dotLogs = attacker.ProcessStatusEffects();
+        foreach (var log in dotLogs)
+        {
+            Debug.Log($"[DOT] {log}");
+            combatUI.ShowCombatLog(log);
+        }
+
+        combatUI.UpdateAllHP(party, enemies);
+        combatUI.BuildEnemyTargetButtons(enemies);
+
+        if (!attacker.IsAlive)
+        {
+            Debug.Log($"{attacker.Name} was defeated by status effect!");
+            combatUI.ShowCombatLog($"{attacker.Name} was defeated by status effect!");
+            if (enemies.All(e => !e.IsAlive)) { HandleVictory(); return; }
+            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+            NextTurn();
+            return;
+        }
 
         if (PartyManager.Instance.IsGameOver())
         {
+            Debug.Log("GAME OVER - all party members defeated!");
             combatUI.ShowGameOver();
             combatActive = false;
             return;
@@ -149,8 +274,22 @@ public class TurnCombatManager : MonoBehaviour
         NextTurn();
     }
 
+    List<EnemyManaAttackSO> GetEnemyAvailableSpells()
+    {
+        Combatant current = turnOrder[currentTurnIndex];
+        if (!current.IsEnemy) return null;
+
+        int enemyListIndex = enemies.IndexOf(current);
+        if (enemyListIndex < 0 || enemyListIndex >= EncounterManager.CurrentEnemies.Count) return null;
+
+        var enemyData = EncounterManager.CurrentEnemies[enemyListIndex];
+        return enemyData.spells.FindAll(s => current.GetCurrentMana() >= s.manaCost);
+    }
+
     void NextTurn()
     {
+        if (!combatActive) return;
+
         int attempts = 0;
         do
         {
@@ -164,6 +303,7 @@ public class TurnCombatManager : MonoBehaviour
 
     void HandleVictory()
     {
+        Debug.Log($"=== VICTORY === Total XP: {enemies.Sum(e => e.XPReward)}");
         int totalXP = enemies.Sum(e => e.XPReward);
         PartyManager.Instance.GiveXPToAll(totalXP);
         combatUI.ShowVictory(totalXP);
