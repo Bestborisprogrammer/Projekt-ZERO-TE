@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e8eec2a7d6085f943b79425f5fa08148, type: 3}
-  m_Name: TheKingOfFreeze
+  m_Name: DarknessSpell
   m_EditorClassIdentifier: 
-  spellName: FreezeTest
-  description: A basic ice attack.
-  affinity: 2
+  spellName: Dark
+  description: A basic fire attack.
+  affinity: 5
   manaCost: 10
   levelRequirement: 1
   flatDamage: 20
-  statusEffect: 4
+  statusEffect: 6
   statusChance: 1
   statusDuration: 2
-  dotPercent: 0.0104
-  defenseReduction: 0.25
+  dotPercent: 0.05
+  defenseReduction: 1

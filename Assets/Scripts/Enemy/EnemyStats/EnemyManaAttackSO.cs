@@ -19,4 +19,7 @@ public class EnemyManaAttackSO : ScriptableObject
     [Range(0f, 1f)] public float statusChance = 0f;
     public int statusDuration = 2;
     [Range(0f, 0.1f)] public float dotPercent = 0.05f;
+
+    [Header("Dark Specific")]
+    [Range(0f, 1f)] public float defenseReduction = 0.25f;
 }

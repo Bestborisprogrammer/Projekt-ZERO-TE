@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 [System.Serializable]
 public class CharacterInstance
@@ -14,11 +15,37 @@ public class CharacterInstance
 
     public List<ActiveStatusEffect> activeEffects = new();
     public bool isFrozen => activeEffects.Exists(e => e.type == StatusEffectType.Freeze && e.turnsRemaining > 0);
+    public bool isWet => activeEffects.Exists(e => e.type == StatusEffectType.Wet && e.turnsRemaining > 0);
+    public bool isBurning => activeEffects.Exists(e => e.type == StatusEffectType.Burn && e.turnsRemaining > 0);
+    public bool isParalyzed => activeEffects.Exists(e => e.type == StatusEffectType.Paralyze && e.turnsRemaining > 0);
 
     public int MaxHP => baseData.maxHP + (level - 1) * baseData.hpGrowth;
     public int Attack => baseData.attack + (level - 1) * baseData.attackGrowth;
-    public int Defense => baseData.defense + (level - 1) * baseData.defenseGrowth;
-    public int Speed => baseData.speed + (level - 1) * baseData.speedGrowth;
+
+    public int Defense
+    {
+        get
+        {
+            int def = baseData.defense + (level - 1) * baseData.defenseGrowth;
+            var darkEffect = activeEffects.FirstOrDefault(e => e.type == StatusEffectType.Dark);
+            if (darkEffect != null)
+                def = Mathf.RoundToInt(def * (1f - darkEffect.defenseReduction));
+            return Mathf.Max(0, def);
+        }
+    }
+
+    public int Speed
+    {
+        get
+        {
+            int spd = baseData.speed + (level - 1) * baseData.speedGrowth;
+            var wetEffect = activeEffects.FirstOrDefault(e => e.type == StatusEffectType.Wet);
+            if (wetEffect != null)
+                spd = Mathf.Max(1, spd - wetEffect.speedReduction);
+            return spd;
+        }
+    }
+
     public int MaxMana => baseData.maxMana + (level - 1) * baseData.manaGrowth;
     public string Name => baseData.characterName;
     public bool IsAlive => currentHP > 0;
@@ -29,8 +56,6 @@ public class CharacterInstance
         currentHP = MaxHP;
         currentMana = MaxMana;
         xpToNextLevel = baseData.baseXPToNextLevel;
-
-        // Scale XP threshold for starting level
         for (int i = 1; i < level; i++)
             xpToNextLevel = Mathf.RoundToInt(xpToNextLevel * 1.4f);
     }
@@ -47,13 +72,12 @@ public class CharacterInstance
         return true;
     }
 
-    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration, float dotPercent)
+    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration, float dotPercent = 0f, float defenseReduction = 0f, int speedReduction = 0)
     {
         if (UnityEngine.Random.value <= chance)
         {
-            // Remove existing same effect and replace
             activeEffects.RemoveAll(e => e.type == type);
-            activeEffects.Add(new ActiveStatusEffect(type, duration, dotPercent));
+            activeEffects.Add(new ActiveStatusEffect(type, duration, dotPercent, defenseReduction, speedReduction));
         }
     }
 

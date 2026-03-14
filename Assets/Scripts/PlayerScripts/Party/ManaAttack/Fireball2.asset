@@ -18,7 +18,8 @@ MonoBehaviour:
   manaCost: 10
   levelRequirement: 2
   flatDamage: 20
-  statusEffect: 3
+  statusEffect: 1
   statusChance: 1
   statusDuration: 2
   dotPercent: 0.1
+  defenseReduction: 0.25

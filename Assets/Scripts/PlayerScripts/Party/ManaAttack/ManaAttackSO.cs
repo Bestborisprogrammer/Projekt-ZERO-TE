@@ -1,7 +1,7 @@
 using UnityEngine;
 
-public enum SpellAffinity { None, Fire, Ice, Thunder, Poison, Dark, Light }
-public enum StatusEffectType { None, Freeze, Poison, Burn }
+public enum SpellAffinity { None, Fire, Ice, Thunder, Poison, Dark, Light, Water }
+public enum StatusEffectType { None, Burn, Poison, Paralyze, Freeze, Wet, Dark, Light }
 
 [CreateAssetMenu(fileName = "NewSpell", menuName = "Zero-Te/Party Spell")]
 public class ManaAttackSO : ScriptableObject
@@ -22,5 +22,8 @@ public class ManaAttackSO : ScriptableObject
     public StatusEffectType statusEffect = StatusEffectType.None;
     [Range(0f, 1f)] public float statusChance = 0f;
     public int statusDuration = 2;
-    [Range(0f, 0.1f)] public float dotPercent = 0.05f; // % of max HP for Poison/Burn per turn
+    [Range(0f, 0.1f)] public float dotPercent = 0.05f;
+
+    [Header("Dark Specific")]
+    [Range(0f, 1f)] public float defenseReduction = 0.25f; // default 25%
 }

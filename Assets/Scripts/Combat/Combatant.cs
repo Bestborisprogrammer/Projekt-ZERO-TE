@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Combatant
@@ -13,6 +14,9 @@ public class Combatant
     public bool IsEnemy { get; private set; }
     public bool IsAlive => CurrentHP > 0;
     public bool IsFrozen { get; private set; }
+    public bool IsWet { get; private set; }
+    public bool IsBurning { get; private set; }
+    public bool IsParalyzed { get; private set; }
     public List<SpellAffinity> Affinities { get; private set; }
 
     private CharacterInstance characterRef;
@@ -41,10 +45,10 @@ public class Combatant
         Refresh();
     }
 
-    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration, float dotPercent)
+    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration, float dotPercent = 0f, float defenseReduction = 0f, int speedReduction = 0)
     {
-        if (IsEnemy) enemyRef.ApplyStatusEffect(type, chance, duration, dotPercent);
-        else characterRef.ApplyStatusEffect(type, chance, duration, dotPercent);
+        if (IsEnemy) enemyRef.ApplyStatusEffect(type, chance, duration, dotPercent, defenseReduction, speedReduction);
+        else characterRef.ApplyStatusEffect(type, chance, duration, dotPercent, defenseReduction, speedReduction);
         Refresh();
     }
 
@@ -54,7 +58,13 @@ public class Combatant
         return effects.Exists(e => e.type == type && e.turnsRemaining > 0);
     }
 
-    // Called AFTER the combatant has taken their action
+    public void RemoveStatusEffect(StatusEffectType type)
+    {
+        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
+        effects.RemoveAll(e => e.type == type);
+        Refresh();
+    }
+
     public List<string> ProcessStatusEffects()
     {
         List<string> logs = new();
@@ -64,9 +74,16 @@ public class Combatant
         {
             var effect = effects[i];
 
-            if (effect.type == StatusEffectType.Poison || effect.type == StatusEffectType.Burn)
+            if (effect.type == StatusEffectType.Burn || effect.type == StatusEffectType.Poison)
             {
-                int dotDamage = Mathf.Max(1, Mathf.RoundToInt(MaxHP * effect.dotPercent));
+                int dotDamage;
+                if (effect.type == StatusEffectType.Poison)
+                    // Poison ignores defense
+                    dotDamage = Mathf.Max(1, Mathf.RoundToInt(MaxHP * effect.dotPercent));
+                else
+                    // Burn goes through normal damage
+                    dotDamage = Mathf.Max(1, Mathf.RoundToInt(MaxHP * effect.dotPercent));
+
                 TakeDamage(dotDamage);
                 effect.turnsRemaining--;
 
@@ -80,6 +97,30 @@ public class Combatant
                     logs.Add($"{Name} takes {dotDamage} {effect.type} damage! ({effect.turnsRemaining} turns remaining)");
                 }
             }
+            else if (effect.type == StatusEffectType.Wet)
+            {
+                effect.turnsRemaining--;
+                if (effect.turnsRemaining <= 0)
+                {
+                    logs.Add($"{Name}'s Wet effect wore off! Speed returns to normal.");
+                    Debug.Log($"[WET] {Name}'s Wet wore off!");
+                    effects.RemoveAt(i);
+                }
+                else
+                {
+                    logs.Add($"{Name} is Wet! Speed reduced by {effect.speedReduction} ({effect.turnsRemaining} turns remaining)");
+                    Debug.Log($"[WET] {Name} Speed reduced by {effect.speedReduction} | {effect.turnsRemaining} turns remaining");
+                }
+            }
+            else if (effect.type == StatusEffectType.Paralyze)
+            {
+                effect.turnsRemaining--;
+                if (effect.turnsRemaining <= 0)
+                {
+                    logs.Add($"{Name}'s paralysis wore off!");
+                    effects.RemoveAt(i);
+                }
+            }
         }
 
         Refresh();
@@ -91,11 +132,8 @@ public class Combatant
         List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
         var freeze = effects.Find(e => e.type == StatusEffectType.Freeze);
         if (freeze == null) return false;
-
         freeze.turnsRemaining--;
-        if (freeze.turnsRemaining <= 0)
-            effects.Remove(freeze);
-
+        if (freeze.turnsRemaining <= 0) effects.Remove(freeze);
         Refresh();
         return true;
     }
@@ -111,6 +149,9 @@ public class Combatant
             MaxHP = enemyRef.MaxHP;
             CurrentHP = enemyRef.currentHP;
             IsFrozen = enemyRef.isFrozen;
+            IsWet = enemyRef.isWet;
+            IsBurning = enemyRef.isBurning;
+            IsParalyzed = enemyRef.isParalyzed;
             Affinities = enemyRef.baseData.affinities;
         }
         else
@@ -122,6 +163,9 @@ public class Combatant
             MaxHP = characterRef.MaxHP;
             CurrentHP = characterRef.currentHP;
             IsFrozen = characterRef.isFrozen;
+            IsWet = characterRef.isWet;
+            IsBurning = characterRef.isBurning;
+            IsParalyzed = characterRef.isParalyzed;
             Affinities = characterRef.baseData.affinities;
         }
     }
