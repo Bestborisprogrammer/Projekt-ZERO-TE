@@ -5,20 +5,19 @@ using System.Collections.Generic;
 
 public class InventoryMenuPanel : MonoBehaviour
 {
+    [Header("Item List")]
     public Transform itemListParent;
     public GameObject itemEntryPrefab;
+    public TextMeshProUGUI inventoryCountText;
 
-    // Target selection for using items outside combat
+    [Header("Target Panel")]
     public GameObject targetPanel;
     public Transform targetParent;
-    public GameObject targetButtonPrefab;
+    public GameObject targetMemberPrefab;
 
     private ItemSO pendingItem;
 
-    void Start()
-    {
-        targetPanel.SetActive(false);
-    }
+    void OnEnable() => Refresh();
 
     public void Refresh()
     {
@@ -28,29 +27,26 @@ public class InventoryMenuPanel : MonoBehaviour
         foreach (var item in InventoryManager.Instance.items)
         {
             GameObject entry = Instantiate(itemEntryPrefab, itemListParent);
-            var tmp = entry.GetComponentInChildren<TextMeshProUGUI>();
-            tmp.text = $"{item.itemData.itemName} x{item.quantity}\n{item.itemData.description}";
-
-            var btn = entry.GetComponent<Button>();
-            var capturedItem = item.itemData;
-            btn?.onClick.AddListener(() => SelectItem(capturedItem));
+            var entryUI = entry.GetComponent<ItemEntryUI>();
+            entryUI.Setup(item, this);
         }
+
+        int count = InventoryManager.Instance.items.Count;
+        if (inventoryCountText != null)
+            inventoryCountText.text = $"Items: {count}/{InventoryManager.MaxSlots}";
+
+        targetPanel.SetActive(false);
     }
 
-    void SelectItem(ItemSO item)
+    public void OpenTargetPanel(ItemSO item)
     {
         if (item.itemTarget == ItemTarget.Enemy)
         {
-            Debug.Log("Can't use enemy-targeted items outside combat!");
+            Debug.Log("Enemy items can only be used in combat!");
             return;
         }
 
         pendingItem = item;
-        ShowTargetSelection();
-    }
-
-    void ShowTargetSelection()
-    {
         targetPanel.SetActive(true);
 
         foreach (Transform child in targetParent)
@@ -58,13 +54,29 @@ public class InventoryMenuPanel : MonoBehaviour
 
         foreach (var member in PartyManager.Instance.activeParty)
         {
-            GameObject btn = Instantiate(targetButtonPrefab, targetParent);
+            GameObject btn = Instantiate(targetMemberPrefab, targetParent);
             var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
-            tmp.text = $"{member.Name}\nHP: {member.currentHP}/{member.MaxHP}";
+
+            string preview = "";
+            if (pendingItem.itemType == ItemType.Heal)
+            {
+                int heal = pendingItem.flatHeal + Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
+                preview = $"+{heal} HP";
+            }
+            else if (pendingItem.itemType == ItemType.Buff)
+                preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
+
+            tmp.text = $"{member.Name}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
 
             var capturedMember = member;
             btn.GetComponent<Button>()?.onClick.AddListener(() => UseItemOnMember(capturedMember));
         }
+    }
+
+    public void CloseTargetPanel()
+    {
+        targetPanel.SetActive(false);
+        pendingItem = null;
     }
 
     void UseItemOnMember(CharacterInstance member)
@@ -74,12 +86,13 @@ public class InventoryMenuPanel : MonoBehaviour
         if (pendingItem.itemType == ItemType.Heal)
         {
             member.HealHP(pendingItem.flatHeal, pendingItem.percentHeal);
-            Debug.Log($"Used {pendingItem.itemName} on {member.Name}!");
+            int heal = pendingItem.flatHeal + Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
+            Debug.Log($"Used {pendingItem.itemName} on {member.Name} for {heal} HP!");
         }
         else if (pendingItem.itemType == ItemType.Buff)
         {
             member.ApplyStatModifier(pendingItem.statType, pendingItem.statModifier, pendingItem.modifierDuration);
-            Debug.Log($"Applied {pendingItem.statType} +{pendingItem.statModifier} to {member.Name} for {pendingItem.modifierDuration} turns!");
+            Debug.Log($"Applied {pendingItem.statType} +{pendingItem.statModifier} to {member.Name}!");
         }
 
         InventoryManager.Instance.RemoveItem(pendingItem);

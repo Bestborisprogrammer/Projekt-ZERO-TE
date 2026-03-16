@@ -18,12 +18,12 @@ public class ItemSO : ScriptableObject
     public int flatHeal = 50;
     [Range(0f, 1f)] public float percentHeal = 0f;
 
-    [Header("Buff/Debuff Stats (if Buff or Debuff type)")]
+    [Header("Buff/Debuff Stats")]
     public StatType statType = StatType.ATK;
     public int statModifier = 10;
     public int modifierDuration = 3;
 
-    [Header("Debuff Status Effect (if Debuff type, optional)")]
+    [Header("Debuff Status Effect (optional)")]
     public StatusEffectType statusEffect = StatusEffectType.None;
     [Range(0f, 1f)] public float statusChance = 0f;
     public int statusDuration = 2;
