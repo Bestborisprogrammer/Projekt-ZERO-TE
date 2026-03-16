@@ -2621,7 +2621,7 @@ MonoBehaviour:
   blockButton: {fileID: 1098438195}
   blockButtonImage: {fileID: 1098438196}
   blockSprite: {fileID: -1963458900025769789, guid: 675b23584415cf243b98f856591f2d64, type: 3}
-  evadeSprite: {fileID: -1233499545764635397, guid: 2ba6eaacc2bb45a449a0c08dc234221f, type: 3}
+  evadeSprite: {fileID: 7199619634247894362, guid: 959ac20cf5dcb804ca670aa17a87d26a, type: 3}
   skillPanel: {fileID: 1635259117}
   skillButtonParent: {fileID: 1667926976}
   skillButtonPrefab: {fileID: 7387230429905190440, guid: b5713e705f8a5a64d8008b6e77cd0861, type: 3}

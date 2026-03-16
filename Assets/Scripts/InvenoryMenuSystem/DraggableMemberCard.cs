@@ -6,24 +6,30 @@ using TMPro;
 public class DraggableMemberCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public CharacterInstance member;
-    public Transform originalParent;
-    public int originalIndex;
+    public bool isInActiveParty;
 
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
-    private Canvas canvas;
+    private Canvas rootCanvas;
+    private Transform originalParent;
+    private int originalIndex;
+    private Vector2 originalPosition;
 
     void Awake()
     {
         canvasGroup = GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
         rectTransform = GetComponent<RectTransform>();
-        canvas = GetComponentInParent<Canvas>();
     }
 
-    public void Setup(CharacterInstance m)
+    public void Setup(CharacterInstance m, bool active)
     {
         member = m;
-        originalParent = transform.parent;
+        isInActiveParty = active;
+        rootCanvas = GetComponentInParent<Canvas>();
+        while (rootCanvas != null && !rootCanvas.isRootCanvas)
+            rootCanvas = rootCanvas.transform.parent?.GetComponentInParent<Canvas>();
         RefreshText();
     }
 
@@ -31,29 +37,31 @@ public class DraggableMemberCard : MonoBehaviour, IBeginDragHandler, IDragHandle
     {
         var tmp = GetComponentInChildren<TextMeshProUGUI>();
         if (tmp == null) return;
-
-        bool isActive = PartyManager.Instance.activeParty.Contains(member);
-        tmp.text =
-            $"{member.Name} Lv.{member.level}\n" +
-            $"HP:{member.currentHP}/{member.MaxHP}\n" +
-            $"ATK:{member.Attack} DEF:{member.Defense} SPD:{member.Speed}\n" +
-            $"{(isActive ? "[ACTIVE]" : "[BENCH]")}";
+        tmp.text = $"{member.Name}\nLv.{member.level}\nHP:{member.currentHP}/{member.MaxHP}";
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (rootCanvas == null)
+            rootCanvas = GetComponentInParent<Canvas>();
+
         originalParent = transform.parent;
         originalIndex = transform.GetSiblingIndex();
+        originalPosition = rectTransform.anchoredPosition;
 
-        // Move to top level canvas so it renders above everything
-        transform.SetParent(canvas.transform);
+        transform.SetParent(rootCanvas.transform, true);
+        transform.SetAsLastSibling();
+
         canvasGroup.alpha = 0.7f;
         canvasGroup.blocksRaycasts = false;
+
+        Debug.Log($"Dragging {member.Name} (active: {isInActiveParty})");
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
+        if (rootCanvas == null) return;
+        rectTransform.anchoredPosition += eventData.delta / rootCanvas.scaleFactor;
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -61,11 +69,13 @@ public class DraggableMemberCard : MonoBehaviour, IBeginDragHandler, IDragHandle
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
 
-        // If not dropped on a valid slot, return to original position
-        if (transform.parent == canvas.transform)
+        // If not dropped on valid zone return to original
+        if (transform.parent == rootCanvas.transform)
         {
             transform.SetParent(originalParent);
             transform.SetSiblingIndex(originalIndex);
+            rectTransform.anchoredPosition = originalPosition;
+            Debug.Log($"{member.Name} returned to original position");
         }
 
         Object.FindFirstObjectByType<PartyMenuPanel>()?.Refresh();

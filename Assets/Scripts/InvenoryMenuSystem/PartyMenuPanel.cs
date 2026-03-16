@@ -1,62 +1,57 @@
-using UnityEngine;
-using TMPro;
+﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
+using TMPro;
 
 public class PartyMenuPanel : MonoBehaviour
 {
-    [Header("Active Party Slots (top)")]
-    public List<PartySlotDropZone> partySlots; // 4 slots
+    [Header("Active Party Area")]
+    public Transform activePartyParent;     // Has ActivePartyDropZone
 
-    [Header("Bench (bottom)")]
-    public Transform benchParent;      // BenchDropZone goes here
+    [Header("Inactive Members Area")]
+    public Transform inactivePartyParent;   // Has InactivePartyDropZone
+
+    [Header("Prefab")]
     public GameObject memberCardPrefab;
+
+    [Header("Status Text")]
+    public TextMeshProUGUI statusText;      // Shows e.g. "Active: 2/4"
+
+    void OnEnable()
+    {
+        Refresh();
+    }
 
     public void Refresh()
     {
-        RefreshSlots();
-        RefreshBench();
-    }
-
-    void RefreshSlots()
-    {
-        var active = PartyManager.Instance.activeParty;
-
-        for (int i = 0; i < partySlots.Count; i++)
-        {
-            // Clear slot children except the drop zone itself
-            foreach (Transform child in partySlots[i].transform)
-                Destroy(child.gameObject);
-
-            if (i < active.Count && active[i] != null)
-            {
-                partySlots[i].RefreshSlot(active[i]);
-
-                // Spawn card in slot
-                GameObject card = Instantiate(memberCardPrefab, partySlots[i].transform);
-                var dc = card.GetComponent<DraggableMemberCard>();
-                dc.Setup(active[i]);
-            }
-            else
-            {
-                partySlots[i].RefreshSlot(null);
-            }
-        }
-    }
-
-    void RefreshBench()
-    {
-        foreach (Transform child in benchParent)
+        // Clear both areas
+        foreach (Transform child in activePartyParent)
+            Destroy(child.gameObject);
+        foreach (Transform child in inactivePartyParent)
             Destroy(child.gameObject);
 
-        foreach (var member in PartyManager.Instance.allMembers)
-        {
-            // Only show bench members
-            if (PartyManager.Instance.activeParty.Contains(member)) continue;
+        var active = PartyManager.Instance.activeParty;
+        var all = PartyManager.Instance.allMembers;
 
-            GameObject card = Instantiate(memberCardPrefab, benchParent);
+        // Spawn active members
+        foreach (var member in active)
+        {
+            GameObject card = Instantiate(memberCardPrefab, activePartyParent);
             var dc = card.GetComponent<DraggableMemberCard>();
-            dc.Setup(member);
+            dc.Setup(member, true);
         }
+
+        // Spawn inactive members
+        foreach (var member in all)
+        {
+            if (active.Contains(member)) continue;
+            GameObject card = Instantiate(memberCardPrefab, inactivePartyParent);
+            var dc = card.GetComponent<DraggableMemberCard>();
+            dc.Setup(member, false);
+        }
+
+        if (statusText != null)
+            statusText.text = $"Active Party: {active.Count}/4";
+
+        Debug.Log($"Party refreshed - Active: {active.Count}, Total: {all.Count}");
     }
 }
