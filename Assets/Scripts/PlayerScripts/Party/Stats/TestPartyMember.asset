@@ -18,7 +18,7 @@ MonoBehaviour:
   maxHP: 4000
   attack: 10
   defense: 5
-  speed: 8
+  speed: 2147
   maxMana: 3000000
   hpGrowth: 15
   attackGrowth: 3
@@ -34,3 +34,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}
   - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}
   - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}
+  combatStyle: 1

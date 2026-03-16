@@ -9,6 +9,7 @@ public class EnemyInstance
 
     public int currentHP;
     public int currentMana;
+    public bool isBlocking = false;
 
     public List<ActiveStatusEffect> activeEffects = new();
     public bool isFrozen => activeEffects.Exists(e => e.type == StatusEffectType.Freeze && e.turnsRemaining > 0);
@@ -48,6 +49,10 @@ public class EnemyInstance
     public int MaxMana => baseData.maxMana;
     public int XPReward => baseData.xpReward;
     public bool IsAlive => currentHP > 0;
+    public CombatStyle CombatStyle => baseData.combatStyle;
+
+    public float BlockReduction => Mathf.Min(0.9f, 0.30f + (Defense * 0.002f));
+    public float EvadeChance => Mathf.Min(0.9f, 0.20f + (Speed * 0.002f));
 
     public void Initialize()
     {

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -24,6 +24,10 @@ public class CombatUI : MonoBehaviour
     [Header("Action Buttons")]
     public Button basicAttackButton;
     public Button skillsButton;
+    public Button blockButton;
+    public Image blockButtonImage;
+    public Sprite blockSprite;
+    public Sprite evadeSprite;
 
     [Header("Skill Panel")]
     public GameObject skillPanel;
@@ -48,10 +52,9 @@ public class CombatUI : MonoBehaviour
     private const int spellsPerPage = 3;
     private int currentMana = 0;
 
-    // Log queue
     private Queue<string> logQueue = new Queue<string>();
     private bool isShowingLog = false;
-    private float logDelay = 1.2f;
+    private float logDelay = 2.2f; // 1.2s read time + 1s gap
 
     void Start()
     {
@@ -67,25 +70,6 @@ public class CombatUI : MonoBehaviour
         skillNextButton.onClick.AddListener(SpellPageNext);
     }
 
-    // Queue a message instead of showing instantly
-    public void ShowCombatLog(string message)
-    {
-        logQueue.Enqueue(message);
-        if (!isShowingLog)
-            StartCoroutine(ProcessLogQueue());
-    }
-
-    IEnumerator ProcessLogQueue()
-    {
-        isShowingLog = true;
-        while (logQueue.Count > 0)
-        {
-            combatLogText.text = logQueue.Dequeue();
-            yield return new WaitForSeconds(logDelay);
-        }
-        isShowingLog = false;
-    }
-
     void OnBasicAttack()
     {
         skillPanel.SetActive(false);
@@ -93,6 +77,24 @@ public class CombatUI : MonoBehaviour
         skillPrevButton.gameObject.SetActive(false);
         skillNextButton.gameObject.SetActive(false);
         TurnCombatManager.Instance.PlayerBasicAttack();
+    }
+
+    void OnBlock()
+    {
+        skillPanel.SetActive(false);
+        skillPageText.gameObject.SetActive(false);
+        skillPrevButton.gameObject.SetActive(false);
+        skillNextButton.gameObject.SetActive(false);
+        TurnCombatManager.Instance.PlayerBlock();
+    }
+
+    void OnEvade()
+    {
+        skillPanel.SetActive(false);
+        skillPageText.gameObject.SetActive(false);
+        skillPrevButton.gameObject.SetActive(false);
+        skillNextButton.gameObject.SetActive(false);
+        TurnCombatManager.Instance.PlayerEvade();
     }
 
     void ToggleSkillPanel()
@@ -172,6 +174,24 @@ public class CombatUI : MonoBehaviour
         skillNextButton.gameObject.SetActive(multiPage);
     }
 
+    public void ShowCombatLog(string message)
+    {
+        logQueue.Enqueue(message);
+        if (!isShowingLog)
+            StartCoroutine(ProcessLogQueue());
+    }
+
+    IEnumerator ProcessLogQueue()
+    {
+        isShowingLog = true;
+        while (logQueue.Count > 0)
+        {
+            combatLogText.text = logQueue.Dequeue();
+            yield return new WaitForSeconds(logDelay);
+        }
+        isShowingLog = false;
+    }
+
     public void UpdateTurnText(string name)
     {
         turnText.text = $"{name}'s Turn";
@@ -186,7 +206,10 @@ public class CombatUI : MonoBehaviour
         {
             GameObject entry = Instantiate(partyHPEntryPrefab, partyHPParent);
             var tmp = entry.GetComponent<TextMeshProUGUI>();
-            tmp.text = $"{member.Name}  HP: {member.CurrentHP}/{member.MaxHP}  MP: {member.GetCurrentMana()}";
+            string indicator = "";
+            if (member.IsBlocking) indicator = " B!";
+            else if (member.CombatStyle == CombatStyle.Evade) indicator = " E!";
+            tmp.text = $"{member.Name}  HP: {member.CurrentHP}/{member.MaxHP}  MP: {member.GetCurrentMana()}{indicator}";
             tmp.color = member.IsAlive ? Color.white : Color.red;
         }
     }
@@ -205,7 +228,10 @@ public class CombatUI : MonoBehaviour
 
             GameObject btn = Instantiate(enemyButtonPrefab, enemyButtonParent);
             var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
-            tmp.text = $"{enemies[i].Name}\nHP: {enemies[i].CurrentHP}/{enemies[i].MaxHP}";
+            string indicator = "";
+            if (enemies[i].IsBlocking) indicator = " B!";
+            else if (enemies[i].CombatStyle == CombatStyle.Evade) indicator = " E!";
+            tmp.text = $"{enemies[i].Name}{indicator}\nHP: {enemies[i].CurrentHP}/{enemies[i].MaxHP}";
 
             var button = btn.GetComponent<Button>();
             button.onClick.AddListener(() =>
@@ -234,10 +260,24 @@ public class CombatUI : MonoBehaviour
         }
     }
 
-    public void SetPlayerButtonsActive(bool active)
+    public void SetPlayerButtonsActive(bool active, CombatStyle style = CombatStyle.Block)
     {
         basicAttackButton.interactable = active;
         skillsButton.interactable = active;
+        blockButton.interactable = active;
+
+        blockButton.onClick.RemoveAllListeners();
+        if (style == CombatStyle.Block)
+        {
+            if (blockSprite != null) blockButtonImage.sprite = blockSprite;
+            blockButton.onClick.AddListener(OnBlock);
+        }
+        else
+        {
+            if (evadeSprite != null) blockButtonImage.sprite = evadeSprite;
+            blockButton.onClick.AddListener(OnEvade);
+        }
+
         if (!active)
         {
             skillPanel.SetActive(false);
@@ -245,6 +285,7 @@ public class CombatUI : MonoBehaviour
             skillPrevButton.gameObject.SetActive(false);
             skillNextButton.gameObject.SetActive(false);
         }
+
         foreach (var btn in enemyButtons)
             btn.interactable = active;
     }

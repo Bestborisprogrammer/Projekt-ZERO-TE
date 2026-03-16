@@ -17,6 +17,10 @@ public class Combatant
     public bool IsWet { get; private set; }
     public bool IsBurning { get; private set; }
     public bool IsParalyzed { get; private set; }
+    public bool IsBlocking { get; private set; }
+    public CombatStyle CombatStyle { get; private set; }
+    public float BlockReduction { get; private set; }
+    public float EvadeChance { get; private set; }
     public List<SpellAffinity> Affinities { get; private set; }
 
     private CharacterInstance characterRef;
@@ -38,10 +42,32 @@ public class Combatant
         Refresh();
     }
 
+    // Returns true if attack was evaded
+    public bool TryEvade()
+    {
+        if (CombatStyle != CombatStyle.Evade) return false;
+        bool evaded = Random.value < EvadeChance;
+        Debug.Log($"{Name} evade check: chance={EvadeChance * 100f:F1}% result={evaded}");
+        return evaded;
+    }
+
     public void TakeDamage(int damage)
     {
+        if (IsBlocking)
+        {
+            int reduced = Mathf.RoundToInt(damage * (1f - BlockReduction));
+            Debug.Log($"{Name} blocked! {damage} -> {reduced} damage (reduction: {BlockReduction * 100f:F1}%)");
+            damage = reduced;
+        }
         if (IsEnemy) enemyRef.TakeDamage(damage);
         else characterRef.TakeDamage(damage);
+        Refresh();
+    }
+
+    public void SetBlocking(bool value)
+    {
+        if (IsEnemy) enemyRef.isBlocking = value;
+        else characterRef.isBlocking = value;
         Refresh();
     }
 
@@ -76,14 +102,7 @@ public class Combatant
 
             if (effect.type == StatusEffectType.Burn || effect.type == StatusEffectType.Poison)
             {
-                int dotDamage;
-                if (effect.type == StatusEffectType.Poison)
-                    // Poison ignores defense
-                    dotDamage = Mathf.Max(1, Mathf.RoundToInt(MaxHP * effect.dotPercent));
-                else
-                    // Burn goes through normal damage
-                    dotDamage = Mathf.Max(1, Mathf.RoundToInt(MaxHP * effect.dotPercent));
-
+                int dotDamage = Mathf.Max(1, Mathf.RoundToInt(MaxHP * effect.dotPercent));
                 TakeDamage(dotDamage);
                 effect.turnsRemaining--;
 
@@ -110,6 +129,19 @@ public class Combatant
                 {
                     logs.Add($"{Name} is Wet! Speed reduced by {effect.speedReduction} ({effect.turnsRemaining} turns remaining)");
                     Debug.Log($"[WET] {Name} Speed reduced by {effect.speedReduction} | {effect.turnsRemaining} turns remaining");
+                }
+            }
+            else if (effect.type == StatusEffectType.Dark)
+            {
+                effect.turnsRemaining--;
+                if (effect.turnsRemaining <= 0)
+                {
+                    logs.Add($"{Name}'s Defense reduction wore off!");
+                    effects.RemoveAt(i);
+                }
+                else
+                {
+                    logs.Add($"{Name}'s Defense is reduced! ({effect.turnsRemaining} turns remaining)");
                 }
             }
             else if (effect.type == StatusEffectType.Paralyze)
@@ -152,6 +184,10 @@ public class Combatant
             IsWet = enemyRef.isWet;
             IsBurning = enemyRef.isBurning;
             IsParalyzed = enemyRef.isParalyzed;
+            IsBlocking = enemyRef.isBlocking;
+            CombatStyle = enemyRef.CombatStyle;
+            BlockReduction = enemyRef.BlockReduction;
+            EvadeChance = enemyRef.EvadeChance;
             Affinities = enemyRef.baseData.affinities;
         }
         else
@@ -166,6 +202,10 @@ public class Combatant
             IsWet = characterRef.isWet;
             IsBurning = characterRef.isBurning;
             IsParalyzed = characterRef.isParalyzed;
+            IsBlocking = characterRef.isBlocking;
+            CombatStyle = characterRef.CombatStyle;
+            BlockReduction = characterRef.BlockReduction;
+            EvadeChance = characterRef.EvadeChance;
             Affinities = characterRef.baseData.affinities;
         }
     }

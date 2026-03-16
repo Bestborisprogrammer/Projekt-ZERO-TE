@@ -12,6 +12,7 @@ public class CharacterInstance
     public int level = 1;
     public int currentXP = 0;
     public int xpToNextLevel;
+    public bool isBlocking = false;
 
     public List<ActiveStatusEffect> activeEffects = new();
     public bool isFrozen => activeEffects.Exists(e => e.type == StatusEffectType.Freeze && e.turnsRemaining > 0);
@@ -49,6 +50,13 @@ public class CharacterInstance
     public int MaxMana => baseData.maxMana + (level - 1) * baseData.manaGrowth;
     public string Name => baseData.characterName;
     public bool IsAlive => currentHP > 0;
+    public CombatStyle CombatStyle => baseData.combatStyle;
+
+    // Block reduction: 30% base + (defense * 0.2%)
+    public float BlockReduction => Mathf.Min(0.9f, 0.30f + (Defense * 0.002f));
+
+    // Evade chance: 20% base + (speed * 0.2%)
+    public float EvadeChance => Mathf.Min(0.9f, 0.20f + (Speed * 0.002f));
 
     public void Initialize()
     {
@@ -95,6 +103,6 @@ public class CharacterInstance
         xpToNextLevel = Mathf.RoundToInt(xpToNextLevel * 1.4f);
         currentHP = MaxHP;
         currentMana = MaxMana;
-        Debug.Log($"🎉 {Name} reached Level {level}!");
+        Debug.Log($"{Name} reached Level {level}!");
     }
 }

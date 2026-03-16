@@ -437,7 +437,7 @@ GameObject:
   - component: {fileID: 389473319}
   - component: {fileID: 389473321}
   m_Layer: 5
-  m_Name: Prev
+  m_Name: Next
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -891,7 +891,7 @@ GameObject:
   - component: {fileID: 564749879}
   - component: {fileID: 564749878}
   m_Layer: 5
-  m_Name: Next
+  m_Name: Prev
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1582,6 +1582,8 @@ MonoBehaviour:
     baseData: {fileID: 0}
     currentHP: 0
     currentMana: 0
+    isBlocking: 0
+    activeEffects: []
 --- !u!1 &1625291701
 GameObject:
   m_ObjectHideFlags: 0
@@ -1987,7 +1989,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Prev
+  m_text: Next
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8e32e0be0b3deaa4bb902fb11853df72, type: 2}
   m_sharedMaterial: {fileID: -4223603851402617989, guid: 8e32e0be0b3deaa4bb902fb11853df72, type: 2}
@@ -2123,7 +2125,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Next
+  m_text: Prev
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8e32e0be0b3deaa4bb902fb11853df72, type: 2}
   m_sharedMaterial: {fileID: -4223603851402617989, guid: 8e32e0be0b3deaa4bb902fb11853df72, type: 2}

@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+public enum CombatStyle { Block, Evade }
+
 [CreateAssetMenu(fileName = "NewCharacter", menuName = "Zero-Te/Character")]
 public class CharacterStatsSO : ScriptableObject
 {
@@ -33,4 +35,7 @@ public class CharacterStatsSO : ScriptableObject
 
     [Header("Spells")]
     public List<ManaAttackSO> spells = new();
+
+    [Header("Combat Style")]
+    public CombatStyle combatStyle = CombatStyle.Block;
 }

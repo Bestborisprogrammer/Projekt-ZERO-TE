@@ -24,3 +24,4 @@ MonoBehaviour:
   affinities: 
   spells:
   - {fileID: 11400000, guid: 142405572d170d8458d836788f895c74, type: 2}
+  combatStyle: 1

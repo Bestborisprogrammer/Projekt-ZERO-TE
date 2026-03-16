@@ -26,4 +26,7 @@ public class EnemyStatsSO : ScriptableObject
 
     [Header("Spells")]
     public List<EnemyManaAttackSO> spells = new();
+
+    [Header("Combat Style")]
+    public CombatStyle combatStyle = CombatStyle.Block;
 }
