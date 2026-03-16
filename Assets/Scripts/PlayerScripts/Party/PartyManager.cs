@@ -5,8 +5,9 @@ public class PartyManager : MonoBehaviour
 {
     public static PartyManager Instance;
 
-    public List<CharacterStatsSO> partyDataList;        // Im Inspector zuweisen
-    public List<CharacterInstance> activeParty = new(); // Runtime Daten
+    public List<CharacterStatsSO> partyDataList;
+    public List<CharacterInstance> activeParty = new();
+    public List<CharacterInstance> allMembers = new();
 
     void Awake()
     {
@@ -24,8 +25,12 @@ public class PartyManager : MonoBehaviour
         {
             var instance = new CharacterInstance { baseData = data };
             instance.Initialize();
-            activeParty.Add(instance);
+            allMembers.Add(instance);
         }
+
+        // First 4 are default active party
+        for (int i = 0; i < Mathf.Min(4, allMembers.Count); i++)
+            activeParty.Add(allMembers[i]);
     }
 
     public bool IsGameOver()
