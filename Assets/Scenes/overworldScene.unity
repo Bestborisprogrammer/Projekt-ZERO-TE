@@ -1256,11 +1256,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 10
-  spriteIdle: {fileID: -5034549553789169346, guid: c0414dd9847e2984abcab66b3b3132dc, type: 3}
+  spriteIdle: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
   spriteLeft: {fileID: -4381012285566029206, guid: 8e33608f4a5e9d84b8bef065b0af1cee, type: 3}
   spriteRight: {fileID: -1563881162976657476, guid: 97cfbcb99000eb541aedc36f1fc0a0a9, type: 3}
-  spriteUp: {fileID: -5034549553789169346, guid: c0414dd9847e2984abcab66b3b3132dc, type: 3}
-  spriteDown: {fileID: -5034549553789169346, guid: c0414dd9847e2984abcab66b3b3132dc, type: 3}
+  spriteUp: {fileID: 6211265615728205392, guid: e61dfb466979c964fa81915ff3dde6d5, type: 3}
+  spriteDown: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
 --- !u!61 &547836947
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2596,7 +2596,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -7903754828726696838, guid: afdfe06408cddb444b57c4eb65c0838a, type: 3}
+  m_Sprite: {fileID: -4653036966477985299, guid: fb85e73d61d44a94abd1422f738d7a71, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -3157,7 +3157,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 47, y: -149}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1294481297
