@@ -1,6 +1,20 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+[System.Serializable]
+public class ItemDrop
+{
+    public ItemSO item;
+    [Range(0f, 100f)] public float dropChance = 50f;
+}
+
+[System.Serializable]
+public class GearDrop
+{
+    public GearSO gear;
+    [Range(0f, 100f)] public float dropChance = 10f;
+}
+
 [CreateAssetMenu(fileName = "NewEnemy", menuName = "Zero-Te/Enemy")]
 public class EnemyStatsSO : ScriptableObject
 {
@@ -20,6 +34,11 @@ public class EnemyStatsSO : ScriptableObject
 
     [Header("Rewards")]
     public int xpReward = 30;
+    public int goldReward = 10;
+
+    [Header("Drops")]
+    public List<ItemDrop> itemDrops = new();
+    public List<GearDrop> gearDrops = new();
 
     [Header("Affinities")]
     public List<SpellAffinity> affinities = new();

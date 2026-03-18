@@ -16,6 +16,8 @@ MonoBehaviour:
   description: A basic sword.
   icon: {fileID: 0}
   slot: 0
+  buyPrice: 10
+  sellPrice: 50
   bonusHP: 1
   bonusATK: 31
   bonusDEF: 31

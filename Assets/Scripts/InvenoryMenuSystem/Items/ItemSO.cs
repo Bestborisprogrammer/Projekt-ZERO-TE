@@ -14,6 +14,10 @@ public class ItemSO : ScriptableObject
     public ItemType itemType = ItemType.Heal;
     public ItemTarget itemTarget = ItemTarget.Ally;
 
+    [Header("Shop")]
+    public int buyPrice = 50;
+    public int sellPrice = 25;
+
     [Header("Heal (if Heal type)")]
     public int flatHeal = 50;
     [Range(0f, 1f)] public float percentHeal = 0f;

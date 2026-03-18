@@ -290,11 +290,28 @@ public class CombatUI : MonoBehaviour
             btn.interactable = active;
     }
 
-    public void ShowVictory(int xp)
+    public void ShowVictory(int xp, int gold, DropResult drops)
     {
         victoryPanel.SetActive(true);
-        victoryXPText.text = $"Victory! +{xp} XP";
-        StartCoroutine(ReturnAfterDelay(2.5f));
+
+        string text = $"Victory!\n+{xp} XP  +{gold} Gold\n";
+
+        if (drops.itemsDropped.Count > 0)
+        {
+            text += "\nItems obtained:\n";
+            foreach (var item in drops.itemsDropped)
+                text += $"- {item.itemName}\n";
+        }
+
+        if (drops.gearDropped.Count > 0)
+        {
+            text += "\nGear obtained:\n";
+            foreach (var gear in drops.gearDropped)
+                text += $"- {gear.gearName}\n";
+        }
+
+        victoryXPText.text = text;
+        StartCoroutine(ReturnAfterDelay(3f));
     }
 
     public void ShowGameOver()

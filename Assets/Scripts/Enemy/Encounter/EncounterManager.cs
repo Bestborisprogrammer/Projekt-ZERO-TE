@@ -8,7 +8,7 @@ public class EncounterManager : MonoBehaviour
     public string combatSceneName = "CombatScene";
 
     public static List<EnemyStatsSO> CurrentEnemies { get; private set; } = new();
-    public static Vector3 PlayerReturnPosition { get; private set; }
+    public static Vector3 PlayerReturnPosition { get; set; } // changed to set
 
     void Awake()
     {
@@ -22,7 +22,6 @@ public class EncounterManager : MonoBehaviour
 
     public void StartEncounter(List<EnemyStatsSO> enemies)
     {
-        // Save player position before leaving
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
             PlayerReturnPosition = player.transform.position;

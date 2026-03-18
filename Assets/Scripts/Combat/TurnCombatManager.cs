@@ -449,10 +449,47 @@ public class TurnCombatManager : MonoBehaviour
 
     void HandleVictory()
     {
-        Debug.Log($"=== VICTORY === Total XP: {enemies.Sum(e => e.XPReward)}");
         int totalXP = enemies.Sum(e => e.XPReward);
+        int totalGold = 0;
+        DropResult drops = new DropResult();
+
+        foreach (var enemy in enemies)
+        {
+            // Find matching SO
+            int idx = enemies.IndexOf(enemy);
+            if (idx < 0 || idx >= EncounterManager.CurrentEnemies.Count) continue;
+            var enemyData = EncounterManager.CurrentEnemies[idx];
+
+            totalGold += enemyData.goldReward;
+
+            // Roll item drops
+            foreach (var drop in enemyData.itemDrops)
+            {
+                float roll = UnityEngine.Random.Range(0f, 100f);
+                if (roll <= drop.dropChance)
+                {
+                    InventoryManager.Instance.AddItem(drop.item);
+                    drops.itemsDropped.Add(drop.item);
+                    Debug.Log($"[DROP] {drop.item.itemName} dropped! (roll:{roll:F1} chance:{drop.dropChance})");
+                }
+            }
+
+            // Roll gear drops
+            foreach (var drop in enemyData.gearDrops)
+            {
+                float roll = UnityEngine.Random.Range(0f, 100f);
+                if (roll <= drop.dropChance)
+                {
+                    // Store gear in a separate list for now
+                    drops.gearDropped.Add(drop.gear);
+                    Debug.Log($"[DROP] {drop.gear.gearName} dropped! (roll:{roll:F1} chance:{drop.dropChance})");
+                }
+            }
+        }
+
+        GoldManager.Instance.AddGold(totalGold);
         PartyManager.Instance.GiveXPToAll(totalXP);
-        combatUI.ShowVictory(totalXP);
+        combatUI.ShowVictory(totalXP, totalGold, drops);
         combatActive = false;
     }
 }

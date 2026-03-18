@@ -11,6 +11,10 @@ public class GearSO : ScriptableObject
     public Sprite icon;
     public GearSlot slot = GearSlot.Weapon;
 
+    [Header("Shop")]
+    public int buyPrice = 100;
+    public int sellPrice = 50;
+
     [Header("Stat Bonuses")]
     public int bonusHP = 0;
     public int bonusATK = 0;
