@@ -8,7 +8,13 @@ public class GearSlotDropZone : MonoBehaviour, IDropHandler, IPointerEnterHandle
     public GearSlot slot;
     public bool isRing2;
     public CharacterInstance member;
-    public TextMeshProUGUI slotText;
+
+    private TextMeshProUGUI slotText;
+
+    void Awake()
+    {
+        slotText = GetComponentInChildren<TextMeshProUGUI>();
+    }
 
     public void Setup(GearSlot s, bool ring2, CharacterInstance m)
     {
@@ -20,15 +26,18 @@ public class GearSlotDropZone : MonoBehaviour, IDropHandler, IPointerEnterHandle
 
     public void Refresh()
     {
+        if (slotText == null)
+            slotText = GetComponentInChildren<TextMeshProUGUI>();
         if (slotText == null) return;
-        var gear = GearManager.Instance.GetGearFor(member.Name).GetSlot(slot, isRing2);
+
+        var equipped = GearManager.Instance.GetGearFor(member.Name).GetSlot(slot, isRing2);
         string label = isRing2 ? "Ring 2" : slot.ToString();
-        slotText.text = $"{label}\n{(gear != null ? gear.gearName : "Empty")}";
+        slotText.text = equipped != null ? $"{label}\n{equipped.gearName}" : $"{label}\nEmpty";
     }
 
     public void OnDrop(PointerEventData eventData)
     {
-        var card = eventData.pointerDrag?.GetComponent<DraggableGearCard>();
+        var card = eventData.pointerDrag?.GetComponent<GearCard>();
         if (card == null) return;
 
         if (card.gear.slot != slot)
@@ -38,15 +47,17 @@ public class GearSlotDropZone : MonoBehaviour, IDropHandler, IPointerEnterHandle
         }
 
         GearManager.Instance.EquipGear(member.Name, card.gear, isRing2);
+        Debug.Log($"Equipped {card.gear.gearName} on {member.Name}!");
         Refresh();
+
         Object.FindFirstObjectByType<GearMenuPanel>()?.Refresh();
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        var gear = GearManager.Instance.GetGearFor(member.Name).GetSlot(slot, isRing2);
-        if (gear != null)
-            GearTooltip.Instance?.Show(gear, member);
+        var equipped = GearManager.Instance.GetGearFor(member.Name).GetSlot(slot, isRing2);
+        if (equipped != null)
+            GearTooltip.Instance?.Show(equipped, member);
     }
 
     public void OnPointerExit(PointerEventData eventData)

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -14,6 +14,7 @@ public class InventoryMenuPanel : MonoBehaviour
     public GameObject targetPanel;
     public Transform targetParent;
     public GameObject targetMemberPrefab;
+    public TextMeshProUGUI targetTitleText;
 
     private ItemSO pendingItem;
 
@@ -28,14 +29,18 @@ public class InventoryMenuPanel : MonoBehaviour
         {
             GameObject entry = Instantiate(itemEntryPrefab, itemListParent);
             var entryUI = entry.GetComponent<ItemEntryUI>();
-            entryUI.Setup(item, this);
+            if (entryUI != null)
+                entryUI.Setup(item, this);
+            else
+                Debug.LogWarning("ItemEntryUI component missing from prefab!");
         }
 
         int count = InventoryManager.Instance.items.Count;
         if (inventoryCountText != null)
             inventoryCountText.text = $"Items: {count}/{InventoryManager.MaxSlots}";
 
-        targetPanel.SetActive(false);
+        if (targetPanel != null)
+            targetPanel.SetActive(false);
     }
 
     public void OpenTargetPanel(ItemSO item)
@@ -47,6 +52,10 @@ public class InventoryMenuPanel : MonoBehaviour
         }
 
         pendingItem = item;
+
+        if (targetTitleText != null)
+            targetTitleText.text = $"Use {item.itemName} on who?";
+
         targetPanel.SetActive(true);
 
         foreach (Transform child in targetParent)
@@ -55,18 +64,21 @@ public class InventoryMenuPanel : MonoBehaviour
         foreach (var member in PartyManager.Instance.activeParty)
         {
             GameObject btn = Instantiate(targetMemberPrefab, targetParent);
-            var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
-
-            string preview = "";
-            if (pendingItem.itemType == ItemType.Heal)
+            var tmps = btn.GetComponentsInChildren<TextMeshProUGUI>();
+            if (tmps.Length > 0)
             {
-                int heal = pendingItem.flatHeal + Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
-                preview = $"+{heal} HP";
-            }
-            else if (pendingItem.itemType == ItemType.Buff)
-                preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
+                string preview = "";
+                if (pendingItem.itemType == ItemType.Heal)
+                {
+                    int heal = pendingItem.flatHeal + Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
+                    int actualHeal = Mathf.Min(heal, member.MaxHP - member.currentHP);
+                    preview = $"+{actualHeal} HP";
+                }
+                else if (pendingItem.itemType == ItemType.Buff)
+                    preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
 
-            tmp.text = $"{member.Name}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
+                tmps[0].text = $"{member.Name} Lv.{member.level}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
+            }
 
             var capturedMember = member;
             btn.GetComponent<Button>()?.onClick.AddListener(() => UseItemOnMember(capturedMember));
@@ -75,7 +87,8 @@ public class InventoryMenuPanel : MonoBehaviour
 
     public void CloseTargetPanel()
     {
-        targetPanel.SetActive(false);
+        if (targetPanel != null)
+            targetPanel.SetActive(false);
         pendingItem = null;
     }
 
@@ -85,8 +98,8 @@ public class InventoryMenuPanel : MonoBehaviour
 
         if (pendingItem.itemType == ItemType.Heal)
         {
-            member.HealHP(pendingItem.flatHeal, pendingItem.percentHeal);
             int heal = pendingItem.flatHeal + Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
+            member.HealHP(pendingItem.flatHeal, pendingItem.percentHeal);
             Debug.Log($"Used {pendingItem.itemName} on {member.Name} for {heal} HP!");
         }
         else if (pendingItem.itemType == ItemType.Buff)

@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class DraggableGearCard : MonoBehaviour,
+public class GearCard : MonoBehaviour,
     IBeginDragHandler, IDragHandler, IEndDragHandler,
     IPointerEnterHandler, IPointerExitHandler
 {
@@ -33,7 +33,8 @@ public class DraggableGearCard : MonoBehaviour,
 
         var tmp = GetComponentInChildren<TextMeshProUGUI>();
         if (tmp != null)
-            tmp.text = $"{gear.gearName}\n" +
+            tmp.text =
+                $"{gear.gearName}\n" +
                 $"{(gear.bonusATK != 0 ? $"ATK+{gear.bonusATK} " : "")}" +
                 $"{(gear.bonusDEF != 0 ? $"DEF+{gear.bonusDEF} " : "")}" +
                 $"{(gear.bonusHP != 0 ? $"HP+{gear.bonusHP} " : "")}" +
@@ -43,7 +44,6 @@ public class DraggableGearCard : MonoBehaviour,
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        // Find which member is currently selected in gear panel
         var gearPanel = Object.FindFirstObjectByType<GearMenuPanel>();
         GearTooltip.Instance?.Show(gear, gearPanel?.selectedMember);
     }
@@ -69,6 +69,8 @@ public class DraggableGearCard : MonoBehaviour,
 
         canvasGroup.alpha = 0.7f;
         canvasGroup.blocksRaycasts = false;
+
+        Debug.Log($"Dragging gear: {gear.gearName}");
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -87,6 +89,7 @@ public class DraggableGearCard : MonoBehaviour,
             transform.SetParent(originalParent);
             transform.SetSiblingIndex(originalIndex);
             rectTransform.anchoredPosition = originalPosition;
+            Debug.Log($"{gear.gearName} returned to list");
         }
 
         Object.FindFirstObjectByType<GearMenuPanel>()?.Refresh();

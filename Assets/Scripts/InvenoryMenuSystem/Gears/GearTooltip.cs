@@ -1,32 +1,38 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 
 public class GearTooltip : MonoBehaviour
 {
     public static GearTooltip Instance;
-
     public GameObject tooltipPanel;
     public TextMeshProUGUI tooltipText;
+    private RectTransform rt;
 
     void Awake()
     {
         Instance = this;
-        tooltipPanel.SetActive(false);
+        rt = GetComponent<RectTransform>();
+        if (tooltipPanel != null)
+            tooltipPanel.SetActive(false);
     }
 
     void Update()
     {
-        // Follow mouse
-        if (tooltipPanel.activeSelf)
-            transform.position = Input.mousePosition + new Vector3(15, -15, 0);
+        if (tooltipPanel != null && tooltipPanel.activeSelf)
+        {
+            Vector2 pos = Input.mousePosition;
+            pos.x += 15;
+            pos.y -= 15;
+            rt.position = pos;
+        }
     }
 
-    public void Show(GearSO gear, CharacterInstance hoveredMember = null)
+    public void Show(GearSO gear, CharacterInstance member = null)
     {
+        if (gear == null) return;
         tooltipPanel.SetActive(true);
 
-        string stats =
+        string text =
             $"{gear.gearName}\n" +
             $"{gear.description}\n" +
             $"Slot: {gear.slot}\n" +
@@ -37,37 +43,34 @@ public class GearTooltip : MonoBehaviour
             $"{(gear.bonusSPD != 0 ? $"SPD +{gear.bonusSPD}\n" : "")}" +
             $"{(gear.bonusMP != 0 ? $"MP  +{gear.bonusMP}\n" : "")}";
 
-        // Show stat change vs currently equipped
-        if (hoveredMember != null)
+        if (member != null)
         {
-            var currentGear = GearManager.Instance.GetGearFor(hoveredMember.Name);
-            var equipped = currentGear.GetSlot(gear.slot);
-
-            stats += $"──────────\n";
+            var equipped = GearManager.Instance.GetGearFor(member.Name).GetSlot(gear.slot);
+            text += "──────────\n";
             if (equipped != null)
             {
-                stats += $"Replaces: {equipped.gearName}\n";
-                int hpDiff = gear.bonusHP - equipped.bonusHP;
-                int atkDiff = gear.bonusATK - equipped.bonusATK;
-                int defDiff = gear.bonusDEF - equipped.bonusDEF;
-                int spdDiff = gear.bonusSPD - equipped.bonusSPD;
-                int mpDiff = gear.bonusMP - equipped.bonusMP;
-
-                if (hpDiff != 0) stats += $"HP  {hpDiff:+#;-#}\n";
-                if (atkDiff != 0) stats += $"ATK {atkDiff:+#;-#}\n";
-                if (defDiff != 0) stats += $"DEF {defDiff:+#;-#}\n";
-                if (spdDiff != 0) stats += $"SPD {spdDiff:+#;-#}\n";
-                if (mpDiff != 0) stats += $"MP  {mpDiff:+#;-#}\n";
+                text += $"Replaces: {equipped.gearName}\n";
+                int hpD = gear.bonusHP - equipped.bonusHP;
+                int atkD = gear.bonusATK - equipped.bonusATK;
+                int defD = gear.bonusDEF - equipped.bonusDEF;
+                int spdD = gear.bonusSPD - equipped.bonusSPD;
+                int mpD = gear.bonusMP - equipped.bonusMP;
+                if (hpD != 0) text += $"HP  {hpD:+#;-#}\n";
+                if (atkD != 0) text += $"ATK {atkD:+#;-#}\n";
+                if (defD != 0) text += $"DEF {defD:+#;-#}\n";
+                if (spdD != 0) text += $"SPD {spdD:+#;-#}\n";
+                if (mpD != 0) text += $"MP  {mpD:+#;-#}\n";
             }
             else
-                stats += "Slot is empty";
+                text += "Slot is empty";
         }
 
-        tooltipText.text = stats;
+        tooltipText.text = text;
     }
 
     public void Hide()
     {
-        tooltipPanel.SetActive(false);
+        if (tooltipPanel != null)
+            tooltipPanel.SetActive(false);
     }
 }

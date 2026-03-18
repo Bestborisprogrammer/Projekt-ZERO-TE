@@ -1,24 +1,22 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static Unity.Burst.Intrinsics.X86.Avx;
-using static UnityEngine.Rendering.DebugUI;
+using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
 public class GearMenuPanel : MonoBehaviour
 {
-    [Header("Gear List (left side)")]
-    public Transform weaponParent;
-    public Transform helmetParent;
-    public Transform torsoParent;
-    public Transform legsParent;
-    public Transform feetParent;
-    public Transform ringParent;
-    public GameObject gearCardPrefab;
+    [Header("Left Side - Categories")]
+    public Transform categoryParent;        // Vertical Layout Group
+    public GameObject categoryRowPrefab;    // GearCategoryRow prefab
+    public GameObject gearCardPrefab;       // GearCard prefab
 
-    [Header("Member Gear Slots (right side)")]
-    public Transform memberSlotsParent;
+    [Header("Right Side - Member Slots")]
+    public Transform memberSlotsParent;     // Horizontal Layout Group
     public GameObject memberGearBlockPrefab;
+    public GameObject gearSlotPrefab;
 
     [Header("All Gear")]
     public List<GearSO> allGear = new();
@@ -29,35 +27,30 @@ public class GearMenuPanel : MonoBehaviour
 
     public void Refresh()
     {
-        RefreshGearList();
+        RefreshCategories();
         RefreshMemberSlots();
     }
 
-    void RefreshGearList()
+    void RefreshCategories()
     {
-        // Clear all slot parents
-        Transform[] parents = { weaponParent, helmetParent, torsoParent, legsParent, feetParent, ringParent };
-        foreach (var p in parents)
-            foreach (Transform child in p)
-                Destroy(child.gameObject);
+        foreach (Transform child in categoryParent)
+            Destroy(child.gameObject);
 
-        foreach (var gear in allGear)
+        // Group gear by slot
+        var slots = new[]
         {
-            Transform parent = gear.slot switch
-            {
-                GearSlot.Weapon => weaponParent,
-                GearSlot.Helmet => helmetParent,
-                GearSlot.Torso => torsoParent,
-                GearSlot.Legs => legsParent,
-                GearSlot.Feet => feetParent,
-                GearSlot.Ring => ringParent,
-                _ => null
-            };
+            GearSlot.Weapon, GearSlot.Helmet, GearSlot.Torso,
+            GearSlot.Legs, GearSlot.Feet, GearSlot.Ring
+        };
 
-            if (parent == null) continue;
+        foreach (var slot in slots)
+        {
+            var gearInSlot = allGear.Where(g => g.slot == slot).ToList();
 
-            GameObject card = Instantiate(gearCardPrefab, parent);
-            card.GetComponent<DraggableGearCard>()?.Setup(gear);
+            GameObject row = Instantiate(categoryRowPrefab, categoryParent);
+            var categoryRow = row.GetComponent<GearCategoryRow>();
+            if (categoryRow != null)
+                categoryRow.Setup(slot, gearInSlot, gearCardPrefab);
         }
     }
 
@@ -69,47 +62,38 @@ public class GearMenuPanel : MonoBehaviour
         foreach (var member in PartyManager.Instance.activeParty)
         {
             GameObject block = Instantiate(memberGearBlockPrefab, memberSlotsParent);
-            var nameText = block.transform.Find("MemberName")?.GetComponent<TextMeshProUGUI>();
-            if (nameText != null)
-                nameText.text = $"{member.Name} Lv.{member.level}";
 
-            // Create a drop zone for each slot
-            SpawnSlot(block, GearSlot.Weapon, false, member);
-            SpawnSlot(block, GearSlot.Helmet, false, member);
-            SpawnSlot(block, GearSlot.Torso, false, member);
-            SpawnSlot(block, GearSlot.Legs, false, member);
-            SpawnSlot(block, GearSlot.Feet, false, member);
-            SpawnSlot(block, GearSlot.Ring, false, member);
-            SpawnSlot(block, GearSlot.Ring, true, member);
+            var nameText = block.GetComponentInChildren<TextMeshProUGUI>();
+            if (nameText != null)
+                nameText.text = $"{member.Name}\nLv.{member.level}";
+
+            var slotsContainer = block.transform.Find("Slots");
+            if (slotsContainer == null)
+            {
+                Debug.LogWarning("MemberGearBlock missing 'Slots' child!");
+                continue;
+            }
+
+            foreach (Transform child in slotsContainer)
+                Destroy(child.gameObject);
+
+            SpawnSlot(slotsContainer, GearSlot.Weapon, false, member);
+            SpawnSlot(slotsContainer, GearSlot.Helmet, false, member);
+            SpawnSlot(slotsContainer, GearSlot.Torso, false, member);
+            SpawnSlot(slotsContainer, GearSlot.Legs, false, member);
+            SpawnSlot(slotsContainer, GearSlot.Feet, false, member);
+            SpawnSlot(slotsContainer, GearSlot.Ring, false, member);
+            SpawnSlot(slotsContainer, GearSlot.Ring, true, member);
         }
     }
 
-    void SpawnSlot(GameObject block, GearSlot slot, bool isRing2, CharacterInstance member)
+    void SpawnSlot(Transform parent, GearSlot slot, bool isRing2, CharacterInstance member)
     {
-        var slotsParent = block.transform.Find("Slots");
-        if (slotsParent == null) return;
-
-        GameObject slotObj = new GameObject($"{slot}{(isRing2 ? "2" : "")}");
-        slotObj.transform.SetParent(slotsParent);
-
-        var rt = slotObj.AddComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(120, 40);
-
-        var img = slotObj.AddComponent<Image>();
-        img.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
-
-        var tmp = new GameObject("Text").AddComponent<TextMeshProUGUI>();
-        tmp.transform.SetParent(slotObj.transform);
-        tmp.fontSize = 12;
-        tmp.alignment = TextAlignmentOptions.Center;
-        var tmpRT = tmp.GetComponent<RectTransform>();
-        tmpRT.anchorMin = Vector2.zero;
-        tmpRT.anchorMax = Vector2.one;
-        tmpRT.offsetMin = Vector2.zero;
-        tmpRT.offsetMax = Vector2.zero;
-
-        var dropZone = slotObj.AddComponent<GearSlotDropZone>();
-        dropZone.slotText = tmp;
-        dropZone.Setup(slot, isRing2, member);
+        GameObject slotObj = Instantiate(gearSlotPrefab, parent);
+        var dropZone = slotObj.GetComponent<GearSlotDropZone>();
+        if (dropZone != null)
+            dropZone.Setup(slot, isRing2, member);
+        else
+            Debug.LogWarning("GearSlotDropZone missing from gearSlotPrefab!");
     }
 }
