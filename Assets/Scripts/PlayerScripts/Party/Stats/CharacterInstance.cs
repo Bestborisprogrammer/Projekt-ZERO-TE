@@ -13,6 +13,7 @@ public class CharacterInstance
     public int currentXP = 0;
     public int xpToNextLevel;
     public bool isBlocking = false;
+    public bool isEvading = false;
 
     public List<ActiveStatusEffect> activeEffects = new();
     public List<StatModifier> statModifiers = new();
@@ -109,6 +110,7 @@ public class CharacterInstance
     public void HealHP(int flatAmount, float percentAmount)
     {
         int heal = flatAmount + Mathf.RoundToInt(MaxHP * percentAmount);
+        heal = Mathf.Max(0, heal);
         currentHP = Mathf.Min(MaxHP, currentHP + heal);
         Debug.Log($"{Name} healed for {heal} HP! ({currentHP}/{MaxHP})");
     }

@@ -10,6 +10,7 @@ public class EnemyInstance
     public int currentHP;
     public int currentMana;
     public bool isBlocking = false;
+    public bool isEvading = false;
 
     public List<ActiveStatusEffect> activeEffects = new();
     public List<StatModifier> statModifiers = new();

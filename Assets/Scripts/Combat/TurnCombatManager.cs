@@ -1,6 +1,10 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using UnityEngine.UIElements;
+using static Unity.Burst.Intrinsics.X86.Avx;
+using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using static UnityEngine.Rendering.DebugUI;
 
 public class TurnCombatManager : MonoBehaviour
 {
@@ -71,6 +75,7 @@ public class TurnCombatManager : MonoBehaviour
 
         Combatant current = turnOrder[currentTurnIndex];
         current.SetBlocking(false);
+        current.SetEvading(false);
 
         Debug.Log($"--- {current.Name}'s Turn --- HP:{current.CurrentHP}/{current.MaxHP} MP:{current.GetCurrentMana()} Style:{current.CombatStyle}");
 
@@ -271,6 +276,7 @@ public class TurnCombatManager : MonoBehaviour
     public void PlayerEvade()
     {
         Combatant evader = turnOrder[currentTurnIndex];
+        evader.SetEvading(true);
         Debug.Log($"{evader.Name} is ready to evade! Dodge chance: {evader.EvadeChance * 100f:F1}%");
         combatUI.ShowCombatLog($"{evader.Name} readies an evade! Dodge chance: {evader.EvadeChance * 100f:F1}%");
         combatUI.UpdateAllHP(party, enemies);
@@ -341,9 +347,10 @@ public class TurnCombatManager : MonoBehaviour
                 Debug.Log($"{attacker.Name} is guarding! Block reduction: {attacker.BlockReduction * 100f:F1}%");
                 combatUI.ShowCombatLog($"{attacker.Name} guards! (B! - {attacker.BlockReduction * 100f:F1}% reduction)");
             }
-            else
+            if (attacker.CombatStyle == CombatStyle.Evade)
             {
-                Debug.Log($"{attacker.Name} is ready to evade! Dodge chance: {attacker.EvadeChance * 100f:F1}%");
+                attacker.SetEvading(true);
+                Debug.Log($"{attacker.Name} is ready to evade!");
                 combatUI.ShowCombatLog($"{attacker.Name} readies an evade! Dodge chance: {attacker.EvadeChance * 100f:F1}%");
             }
 
@@ -491,5 +498,10 @@ public class TurnCombatManager : MonoBehaviour
         PartyManager.Instance.GiveXPToAll(totalXP);
         combatUI.ShowVictory(totalXP, totalGold, drops);
         combatActive = false;
+
+    }
+    public void NextTurnPublic()
+    {
+        NextTurn();
     }
 }

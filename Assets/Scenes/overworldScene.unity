@@ -906,6 +906,14 @@ MonoBehaviour:
     item: {fileID: 0}
     gear: {fileID: 11400000, guid: d76e6517dcb6521469b6eb50bf9005ce, type: 2}
     stock: 10
+  - entryType: 0
+    item: {fileID: 11400000, guid: 9cc92764c85bacd4aa46a8c9d0b612f9, type: 2}
+    gear: {fileID: 0}
+    stock: 10
+  - entryType: 0
+    item: {fileID: 11400000, guid: 087df6cd159b62e408dfd63cc86ba78c, type: 2}
+    gear: {fileID: 0}
+    stock: 10
   buyListParent: {fileID: 216811445}
   shopItemEntryPrefab: {fileID: 3257884319762810643, guid: a47db11f15a08cd419899da78b792694, type: 3}
   shopGoldText: {fileID: 45940682}
@@ -3626,6 +3634,7 @@ MonoBehaviour:
     currentHP: 0
     currentMana: 0
     isBlocking: 0
+    isEvading: 0
     activeEffects: []
     statModifiers: []
 --- !u!1 &1365380332

@@ -98,14 +98,17 @@ public class InventoryMenuPanel : MonoBehaviour
 
         if (pendingItem.itemType == ItemType.Heal)
         {
-            int heal = pendingItem.flatHeal + Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
             member.HealHP(pendingItem.flatHeal, pendingItem.percentHeal);
+            int heal = pendingItem.flatHeal +
+                Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
             Debug.Log($"Used {pendingItem.itemName} on {member.Name} for {heal} HP!");
         }
         else if (pendingItem.itemType == ItemType.Buff)
         {
-            member.ApplyStatModifier(pendingItem.statType, pendingItem.statModifier, pendingItem.modifierDuration);
-            Debug.Log($"Applied {pendingItem.statType} +{pendingItem.statModifier} to {member.Name}!");
+            member.ApplyStatModifier(pendingItem.statType,
+                pendingItem.statModifier, pendingItem.modifierDuration);
+            Debug.Log($"Applied {pendingItem.statType} +{pendingItem.statModifier} " +
+                $"to {member.Name} for {pendingItem.modifierDuration} turns!");
         }
 
         InventoryManager.Instance.RemoveItem(pendingItem);

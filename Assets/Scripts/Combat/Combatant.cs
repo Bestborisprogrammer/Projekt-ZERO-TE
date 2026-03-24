@@ -46,9 +46,23 @@ public class Combatant
     public bool TryEvade()
     {
         if (CombatStyle != CombatStyle.Evade) return false;
+        if (IsEnemy)
+        {
+            if (!enemyRef.isEvading) return false;
+        }
+        else
+        {
+            if (!characterRef.isEvading) return false;
+        }
         bool evaded = Random.value < EvadeChance;
         Debug.Log($"{Name} evade check: chance={EvadeChance * 100f:F1}% result={evaded}");
         return evaded;
+    }
+
+    public void SetEvading(bool value)
+    {
+        if (IsEnemy) enemyRef.isEvading = value;
+        else characterRef.isEvading = value;
     }
 
     public void TakeDamage(int damage)
