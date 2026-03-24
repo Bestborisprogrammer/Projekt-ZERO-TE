@@ -2,12 +2,14 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
+using System.Collections.Generic;
 
 public class GearCard : MonoBehaviour,
     IBeginDragHandler, IDragHandler, IEndDragHandler,
     IPointerEnterHandler, IPointerExitHandler
 {
     public GearSO gear;
+    public int quantity = 1;
 
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
@@ -15,6 +17,7 @@ public class GearCard : MonoBehaviour,
     private Transform originalParent;
     private int originalIndex;
     private Vector2 originalPosition;
+    private bool isDragging = false;
 
     void Awake()
     {
@@ -24,28 +27,37 @@ public class GearCard : MonoBehaviour,
         rectTransform = GetComponent<RectTransform>();
     }
 
-    public void Setup(GearSO g)
+    public void Setup(GearSO g, int qty = 1)
     {
         gear = g;
+        quantity = qty;
         rootCanvas = GetComponentInParent<Canvas>();
         while (rootCanvas != null && !rootCanvas.isRootCanvas)
             rootCanvas = rootCanvas.transform.parent?.GetComponentInParent<Canvas>();
 
+        RefreshText();
+    }
+
+    public void RefreshText()
+    {
         var tmp = GetComponentInChildren<TextMeshProUGUI>();
-        if (tmp != null)
-            tmp.text =
-                $"{gear.gearName}\n" +
-                $"{(gear.bonusATK != 0 ? $"ATK+{gear.bonusATK} " : "")}" +
-                $"{(gear.bonusDEF != 0 ? $"DEF+{gear.bonusDEF} " : "")}" +
-                $"{(gear.bonusHP != 0 ? $"HP+{gear.bonusHP} " : "")}" +
-                $"{(gear.bonusSPD != 0 ? $"SPD+{gear.bonusSPD} " : "")}" +
-                $"{(gear.bonusMP != 0 ? $"MP+{gear.bonusMP}" : "")}";
+        if (tmp == null) return;
+
+        string qtyText = quantity > 1 ? $" x{quantity}" : "";
+        tmp.text =
+            $"{gear.gearName}{qtyText}\n" +
+            $"{(gear.bonusATK != 0 ? $"ATK+{gear.bonusATK} " : "")}" +
+            $"{(gear.bonusDEF != 0 ? $"DEF+{gear.bonusDEF} " : "")}" +
+            $"{(gear.bonusHP != 0 ? $"HP+{gear.bonusHP} " : "")}" +
+            $"{(gear.bonusSPD != 0 ? $"SPD+{gear.bonusSPD} " : "")}" +
+            $"{(gear.bonusMP != 0 ? $"MP+{gear.bonusMP}" : "")}";
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        var gearPanel = Object.FindFirstObjectByType<GearMenuPanel>();
-        GearTooltip.Instance?.Show(gear, gearPanel?.selectedMember);
+        if (isDragging) return;
+        // Always show gear stats even without a selected member
+        GearTooltip.Instance?.Show(gear, null);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -55,6 +67,7 @@ public class GearCard : MonoBehaviour,
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        isDragging = true;
         GearTooltip.Instance?.Hide();
 
         if (rootCanvas == null)
@@ -81,6 +94,7 @@ public class GearCard : MonoBehaviour,
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        isDragging = false;
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
 

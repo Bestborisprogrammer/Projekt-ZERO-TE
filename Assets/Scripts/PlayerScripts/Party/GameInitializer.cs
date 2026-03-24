@@ -9,7 +9,9 @@ public class GameInitializer : MonoBehaviour
         if (!hasInitialized)
         {
             PlayerPrefs.DeleteAll();
+            GearMenuPanel.ResetInitialized();
             hasInitialized = true;
+            Debug.Log("Game initialized fresh!");
         }
     }
 }

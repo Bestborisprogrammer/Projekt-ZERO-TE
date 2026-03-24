@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections.Generic;
 
@@ -8,17 +7,17 @@ public class GearCategoryRow : MonoBehaviour
 {
     [Header("UI")]
     public TextMeshProUGUI categoryLabel;
-    public GameObject itemListContainer; // expands/collapses
-    public Transform itemListParent;     // gear cards go here
+    public GameObject itemListContainer;
+    public Transform itemListParent;
     public GameObject gearCardPrefab;
 
     [Header("Settings")]
     public GearSlot slot;
 
     private bool isExpanded = false;
-    private List<GearSO> gearList = new();
+    private List<GearStack> gearList = new();
 
-    public void Setup(GearSlot s, List<GearSO> gear, GameObject cardPrefab)
+    public void Setup(GearSlot s, List<GearStack> gear, GameObject cardPrefab)
     {
         slot = s;
         gearList = gear;
@@ -32,17 +31,16 @@ public class GearCategoryRow : MonoBehaviour
     {
         isExpanded = !isExpanded;
         itemListContainer.SetActive(isExpanded);
-
-        if (isExpanded)
-            BuildList();
-
+        if (isExpanded) BuildList();
         RefreshLabel();
     }
 
     void RefreshLabel()
     {
+        int total = 0;
+        foreach (var g in gearList) total += g.quantity;
         if (categoryLabel != null)
-            categoryLabel.text = $"{slot} ({gearList.Count}) {(isExpanded ? "▲" : "▼")}";
+            categoryLabel.text = $"{slot} ({total}) {(isExpanded ? "▲" : "▼")}";
     }
 
     void BuildList()
@@ -50,14 +48,15 @@ public class GearCategoryRow : MonoBehaviour
         foreach (Transform child in itemListParent)
             Destroy(child.gameObject);
 
-        foreach (var gear in gearList)
+        foreach (var stack in gearList)
         {
+            if (stack.quantity <= 0) continue;
             GameObject card = Instantiate(gearCardPrefab, itemListParent);
-            card.GetComponent<GearCard>()?.Setup(gear);
+            card.GetComponent<GearCard>()?.Setup(stack.gear, stack.quantity);
         }
     }
 
-    public void RefreshGearList(List<GearSO> gear)
+    public void RefreshGearList(List<GearStack> gear)
     {
         gearList = gear;
         RefreshLabel();

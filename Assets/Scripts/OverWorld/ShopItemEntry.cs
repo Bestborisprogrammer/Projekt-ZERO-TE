@@ -65,7 +65,7 @@ public class ShopItemEntry : MonoBehaviour
         else if (entry.entryType == ShopEntryType.Gear && entry.gear != null)
         {
             if (!GoldManager.Instance.SpendGold(entry.gear.buyPrice)) return;
-            Object.FindFirstObjectByType<GearMenuPanel>()?.allGear.Add(entry.gear);
+            GearManager.Instance.AddGearToInventory(entry.gear);
             Debug.Log($"Bought {entry.gear.gearName} for {entry.gear.buyPrice}G");
         }
 

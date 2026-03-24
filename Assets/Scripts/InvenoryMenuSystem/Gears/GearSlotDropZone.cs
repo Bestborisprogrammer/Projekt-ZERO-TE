@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
 
-public class GearSlotDropZone : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler
+public class GearSlotDropZone : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     public GearSlot slot;
     public bool isRing2;
@@ -49,7 +49,18 @@ public class GearSlotDropZone : MonoBehaviour, IDropHandler, IPointerEnterHandle
         GearManager.Instance.EquipGear(member.Name, card.gear, isRing2);
         Debug.Log($"Equipped {card.gear.gearName} on {member.Name}!");
         Refresh();
+        Object.FindFirstObjectByType<GearMenuPanel>()?.Refresh();
+    }
 
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        // Click to unequip
+        var equipped = GearManager.Instance.GetGearFor(member.Name).GetSlot(slot, isRing2);
+        if (equipped == null) return;
+
+        GearManager.Instance.UnequipGear(member.Name, slot, isRing2);
+        Debug.Log($"Unequipped {equipped.gearName} from {member.Name}!");
+        Refresh();
         Object.FindFirstObjectByType<GearMenuPanel>()?.Refresh();
     }
 

@@ -111,28 +111,24 @@ public class ShopPanel : MonoBehaviour
         }
 
         // Sell gear - check GearMenuPanel allGear list
-        var gearPanel = Object.FindFirstObjectByType<GearMenuPanel>();
-        if (gearPanel != null)
+        foreach (var stack in GearManager.Instance.gearInventory)
         {
-            foreach (var gear in gearPanel.allGear)
+            var capturedStack = stack;
+            GameObject obj = Instantiate(sellEntryPrefab, sellListParent);
+            var tmp = obj.GetComponentInChildren<TextMeshProUGUI>();
+            var btn = obj.GetComponent<Button>();
+
+            if (tmp != null)
+                tmp.text = $"{capturedStack.gear.gearName} x{capturedStack.quantity} - {capturedStack.gear.sellPrice}G each";
+
+            btn?.onClick.AddListener(() =>
             {
-                var capturedGear = gear;
-                GameObject obj = Instantiate(sellEntryPrefab, sellListParent);
-                var tmp = obj.GetComponentInChildren<TextMeshProUGUI>();
-                var btn = obj.GetComponent<Button>();
-
-                if (tmp != null)
-                    tmp.text = $"{capturedGear.gearName} - {capturedGear.sellPrice}G";
-
-                btn?.onClick.AddListener(() =>
-                {
-                    GoldManager.Instance.AddGold(capturedGear.sellPrice);
-                    gearPanel.allGear.Remove(capturedGear);
-                    Debug.Log($"Sold {capturedGear.gearName} for {capturedGear.sellPrice}G");
-                    RefreshSellPanel();
-                    Refresh();
-                });
-            }
+                GearManager.Instance.RemoveGearFromInventory(capturedStack.gear);
+                GoldManager.Instance.AddGold(capturedStack.gear.sellPrice);
+                Debug.Log($"Sold {capturedStack.gear.gearName} for {capturedStack.gear.sellPrice}G");
+                RefreshSellPanel();
+                Refresh();
+            });
         }
 
         // Show message if nothing to sell

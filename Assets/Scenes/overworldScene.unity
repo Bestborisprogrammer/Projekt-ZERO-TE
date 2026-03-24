@@ -467,6 +467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   allCharacterGear: []
+  gearInventory: []
 --- !u!4 &161992799
 Transform:
   m_ObjectHideFlags: 0

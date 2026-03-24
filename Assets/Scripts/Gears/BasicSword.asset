@@ -19,7 +19,7 @@ MonoBehaviour:
   buyPrice: 10
   sellPrice: 50
   bonusHP: 1
-  bonusATK: 31
+  bonusATK: 10000
   bonusDEF: 31
   bonusSPD: 31
   bonusMP: 31

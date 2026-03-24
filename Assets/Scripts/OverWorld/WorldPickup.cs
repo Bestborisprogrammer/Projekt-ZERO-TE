@@ -92,7 +92,7 @@ public class WorldPickup : MonoBehaviour
             case PickupType.Gear:
                 if (gear != null)
                 {
-                    Object.FindFirstObjectByType<GearMenuPanel>()?.allGear.Add(gear);
+                    GearManager.Instance.AddGearToInventory(gear);
                     Debug.Log($"Picked up {gear.gearName}!");
                 }
                 break;

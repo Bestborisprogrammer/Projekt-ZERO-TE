@@ -1,29 +1,46 @@
-using System.Collections.Generic;
-using System.Linq;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static Unity.Burst.Intrinsics.X86.Avx;
-using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using TMPro;
+using System.Collections.Generic;
+using System.Linq;
 
 public class GearMenuPanel : MonoBehaviour
 {
     [Header("Left Side - Categories")]
-    public Transform categoryParent;        // Vertical Layout Group
-    public GameObject categoryRowPrefab;    // GearCategoryRow prefab
-    public GameObject gearCardPrefab;       // GearCard prefab
+    public Transform categoryParent;
+    public GameObject categoryRowPrefab;
+    public GameObject gearCardPrefab;
 
     [Header("Right Side - Member Slots")]
-    public Transform memberSlotsParent;     // Horizontal Layout Group
+    public Transform memberSlotsParent;
     public GameObject memberGearBlockPrefab;
     public GameObject gearSlotPrefab;
 
-    [Header("All Gear")]
-    public List<GearSO> allGear = new();
+    [Header("Starting Gear")]
+    public List<GearSO> startingGear = new();
 
     public CharacterInstance selectedMember;
 
-    void OnEnable() => Refresh();
+    // Static so it persists across scene loads
+    static bool initialized = false;
+
+    void OnEnable()
+    {
+        if (!initialized)
+        {
+            foreach (var gear in startingGear)
+                GearManager.Instance.AddGearToInventory(gear);
+            initialized = true;
+            Debug.Log($"Gear inventory initialized with {startingGear.Count} items");
+        }
+        Refresh();
+    }
+
+    // Call this from GameInitializer to reset on new play session
+    public static void ResetInitialized()
+    {
+        initialized = false;
+    }
 
     public void Refresh()
     {
@@ -36,7 +53,6 @@ public class GearMenuPanel : MonoBehaviour
         foreach (Transform child in categoryParent)
             Destroy(child.gameObject);
 
-        // Group gear by slot
         var slots = new[]
         {
             GearSlot.Weapon, GearSlot.Helmet, GearSlot.Torso,
@@ -45,7 +61,9 @@ public class GearMenuPanel : MonoBehaviour
 
         foreach (var slot in slots)
         {
-            var gearInSlot = allGear.Where(g => g.slot == slot).ToList();
+            var gearInSlot = GearManager.Instance.gearInventory
+                .Where(g => g.gear.slot == slot && g.quantity > 0)
+                .ToList();
 
             GameObject row = Instantiate(categoryRowPrefab, categoryParent);
             var categoryRow = row.GetComponent<GearCategoryRow>();
@@ -68,11 +86,7 @@ public class GearMenuPanel : MonoBehaviour
                 nameText.text = $"{member.Name}\nLv.{member.level}";
 
             var slotsContainer = block.transform.Find("Slots");
-            if (slotsContainer == null)
-            {
-                Debug.LogWarning("MemberGearBlock missing 'Slots' child!");
-                continue;
-            }
+            if (slotsContainer == null) continue;
 
             foreach (Transform child in slotsContainer)
                 Destroy(child.gameObject);
