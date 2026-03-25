@@ -61,21 +61,20 @@ public class CombatUI : MonoBehaviour
     private List<Button> enemyButtons = new();
     private int highlightedIndex = 0;
 
-    // Spell paging
     private List<ManaAttackSO> currentSpells = new();
     private int spellPage = 0;
     private const int spellsPerPage = 3;
     private int currentMana = 0;
 
-    // Item paging
     private List<InventoryItem> currentItems = new();
     private int itemPage = 0;
     private const int itemsPerPage = 3;
     private InventoryItem pendingItem;
 
-    private Queue<string> logQueue = new Queue<string>();
+    // Log queue
+    private Queue<(string message, System.Action callback)> logQueue = new();
     private bool isShowingLog = false;
-    private float logDelay = 2.2f;
+    private bool waitingForInput = false;
 
     void Start()
     {
@@ -99,6 +98,56 @@ public class CombatUI : MonoBehaviour
         itemNextButton.onClick.AddListener(ItemPageNext);
     }
 
+    void Update()
+    {
+        if (waitingForInput && Input.anyKeyDown)
+        {
+            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+                return;
+            waitingForInput = false;
+        }
+    }
+
+    // ── Log System ────────────────────────────────
+    // Show a single message, run callback after player reads it
+    public void ShowCombatLog(string message, System.Action callback = null)
+    {
+        logQueue.Enqueue((message, callback));
+        if (!isShowingLog)
+            StartCoroutine(ProcessLogQueue());
+    }
+
+    // Show multiple messages in sequence, run callback after all are read
+    public void ShowCombatLogs(List<string> messages, System.Action callback = null)
+    {
+        for (int i = 0; i < messages.Count; i++)
+        {
+            // Only attach callback to the last message
+            System.Action cb = (i == messages.Count - 1) ? callback : null;
+            logQueue.Enqueue((messages[i], cb));
+        }
+        if (!isShowingLog)
+            StartCoroutine(ProcessLogQueue());
+    }
+
+    IEnumerator ProcessLogQueue()
+    {
+        isShowingLog = true;
+
+        while (logQueue.Count > 0)
+        {
+            var (message, callback) = logQueue.Dequeue();
+            combatLogText.text = message;
+
+            waitingForInput = true;
+            yield return new WaitUntil(() => !waitingForInput);
+
+            callback?.Invoke();
+        }
+
+        isShowingLog = false;
+    }
+
     // ── Basic Attack ──────────────────────────────
     void OnBasicAttack()
     {
@@ -106,7 +155,6 @@ public class CombatUI : MonoBehaviour
         TurnCombatManager.Instance.PlayerBasicAttack();
     }
 
-    // ── Block / Evade ─────────────────────────────
     void OnBlock()
     {
         CloseAllPanels();
@@ -245,7 +293,6 @@ public class CombatUI : MonoBehaviour
 
             var button = btn.GetComponent<Button>();
             var capturedItem = item;
-
             button.onClick.AddListener(() =>
             {
                 if (capturedItem.itemData.itemTarget == ItemTarget.Ally)
@@ -280,7 +327,8 @@ public class CombatUI : MonoBehaviour
             string preview = "";
             if (item.itemData.itemType == ItemType.Heal)
             {
-                int heal = item.itemData.flatHeal + Mathf.RoundToInt(member.MaxHP * item.itemData.percentHeal);
+                int heal = item.itemData.flatHeal +
+                    Mathf.RoundToInt(member.MaxHP * item.itemData.percentHeal);
                 int actual = Mathf.Min(heal, member.MaxHP - member.currentHP);
                 preview = $"+{actual} HP";
             }
@@ -304,6 +352,7 @@ public class CombatUI : MonoBehaviour
         {
             int heal = pendingItem.itemData.flatHeal +
                 Mathf.RoundToInt(member.MaxHP * pendingItem.itemData.percentHeal);
+            heal = Mathf.Min(heal, member.MaxHP - member.currentHP);
             member.HealHP(pendingItem.itemData.flatHeal, pendingItem.itemData.percentHeal);
             logMsg = $"{member.Name} used {pendingItem.itemData.itemName} and recovered {heal} HP!";
         }
@@ -316,57 +365,36 @@ public class CombatUI : MonoBehaviour
                 $"for {pendingItem.itemData.modifierDuration} turns!";
         }
 
-        Debug.Log($"[ITEM] {logMsg}");
-        ShowCombatLog(logMsg);
         InventoryManager.Instance.RemoveItem(pendingItem.itemData);
         pendingItem = null;
-
         memberSelectPopup.SetActive(false);
         CloseAllPanels();
         UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
 
-        // Using item counts as the player's turn
-        TurnCombatManager.Instance.NextTurnPublic();
+        ShowCombatLog(logMsg, () => TurnCombatManager.Instance.NextTurnPublic());
     }
 
     void UseItemOnEnemy(InventoryItem item)
     {
-        var target = TurnCombatManager.Instance.enemies
-            .Find(e => e.IsAlive);
+        var target = TurnCombatManager.Instance.enemies.Find(e => e.IsAlive);
         if (target == null) return;
 
-        string logMsg = "";
+        string logMsg = $"Used {item.itemData.itemName} on {target.Name}!";
 
         if (item.itemData.itemType == ItemType.Debuff)
         {
             target.ApplyStatusEffect(item.itemData.statusEffect,
                 item.itemData.statusChance, item.itemData.statusDuration,
-                item.itemData.dotPercent);
+                item.itemData.dotPercent, 0f, 0);
 
-            int speedReduction = 0;
-            target.ApplyStatusEffect(item.itemData.statusEffect,
-                item.itemData.statusChance, item.itemData.statusDuration,
-                item.itemData.dotPercent, 0f, speedReduction);
-
-            // Apply stat debuff
             if (item.itemData.statModifier != 0)
-            {
-                // Negative modifier for debuff
-                var enemyRef = TurnCombatManager.Instance.enemies.Find(e => e == target);
-                logMsg = $"Used {item.itemData.itemName} on {target.Name}! " +
-                    $"{item.itemData.statType} -{item.itemData.statModifier} " +
+                logMsg += $" {item.itemData.statType} -{item.itemData.statModifier} " +
                     $"for {item.itemData.modifierDuration} turns!";
-            }
-            else
-                logMsg = $"Used {item.itemData.itemName} on {target.Name}!";
         }
 
-        Debug.Log($"[ITEM] {logMsg}");
-        ShowCombatLog(logMsg);
         InventoryManager.Instance.RemoveItem(item.itemData);
-
         CloseAllPanels();
-        TurnCombatManager.Instance.NextTurnPublic();
+        ShowCombatLog(logMsg, () => TurnCombatManager.Instance.NextTurnPublic());
     }
 
     // ── Helpers ───────────────────────────────────
@@ -383,24 +411,6 @@ public class CombatUI : MonoBehaviour
         itemNextButton.gameObject.SetActive(false);
     }
 
-    public void ShowCombatLog(string message)
-    {
-        logQueue.Enqueue(message);
-        if (!isShowingLog)
-            StartCoroutine(ProcessLogQueue());
-    }
-
-    IEnumerator ProcessLogQueue()
-    {
-        isShowingLog = true;
-        while (logQueue.Count > 0)
-        {
-            combatLogText.text = logQueue.Dequeue();
-            yield return new WaitForSeconds(logDelay);
-        }
-        isShowingLog = false;
-    }
-
     public void UpdateTurnText(string name)
     {
         turnText.text = $"{name}'s Turn";
@@ -415,8 +425,9 @@ public class CombatUI : MonoBehaviour
         {
             GameObject entry = Instantiate(partyHPEntryPrefab, partyHPParent);
             var tmp = entry.GetComponent<TextMeshProUGUI>();
-            string indicator = member.IsBlocking ? " B!" :
-                member.CombatStyle == CombatStyle.Evade ? " E!" : "";
+            string indicator = "";
+            if (member.IsBlocking) indicator = " B!";
+            else if (member.CombatStyle == CombatStyle.Evade && member.IsEvading) indicator = " E!";
             tmp.text = $"{member.Name}  HP: {member.CurrentHP}/{member.MaxHP}" +
                 $"  MP: {member.GetCurrentMana()}{indicator}";
             tmp.color = member.IsAlive ? Color.white : Color.red;
@@ -436,8 +447,9 @@ public class CombatUI : MonoBehaviour
             int enemyIndex = i;
             GameObject btn = Instantiate(enemyButtonPrefab, enemyButtonParent);
             var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
-            string indicator = enemies[i].IsBlocking ? " B!" :
-                enemies[i].CombatStyle == CombatStyle.Evade ? " E!" : "";
+            string indicator = "";
+            if (enemies[i].IsBlocking) indicator = " B!";
+            else if (enemies[i].CombatStyle == CombatStyle.Evade && enemies[i].IsEvading) indicator = " E!";
             tmp.text = $"{enemies[i].Name}{indicator}\nHP: {enemies[i].CurrentHP}/{enemies[i].MaxHP}";
 
             var button = btn.GetComponent<Button>();
@@ -446,7 +458,6 @@ public class CombatUI : MonoBehaviour
                 TurnCombatManager.Instance.SelectEnemy(enemyIndex);
                 HighlightSelectedEnemy(enemyButtons.IndexOf(button));
             });
-
             enemyButtons.Add(button);
         }
 
@@ -502,7 +513,6 @@ public class CombatUI : MonoBehaviour
             foreach (var item in drops.itemsDropped)
                 text += $"- {item.itemName}\n";
         }
-
         if (drops.gearDropped.Count > 0)
         {
             text += "\nGear obtained:\n";

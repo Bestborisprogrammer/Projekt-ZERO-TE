@@ -36,8 +36,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -64.7, y: -32.9}
-  m_SizeDelta: {x: 109.0739, y: 51.9188}
+  m_AnchoredPosition: {x: -85.7, y: -26.1}
+  m_SizeDelta: {x: 88.6217, y: 33.8264}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5391048100674672873
 CanvasRenderer:
@@ -293,8 +293,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 62, y: -33.488}
-  m_SizeDelta: {x: 117.6363, y: 50.7422}
+  m_AnchoredPosition: {x: 75, y: -26.1}
+  m_SizeDelta: {x: 88.6217, y: 33.8264}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2190259212656065255
 CanvasRenderer:
@@ -414,10 +414,10 @@ RectTransform:
   - {fileID: 3603914902496853677}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -416.74146, y: 179.38135}
-  m_SizeDelta: {x: -833.4831, y: -358.7627}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 139.99524, y: -51.40126}
+  m_SizeDelta: {x: 279.9906, y: 102.8025}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7901478204798276112
 CanvasRenderer:
@@ -506,8 +506,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.0015502, y: 44.619}
-  m_SizeDelta: {x: 250.52, y: 50}
+  m_AnchoredPosition: {x: -3.5405, y: 22.0748}
+  m_SizeDelta: {x: 262.3797, y: 51.5733}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6987932469344693037
 CanvasRenderer:
@@ -602,7 +602,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0.7359619, w: -91.02969}
+  m_margin: {x: 3.146492, y: 1.5732422, z: 2.309204, w: -2.1410828}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

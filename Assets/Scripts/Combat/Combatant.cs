@@ -18,6 +18,7 @@ public class Combatant
     public bool IsBurning { get; private set; }
     public bool IsParalyzed { get; private set; }
     public bool IsBlocking { get; private set; }
+    public bool IsEvading { get; private set; }
     public CombatStyle CombatStyle { get; private set; }
     public float BlockReduction { get; private set; }
     public float EvadeChance { get; private set; }
@@ -42,27 +43,13 @@ public class Combatant
         Refresh();
     }
 
-    // Returns true if attack was evaded
     public bool TryEvade()
     {
         if (CombatStyle != CombatStyle.Evade) return false;
-        if (IsEnemy)
-        {
-            if (!enemyRef.isEvading) return false;
-        }
-        else
-        {
-            if (!characterRef.isEvading) return false;
-        }
+        if (!IsEvading) return false;
         bool evaded = Random.value < EvadeChance;
         Debug.Log($"{Name} evade check: chance={EvadeChance * 100f:F1}% result={evaded}");
         return evaded;
-    }
-
-    public void SetEvading(bool value)
-    {
-        if (IsEnemy) enemyRef.isEvading = value;
-        else characterRef.isEvading = value;
     }
 
     public void TakeDamage(int damage)
@@ -82,6 +69,13 @@ public class Combatant
     {
         if (IsEnemy) enemyRef.isBlocking = value;
         else characterRef.isBlocking = value;
+        Refresh();
+    }
+
+    public void SetEvading(bool value)
+    {
+        if (IsEnemy) enemyRef.isEvading = value;
+        else characterRef.isEvading = value;
         Refresh();
     }
 
@@ -126,9 +120,7 @@ public class Combatant
                     effects.RemoveAt(i);
                 }
                 else
-                {
                     logs.Add($"{Name} takes {dotDamage} {effect.type} damage! ({effect.turnsRemaining} turns remaining)");
-                }
             }
             else if (effect.type == StatusEffectType.Wet)
             {
@@ -154,9 +146,7 @@ public class Combatant
                     effects.RemoveAt(i);
                 }
                 else
-                {
                     logs.Add($"{Name}'s Defense is reduced! ({effect.turnsRemaining} turns remaining)");
-                }
             }
             else if (effect.type == StatusEffectType.Paralyze)
             {
@@ -199,6 +189,7 @@ public class Combatant
             IsBurning = enemyRef.isBurning;
             IsParalyzed = enemyRef.isParalyzed;
             IsBlocking = enemyRef.isBlocking;
+            IsEvading = enemyRef.isEvading;
             CombatStyle = enemyRef.CombatStyle;
             BlockReduction = enemyRef.BlockReduction;
             EvadeChance = enemyRef.EvadeChance;
@@ -217,6 +208,7 @@ public class Combatant
             IsBurning = characterRef.isBurning;
             IsParalyzed = characterRef.isParalyzed;
             IsBlocking = characterRef.isBlocking;
+            IsEvading = characterRef.isEvading;
             CombatStyle = characterRef.CombatStyle;
             BlockReduction = characterRef.BlockReduction;
             EvadeChance = characterRef.EvadeChance;
@@ -230,15 +222,8 @@ public class Combatant
         return characterRef.baseData.spells.FindAll(s => s.levelRequirement <= level);
     }
 
-    public int GetCurrentMana()
-    {
-        return IsEnemy ? enemyRef.currentMana : characterRef.currentMana;
-    }
-
-    public int GetCurrentLevel()
-    {
-        return IsEnemy ? enemyRef.Level : characterRef.level;
-    }
+    public int GetCurrentMana() => IsEnemy ? enemyRef.currentMana : characterRef.currentMana;
+    public int GetCurrentLevel() => IsEnemy ? enemyRef.Level : characterRef.level;
 
     public bool SpendMana(int cost)
     {
