@@ -102,12 +102,13 @@ public class CombatUI : MonoBehaviour
     {
         if (waitingForInput && Input.anyKeyDown)
         {
+            // Block ALL keyboard keys including Enter/Space from triggering buttons
             if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
                 return;
             waitingForInput = false;
+            return; // consume the input, don't let it bubble to UI
         }
     }
-
     // ── Log System ────────────────────────────────
     // Show a single message, run callback after player reads it
     public void ShowCombatLog(string message, System.Action callback = null)
