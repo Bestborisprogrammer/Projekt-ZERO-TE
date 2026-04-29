@@ -75,6 +75,7 @@ public class CombatUI : MonoBehaviour
     private Queue<(string message, System.Action callback)> logQueue = new();
     private bool isShowingLog = false;
     private bool waitingForInput = false;
+    private bool actionTaken = false; // blocks multiple actions
 
     void Start()
     {
@@ -100,30 +101,41 @@ public class CombatUI : MonoBehaviour
 
     void Update()
     {
-        if (waitingForInput && Input.anyKeyDown)
+        if (waitingForInput)
         {
-            // Block ALL keyboard keys including Enter/Space from triggering buttons
-            if (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
-                return;
-            waitingForInput = false;
-            return; // consume the input, don't let it bubble to UI
+            // Only keyboard keys advance log - not mouse
+            if (Input.anyKeyDown && !Input.GetMouseButtonDown(0) && !Input.GetMouseButtonDown(1))
+                waitingForInput = false;
         }
     }
+
+    // Reset action lock when it's player's turn
+    public void ResetActionTaken()
+    {
+        actionTaken = false;
+    }
+
     // ── Log System ────────────────────────────────
-    // Show a single message, run callback after player reads it
     public void ShowCombatLog(string message, System.Action callback = null)
     {
-        logQueue.Enqueue((message, callback));
+        if (string.IsNullOrEmpty(message))
+        {
+            // Empty message just runs callback immediately via queue
+            logQueue.Enqueue(("", callback));
+        }
+        else
+        {
+            logQueue.Enqueue((message, callback));
+        }
+
         if (!isShowingLog)
             StartCoroutine(ProcessLogQueue());
     }
 
-    // Show multiple messages in sequence, run callback after all are read
     public void ShowCombatLogs(List<string> messages, System.Action callback = null)
     {
         for (int i = 0; i < messages.Count; i++)
         {
-            // Only attach callback to the last message
             System.Action cb = (i == messages.Count - 1) ? callback : null;
             logQueue.Enqueue((messages[i], cb));
         }
@@ -138,8 +150,17 @@ public class CombatUI : MonoBehaviour
         while (logQueue.Count > 0)
         {
             var (message, callback) = logQueue.Dequeue();
+
+            if (string.IsNullOrEmpty(message))
+            {
+                // Skip display, just run callback
+                callback?.Invoke();
+                continue;
+            }
+
             combatLogText.text = message;
 
+            // Wait for key press
             waitingForInput = true;
             yield return new WaitUntil(() => !waitingForInput);
 
@@ -149,28 +170,50 @@ public class CombatUI : MonoBehaviour
         isShowingLog = false;
     }
 
+    // ── Action Guard ──────────────────────────────
+    bool TryTakeAction()
+    {
+        if (actionTaken) return false;
+        actionTaken = true;
+        // Immediately disable all action buttons
+        DisableAllActionButtons();
+        CloseAllPanels();
+        return true;
+    }
+
+    void DisableAllActionButtons()
+    {
+        basicAttackButton.interactable = false;
+        skillsButton.interactable = false;
+        itemsButton.interactable = false;
+        blockButton.interactable = false;
+        foreach (var btn in enemyButtons)
+            btn.interactable = false;
+    }
+
     // ── Basic Attack ──────────────────────────────
     void OnBasicAttack()
     {
-        CloseAllPanels();
+        if (!TryTakeAction()) return;
         TurnCombatManager.Instance.PlayerBasicAttack();
     }
 
     void OnBlock()
     {
-        CloseAllPanels();
+        if (!TryTakeAction()) return;
         TurnCombatManager.Instance.PlayerBlock();
     }
 
     void OnEvade()
     {
-        CloseAllPanels();
+        if (!TryTakeAction()) return;
         TurnCombatManager.Instance.PlayerEvade();
     }
 
     // ── Skill Panel ───────────────────────────────
     void ToggleSkillPanel()
     {
+        if (actionTaken) return;
         bool opening = !skillPanel.activeSelf;
         CloseAllPanels();
         if (opening)
@@ -225,7 +268,7 @@ public class CombatUI : MonoBehaviour
             var capturedSpell = spell;
             button.onClick.AddListener(() =>
             {
-                CloseAllPanels();
+                if (!TryTakeAction()) return;
                 TurnCombatManager.Instance.PlayerManaAttack(capturedSpell);
             });
         }
@@ -239,6 +282,7 @@ public class CombatUI : MonoBehaviour
     // ── Item Panel ────────────────────────────────
     void ToggleItemPanel()
     {
+        if (actionTaken) return;
         bool opening = !itemPanel.activeSelf;
         CloseAllPanels();
         if (opening)
@@ -299,7 +343,10 @@ public class CombatUI : MonoBehaviour
                 if (capturedItem.itemData.itemTarget == ItemTarget.Ally)
                     OpenMemberSelectPopup(capturedItem);
                 else
+                {
+                    if (!TryTakeAction()) return;
                     UseItemOnEnemy(capturedItem);
+                }
             });
         }
 
@@ -339,7 +386,11 @@ public class CombatUI : MonoBehaviour
             tmp.text = $"{member.Name}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
 
             var capturedMember = member;
-            btn.GetComponent<Button>()?.onClick.AddListener(() => UseItemOnAlly(capturedMember));
+            btn.GetComponent<Button>()?.onClick.AddListener(() =>
+            {
+                if (!TryTakeAction()) return;
+                UseItemOnAlly(capturedMember);
+            });
         }
     }
 
@@ -369,7 +420,6 @@ public class CombatUI : MonoBehaviour
         InventoryManager.Instance.RemoveItem(pendingItem.itemData);
         pendingItem = null;
         memberSelectPopup.SetActive(false);
-        CloseAllPanels();
         UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
 
         ShowCombatLog(logMsg, () => TurnCombatManager.Instance.NextTurnPublic());
@@ -394,7 +444,6 @@ public class CombatUI : MonoBehaviour
         }
 
         InventoryManager.Instance.RemoveItem(item.itemData);
-        CloseAllPanels();
         ShowCombatLog(logMsg, () => TurnCombatManager.Instance.NextTurnPublic());
     }
 
@@ -480,6 +529,9 @@ public class CombatUI : MonoBehaviour
 
     public void SetPlayerButtonsActive(bool active, CombatStyle style = CombatStyle.Block)
     {
+        // Reset action lock when giving player their turn
+        if (active) ResetActionTaken();
+
         basicAttackButton.interactable = active;
         skillsButton.interactable = active;
         itemsButton.interactable = active;
