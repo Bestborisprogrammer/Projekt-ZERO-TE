@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TestPartyMember
   m_EditorClassIdentifier: 
   characterName: RinItoshi
-  portrait: {fileID: 0}
+  portrait: {fileID: -7903754828726696838, guid: afdfe06408cddb444b57c4eb65c0838a, type: 3}
   startingLevel: 2
   maxHP: 4000
   attack: 10

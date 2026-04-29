@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EvilRicard
   m_EditorClassIdentifier: 
   enemyName: EvilRicard
-  sprite: {fileID: 0}
+  sprite: {fileID: -8336025807721380745, guid: 0a4e3ab5c6dfd10428a776c524101e97, type: 3}
   level: 1
   maxHP: 4000
   attack: 6
@@ -21,6 +21,10 @@ MonoBehaviour:
   speed: 4
   maxMana: 10
   xpReward: 30
+  goldReward: 10
+  itemDrops: []
+  gearDrops: []
   affinities: 
   spells:
   - {fileID: 11400000, guid: 142405572d170d8458d836788f895c74, type: 2}
+  combatStyle: 0

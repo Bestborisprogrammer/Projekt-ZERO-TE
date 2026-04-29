@@ -62,6 +62,7 @@ public class TurnCombatManager : MonoBehaviour
 
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.UpdateAllHP(party, enemies);
+        combatUI.SetupCombatSprites(party, enemies);
         StartTurn();
     }
 
@@ -200,11 +201,13 @@ public class TurnCombatManager : MonoBehaviour
         {
             int reduced = Mathf.RoundToInt(damage * (1f - target.BlockReduction));
             target.TakeDamage(reduced);
+            CombatSpriteManager.Instance?.PlayHitEffect(target.Name);
             combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage! (B! reduced to {reduced} - {target.BlockReduction * 100f:F1}% reduction)");
         }
         else
         {
             target.TakeDamage(damage);
+            CombatSpriteManager.Instance?.PlayHitEffect(target.Name);
             combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage!");
         }
 
@@ -229,6 +232,7 @@ public class TurnCombatManager : MonoBehaviour
 
         if (hit && !target.IsAlive)
         {
+            CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
             if (enemies.All(e => !e.IsAlive))
             {
                 combatUI.ShowCombatLog($"{target.Name} was defeated!", () => HandleVictory());
@@ -294,6 +298,7 @@ public class TurnCombatManager : MonoBehaviour
 
         if (hit && !target.IsAlive)
         {
+            CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
             if (enemies.All(e => !e.IsAlive))
             {
                 combatUI.ShowCombatLog($"{target.Name} was defeated!", () => HandleVictory());
@@ -316,7 +321,6 @@ public class TurnCombatManager : MonoBehaviour
         List<Combatant> aliveParty = party.Where(p => p.IsAlive).ToList();
         if (aliveParty.Count == 0) return;
 
-        // 20% chance to block or evade
         if (Random.value < 0.2f)
         {
             if (attacker.CombatStyle == CombatStyle.Block)
@@ -376,6 +380,7 @@ public class TurnCombatManager : MonoBehaviour
 
                 if (!attacker.IsAlive)
                 {
+                    CombatSpriteManager.Instance?.PlayDefeatedEffect(attacker.Name);
                     if (enemies.All(e => !e.IsAlive)) { HandleVictory(); return; }
                     selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
                 }

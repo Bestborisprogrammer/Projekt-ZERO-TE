@@ -51,6 +51,9 @@ public class CombatUI : MonoBehaviour
     public Transform memberSelectParent;
     public GameObject memberSelectButtonPrefab;
 
+    [Header("Sprites")]
+    public CombatSpriteManager spriteManager;
+
     [Header("Result Panel")]
     public GameObject victoryPanel;
     public TextMeshProUGUI victoryXPText;
@@ -71,11 +74,10 @@ public class CombatUI : MonoBehaviour
     private const int itemsPerPage = 3;
     private InventoryItem pendingItem;
 
-    // Log queue
     private Queue<(string message, System.Action callback)> logQueue = new();
     private bool isShowingLog = false;
     private bool waitingForInput = false;
-    private bool actionTaken = false; // blocks multiple actions
+    private bool actionTaken = false;
 
     void Start()
     {
@@ -103,16 +105,21 @@ public class CombatUI : MonoBehaviour
     {
         if (waitingForInput)
         {
-            // Only keyboard keys advance log - not mouse
             if (Input.anyKeyDown && !Input.GetMouseButtonDown(0) && !Input.GetMouseButtonDown(1))
                 waitingForInput = false;
         }
     }
 
-    // Reset action lock when it's player's turn
     public void ResetActionTaken()
     {
         actionTaken = false;
+    }
+
+    // ── Sprites ───────────────────────────────────
+    public void SetupCombatSprites(List<Combatant> party, List<Combatant> enemies)
+    {
+        if (spriteManager != null)
+            spriteManager.SetupSprites(party, enemies);
     }
 
     // ── Log System ────────────────────────────────
@@ -120,7 +127,6 @@ public class CombatUI : MonoBehaviour
     {
         if (string.IsNullOrEmpty(message))
         {
-            // Empty message just runs callback immediately via queue
             logQueue.Enqueue(("", callback));
         }
         else
@@ -153,17 +159,13 @@ public class CombatUI : MonoBehaviour
 
             if (string.IsNullOrEmpty(message))
             {
-                // Skip display, just run callback
                 callback?.Invoke();
                 continue;
             }
 
             combatLogText.text = message;
-
-            // Wait for key press
             waitingForInput = true;
             yield return new WaitUntil(() => !waitingForInput);
-
             callback?.Invoke();
         }
 
@@ -175,7 +177,6 @@ public class CombatUI : MonoBehaviour
     {
         if (actionTaken) return false;
         actionTaken = true;
-        // Immediately disable all action buttons
         DisableAllActionButtons();
         CloseAllPanels();
         return true;
@@ -529,7 +530,6 @@ public class CombatUI : MonoBehaviour
 
     public void SetPlayerButtonsActive(bool active, CombatStyle style = CombatStyle.Block)
     {
-        // Reset action lock when giving player their turn
         if (active) ResetActionTaken();
 
         basicAttackButton.interactable = active;

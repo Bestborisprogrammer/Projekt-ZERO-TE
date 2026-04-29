@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MC_Character
   m_EditorClassIdentifier: 
   characterName: Hero
-  portrait: {fileID: 0}
+  portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
   startingLevel: 1
   maxHP: 4000
   attack: 10
@@ -35,3 +35,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8e9cb85cbe9162146821fdcb7843e3e9, type: 2}
   - {fileID: 11400000, guid: 15a456db98950c04c84877a0820fea5d, type: 2}
   - {fileID: 11400000, guid: 439ce99c045dc184c88950b830fc3dd6, type: 2}
+  combatStyle: 0
