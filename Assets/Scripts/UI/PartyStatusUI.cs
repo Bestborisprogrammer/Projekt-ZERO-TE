@@ -74,9 +74,9 @@ public class PartyStatusUI : MonoBehaviour
             : "None";
 
         memberInfoText.text =
-            $"══════════════════\n" +
+            $"════════════════\n" +
             $"{member.Name}  |  Lv. {member.level}\n" +
-            $"══════════════════\n" +
+            $"════════════════\n" +
             $"HP:  {member.currentHP} / {member.MaxHP}\n" +
             $"MP:  {member.currentMana} / {member.MaxMana}\n" +
             $"ATK: {member.Attack}\n" +

@@ -487,45 +487,14 @@ public class CombatUI : MonoBehaviour
 
     public void BuildEnemyTargetButtons(List<Combatant> enemies)
     {
-        foreach (Transform child in enemyButtonParent)
-            Destroy(child.gameObject);
-        enemyButtons.Clear();
-
-        for (int i = 0; i < enemies.Count; i++)
-        {
-            if (!enemies[i].IsAlive) continue;
-
-            int enemyIndex = i;
-            GameObject btn = Instantiate(enemyButtonPrefab, enemyButtonParent);
-            var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
-            string indicator = "";
-            if (enemies[i].IsBlocking) indicator = " B!";
-            else if (enemies[i].CombatStyle == CombatStyle.Evade && enemies[i].IsEvading) indicator = " E!";
-            tmp.text = $"{enemies[i].Name}{indicator}\nHP: {enemies[i].CurrentHP}/{enemies[i].MaxHP}";
-
-            var button = btn.GetComponent<Button>();
-            button.onClick.AddListener(() =>
-            {
-                TurnCombatManager.Instance.SelectEnemy(enemyIndex);
-                HighlightSelectedEnemy(enemyButtons.IndexOf(button));
-            });
-            enemyButtons.Add(button);
-        }
-
-        HighlightSelectedEnemy(highlightedIndex);
+        // Now handled by CombatSpriteManager
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
     }
 
     public void HighlightSelectedEnemy(int index)
     {
         highlightedIndex = index;
-        for (int i = 0; i < enemyButtons.Count; i++)
-        {
-            var colors = enemyButtons[i].colors;
-            colors.normalColor = (i == index) ? Color.green : Color.white;
-            colors.highlightedColor = (i == index) ? Color.green : new Color(0.9f, 0.9f, 0.9f);
-            colors.selectedColor = (i == index) ? Color.green : Color.white;
-            enemyButtons[i].colors = colors;
-        }
+        CombatSpriteManager.Instance?.HighlightSelectedEnemy(index);
     }
 
     public void SetPlayerButtonsActive(bool active, CombatStyle style = CombatStyle.Block)

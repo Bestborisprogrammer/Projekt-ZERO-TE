@@ -63,6 +63,7 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.UpdateAllHP(party, enemies);
         combatUI.SetupCombatSprites(party, enemies);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         StartTurn();
     }
 
@@ -78,6 +79,7 @@ public class TurnCombatManager : MonoBehaviour
 
         combatUI.UpdateTurnText(current.Name);
         combatUI.UpdateAllHP(party, enemies);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
 
         if (current.IsFrozen)
         {
@@ -229,6 +231,7 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.UpdateAllHP(party, enemies);
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
 
         if (hit && !target.IsAlive)
         {
@@ -252,6 +255,7 @@ public class TurnCombatManager : MonoBehaviour
         Combatant blocker = turnOrder[currentTurnIndex];
         blocker.SetBlocking(true);
         combatUI.UpdateAllHP(party, enemies);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         combatUI.ShowCombatLog($"{blocker.Name} guards! Damage reduction: {blocker.BlockReduction * 100f:F1}%",
             () => NextTurn());
     }
@@ -261,6 +265,7 @@ public class TurnCombatManager : MonoBehaviour
         Combatant evader = turnOrder[currentTurnIndex];
         evader.SetEvading(true);
         combatUI.UpdateAllHP(party, enemies);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         combatUI.ShowCombatLog($"{evader.Name} readies an evade! Dodge chance: {evader.EvadeChance * 100f:F1}%",
             () => NextTurn());
     }
@@ -295,6 +300,7 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.UpdateAllHP(party, enemies);
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
 
         if (hit && !target.IsAlive)
         {
@@ -326,15 +332,15 @@ public class TurnCombatManager : MonoBehaviour
             if (attacker.CombatStyle == CombatStyle.Block)
             {
                 attacker.SetBlocking(true);
-                combatUI.ShowCombatLog($"{attacker.Name} guards! (B! - {attacker.BlockReduction * 100f:F1}% reduction)");
+                combatUI.ShowCombatLog($"{attacker.Name} guards! (B! - {attacker.BlockReduction * 100f:F1}% reduction)",
+                    () => ProcessDotsAndNextTurn(attacker));
             }
             else
             {
                 attacker.SetEvading(true);
-                combatUI.ShowCombatLog($"{attacker.Name} readies an evade! Dodge: {attacker.EvadeChance * 100f:F1}%");
+                combatUI.ShowCombatLog($"{attacker.Name} readies an evade! Dodge: {attacker.EvadeChance * 100f:F1}%",
+                    () => ProcessDotsAndNextTurn(attacker));
             }
-
-            ProcessDotsAndNextTurn(attacker);
             return;
         }
 
@@ -364,7 +370,9 @@ public class TurnCombatManager : MonoBehaviour
         }
 
         combatUI.UpdateAllHP(party, enemies);
-        ProcessDotsAndNextTurn(attacker);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+
+        combatUI.ShowCombatLog("", () => ProcessDotsAndNextTurn(attacker));
     }
 
     void ProcessDotsAndNextTurn(Combatant attacker)
@@ -377,6 +385,7 @@ public class TurnCombatManager : MonoBehaviour
             {
                 combatUI.UpdateAllHP(party, enemies);
                 combatUI.BuildEnemyTargetButtons(enemies);
+                CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
 
                 if (!attacker.IsAlive)
                 {
@@ -399,6 +408,7 @@ public class TurnCombatManager : MonoBehaviour
         {
             combatUI.UpdateAllHP(party, enemies);
             combatUI.BuildEnemyTargetButtons(enemies);
+            CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
 
             if (PartyManager.Instance.IsGameOver())
             {

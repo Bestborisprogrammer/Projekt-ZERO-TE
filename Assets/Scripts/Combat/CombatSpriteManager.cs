@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
+using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -14,6 +16,14 @@ public class CombatSpriteManager : MonoBehaviour
 
     private Dictionary<string, Image> spriteMap = new();
     private Dictionary<string, RectTransform> rectMap = new();
+    private Dictionary<string, TextMeshProUGUI> enemyLabelMap = new();
+    private Dictionary<string, Image> enemyContainerBGMap = new();
+    private List<string> enemyNameOrder = new();
+
+    // Colors
+    private Color normalColor = new Color(0f, 0f, 0f, 0.5f);
+    private Color selectedColor = new Color(0.2f, 0.8f, 0.2f, 0.7f);
+    private Color defeatedColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
 
     void Awake()
     {
@@ -25,6 +35,9 @@ public class CombatSpriteManager : MonoBehaviour
     {
         spriteMap.Clear();
         rectMap.Clear();
+        enemyLabelMap.Clear();
+        enemyContainerBGMap.Clear();
+        enemyNameOrder.Clear();
 
         foreach (Transform child in partySpritesParent) Destroy(child.gameObject);
         foreach (Transform child in enemySpritesParent) Destroy(child.gameObject);
@@ -43,28 +56,131 @@ public class CombatSpriteManager : MonoBehaviour
             if (so.portrait != null)
                 img.sprite = so.portrait;
 
-            var rt = obj.GetComponent<RectTransform>();
             spriteMap[member.Name] = img;
-            rectMap[member.Name] = rt;
+            rectMap[member.Name] = obj.GetComponent<RectTransform>();
         }
 
         // Enemy sprites – right side
-        foreach (var enemy in enemies)
+        for (int i = 0; i < enemies.Count; i++)
         {
+            var enemy = enemies[i];
+            enemyNameOrder.Add(enemy.Name);
+
             var so = EncounterManager.CurrentEnemies
                 .Find(e => e.enemyName == enemy.Name);
             if (so == null) continue;
 
-            GameObject obj = Instantiate(combatSpritePrefab, enemySpritesParent);
-            obj.name = enemy.Name;
+            int capturedIndex = i;
 
-            var img = obj.GetComponent<Image>();
+            // Container
+            GameObject container = new GameObject($"EnemyContainer_{enemy.Name}");
+            container.transform.SetParent(enemySpritesParent, false);
+
+            var containerRT = container.AddComponent<RectTransform>();
+            containerRT.sizeDelta = new Vector2(130, 170);
+
+            // Background highlight – green when selected
+            var containerBG = container.AddComponent<Image>();
+            containerBG.color = normalColor;
+            enemyContainerBGMap[enemy.Name] = containerBG;
+
+            // Make whole container clickable
+            var btn = container.AddComponent<Button>();
+            btn.onClick.AddListener(() =>
+            {
+                TurnCombatManager.Instance.SelectEnemy(capturedIndex);
+                HighlightSelectedEnemy(capturedIndex);
+            });
+
+            // Remove default button transition so our color logic works
+            var colors = btn.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = Color.white;
+            colors.pressedColor = Color.white;
+            colors.selectedColor = Color.white;
+            btn.colors = colors;
+            btn.transition = Selectable.Transition.None;
+
+            var layout = container.AddComponent<VerticalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.spacing = 4;
+            layout.childControlHeight = false;
+            layout.childControlWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childForceExpandWidth = true;
+            layout.padding = new RectOffset(4, 4, 4, 4);
+
+            // HP Label
+            GameObject labelObj = new GameObject("HPLabel");
+            labelObj.transform.SetParent(container.transform, false);
+
+            var labelRT = labelObj.AddComponent<RectTransform>();
+            labelRT.sizeDelta = new Vector2(122, 35);
+
+            var label = labelObj.AddComponent<TextMeshProUGUI>();
+            label.fontSize = 11;
+            label.alignment = TextAlignmentOptions.Center;
+            label.text = $"{enemy.Name}\nHP: {enemy.CurrentHP}/{enemy.MaxHP}";
+            label.color = Color.white;
+            label.raycastTarget = false;
+            enemyLabelMap[enemy.Name] = label;
+
+            // Sprite
+            GameObject spriteObj = Instantiate(combatSpritePrefab, container.transform);
+            spriteObj.name = enemy.Name;
+
+            // Disable raycast on sprite so container gets the click
+            var spriteImg = spriteObj.GetComponent<Image>();
+            spriteImg.raycastTarget = false;
+
+            var spriteRT = spriteObj.GetComponent<RectTransform>();
+            spriteRT.sizeDelta = new Vector2(120, 120);
+
             if (so.sprite != null)
-                img.sprite = so.sprite;
+                spriteImg.sprite = so.sprite;
 
-            var rt = obj.GetComponent<RectTransform>();
-            spriteMap[enemy.Name] = img;
-            rectMap[enemy.Name] = rt;
+            spriteMap[enemy.Name] = spriteImg;
+            rectMap[enemy.Name] = spriteRT;
+        }
+
+        // Auto highlight first enemy
+        if (enemies.Count > 0)
+            HighlightSelectedEnemy(0);
+    }
+
+    public void HighlightSelectedEnemy(int index)
+    {
+        for (int i = 0; i < enemyNameOrder.Count; i++)
+        {
+            string name = enemyNameOrder[i];
+            if (!enemyContainerBGMap.ContainsKey(name)) continue;
+
+            var bg = enemyContainerBGMap[name];
+
+            // Check if defeated
+            bool isDefeated = !spriteMap.ContainsKey(name) ||
+                spriteMap[name].color == new Color(0.3f, 0.3f, 0.3f, 0.5f);
+
+            if (isDefeated)
+                bg.color = defeatedColor;
+            else if (i == index)
+                bg.color = selectedColor;
+            else
+                bg.color = normalColor;
+        }
+    }
+
+    public void UpdateEnemyLabels(List<Combatant> enemies)
+    {
+        foreach (var enemy in enemies)
+        {
+            if (!enemyLabelMap.ContainsKey(enemy.Name)) continue;
+            var label = enemyLabelMap[enemy.Name];
+            if (label == null) continue;
+
+            label.text = !enemy.IsAlive
+                ? $"{enemy.Name}\nDefeated"
+                : $"{enemy.Name}\nHP: {enemy.CurrentHP}/{enemy.MaxHP}";
         }
     }
 
@@ -78,6 +194,10 @@ public class CombatSpriteManager : MonoBehaviour
     {
         if (!spriteMap.ContainsKey(name)) return;
         StartCoroutine(GreyOut(name));
+
+        // Grey out container too
+        if (enemyContainerBGMap.ContainsKey(name))
+            enemyContainerBGMap[name].color = defeatedColor;
     }
 
     IEnumerator ShakeAndFlash(string name)
@@ -88,10 +208,8 @@ public class CombatSpriteManager : MonoBehaviour
         var img = spriteMap[name];
         Vector2 originalPos = rt.anchoredPosition;
 
-        // Flash red
         img.color = Color.red;
 
-        // Shake
         float elapsed = 0f;
         float duration = 0.3f;
         float magnitude = 8f;
