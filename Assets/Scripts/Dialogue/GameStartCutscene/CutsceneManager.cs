@@ -1,11 +1,13 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class CutsceneManager : MonoBehaviour
 {
     [Header("Dialogues")]
-    public DialogueSO wakeUpDialogue;
-    public DialogueSO monsterDialogue;
+    public DialogueSO fullDialogue; // all dialogue in one SO
+    public int monsterDialogueStartIndex = 2; // which line monster starts speaking
+    public int postBattleDialogueStartIndex = 4; // which line post battle starts
 
     [Header("Monster")]
     public GameObject monsterGameObject;
@@ -14,55 +16,76 @@ public class CutsceneManager : MonoBehaviour
 
     [Header("Torch")]
     public TorchEffect torchEffect;
-    public bool roomHasTorch = true;
 
-    [Header("Encounter")]
-    public EncounterManager encounterManager;
+    [Header("Trigger")]
+    public GameObject triggerObject; // the scripted event trigger GO
 
     private Transform player;
     private bool cutsceneStarted = false;
+    private bool battleDone = false;
+    private string cutsceneSaveKey;
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
+        cutsceneSaveKey = $"cutscene_{transform.position.x}_{transform.position.y}";
+
         // Hide monster at start
         if (monsterGameObject != null)
             monsterGameObject.SetActive(false);
 
-        // Activate torch if this room has it
+        // Torch off by default
         if (torchEffect != null)
-            torchEffect.SetActive(roomHasTorch);
-
-        StartCoroutine(PlayOpeningCutscene());
+            torchEffect.SetActive(false);
     }
 
-    IEnumerator PlayOpeningCutscene()
+    // Called by ScriptedEventTrigger when player steps on it
+    public void StartCutscene()
     {
-        // Small delay before dialogue starts
-        yield return new WaitForSeconds(0.5f);
+        if (cutsceneStarted) return;
+        if (PlayerPrefs.GetInt(cutsceneSaveKey, 0) == 1) return;
+        cutsceneStarted = true;
 
-        // MC wakes up dialogue
-        bool wakeUpDone = false;
-        DialogueUI.Instance.StartDialogue(wakeUpDialogue, () => wakeUpDone = true);
-        yield return new WaitUntil(() => wakeUpDone);
+        // Disable trigger so it cant fire again
+        if (triggerObject != null)
+            triggerObject.SetActive(false);
 
-        // Player can walk around briefly
-        yield return new WaitForSeconds(3f);
+        // Activate torch effect
+        if (torchEffect != null)
+            torchEffect.SetActive(true);
+
+        StartCoroutine(PlayCutscene());
+    }
+
+    IEnumerator PlayCutscene()
+    {
+        yield return new WaitForSeconds(0.3f);
+
+        // Play lines up to monster dialogue start
+        bool part1Done = false;
+        DialogueUI.Instance.StartDialogueRange(
+            fullDialogue, 0, monsterDialogueStartIndex - 1,
+            () => part1Done = true);
+        yield return new WaitUntil(() => part1Done);
+
+        // Player can walk briefly
+        yield return new WaitForSeconds(2f);
 
         // Monster appears
         if (monsterGameObject != null)
             monsterGameObject.SetActive(true);
 
-        // Short pause before monster speaks
         yield return new WaitForSeconds(0.5f);
 
         // Monster dialogue
-        bool monsterDone = false;
-        DialogueUI.Instance.StartDialogue(monsterDialogue, () => monsterDone = true);
-        yield return new WaitUntil(() => monsterDone);
+        bool part2Done = false;
+        DialogueUI.Instance.StartDialogueRange(
+            fullDialogue, monsterDialogueStartIndex, postBattleDialogueStartIndex - 1,
+            () => part2Done = true);
+        yield return new WaitUntil(() => part2Done);
 
-        // Monster charges at player
+        // Monster charges
         StartCoroutine(MonsterCharge());
     }
 
@@ -72,7 +95,7 @@ public class CutsceneManager : MonoBehaviour
 
         var rb = monsterGameObject.GetComponent<Rigidbody2D>();
 
-        while (true)
+        while (!battleDone)
         {
             if (rb != null)
             {
@@ -86,20 +109,46 @@ public class CutsceneManager : MonoBehaviour
                     player.position,
                     monsterMoveSpeed * Time.deltaTime);
             }
-
             yield return null;
         }
     }
 
-    // Called when monster collider hits player
     public void TriggerScriptedBattle()
     {
-        if (cutsceneStarted) return;
-        cutsceneStarted = true;
+        if (battleDone) return;
+        StopCoroutine(nameof(MonsterCharge));
 
-        StopAllCoroutines();
-
-        var enemies = new System.Collections.Generic.List<EnemyStatsSO> { monsterEnemySO };
+        var enemies = new List<EnemyStatsSO> { monsterEnemySO };
         EncounterManager.Instance.StartEncounter(enemies);
+
+        EncounterManager.ActiveCutscene = this;
+    }
+
+    // Call this after returning from battle
+    public void OnBattleComplete()
+    {
+        battleDone = true;
+
+        // Disable torch
+        if (torchEffect != null)
+            torchEffect.SetActive(false);
+
+        // Destroy monster
+        if (monsterGameObject != null)
+            Destroy(monsterGameObject);
+
+        // Save that this cutscene is done
+        PlayerPrefs.SetInt(cutsceneSaveKey, 1);
+        PlayerPrefs.Save();
+
+        // Post battle dialogue
+        if (postBattleDialogueStartIndex < fullDialogue.lines.Count)
+        {
+            DialogueUI.Instance.StartDialogueRange(
+                fullDialogue,
+                postBattleDialogueStartIndex,
+                fullDialogue.lines.Count - 1,
+                null);
+        }
     }
 }

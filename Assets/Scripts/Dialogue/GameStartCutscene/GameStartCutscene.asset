@@ -16,6 +16,18 @@ MonoBehaviour:
   - speakerName: Hero
     portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
     text: Where am I..
-    typingSpeed: 1
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
+  - speakerName: ???
+    portrait: {fileID: 8605205185410670490, guid: 6017e18dd2d32164098c590f999b9bb2, type: 3}
+    text: I'll kill you!
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
+  - speakerName: Hero
+    portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
+    text: How did I do that..
+    typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

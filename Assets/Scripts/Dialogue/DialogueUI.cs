@@ -43,30 +43,30 @@ public class DialogueUI : MonoBehaviour
 
     public void StartDialogue(DialogueSO dialogue, System.Action callback = null)
     {
+        StartDialogueRange(dialogue, 0, dialogue.lines.Count - 1, callback);
+    }
+
+    public void StartDialogueRange(DialogueSO dialogue, int from, int to, System.Action callback = null)
+    {
         onComplete = callback;
         dialogueBox.SetActive(true);
 
         // Freeze player
-        var player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            var rb = player.GetComponent<Rigidbody2D>();
-            if (rb != null) rb.linearVelocity = Vector2.zero;
-            var movement = player.GetComponent<PlayerMovement2D>();
-            if (movement != null) movement.enabled = false;
-        }
+        SetPlayerMovement(false);
 
-        StartCoroutine(PlayDialogue(dialogue));
+        StartCoroutine(PlayDialogueRange(dialogue, from, to));
     }
 
-    IEnumerator PlayDialogue(DialogueSO dialogue)
+    IEnumerator PlayDialogueRange(DialogueSO dialogue, int from, int to)
     {
-        foreach (var line in dialogue.lines)
+        to = Mathf.Min(to, dialogue.lines.Count - 1);
+
+        for (int i = from; i <= to; i++)
         {
-            // Speaker name
+            var line = dialogue.lines[i];
+
             speakerText.text = line.speakerName;
 
-            // Portrait
             if (line.portrait != null)
             {
                 portraitContainer?.SetActive(true);
@@ -78,14 +78,10 @@ public class DialogueUI : MonoBehaviour
                 portraitContainer?.SetActive(false);
             }
 
-            // Typewriter effect
             yield return StartCoroutine(TypeText(line));
 
-            // Wait for input or auto advance
             if (line.autoAdvance)
-            {
                 yield return new WaitForSeconds(line.autoAdvanceDelay);
-            }
             else
             {
                 waitingForInput = true;
@@ -119,15 +115,22 @@ public class DialogueUI : MonoBehaviour
     void EndDialogue()
     {
         dialogueBox.SetActive(false);
-
-        // Unfreeze player
-        var player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-            var movement = player.GetComponent<PlayerMovement2D>();
-            if (movement != null) movement.enabled = true;
-        }
-
+        SetPlayerMovement(true);
         onComplete?.Invoke();
+        onComplete = null;
+    }
+
+    void SetPlayerMovement(bool enabled)
+    {
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
+
+        var rb = player.GetComponent<Rigidbody2D>();
+        if (rb != null && !enabled)
+            rb.linearVelocity = Vector2.zero;
+
+        var movement = player.GetComponent<PlayerMovement2D>();
+        if (movement != null)
+            movement.enabled = enabled;
     }
 }

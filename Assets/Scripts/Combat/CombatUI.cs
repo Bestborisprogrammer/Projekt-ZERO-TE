@@ -544,6 +544,12 @@ public class CombatUI : MonoBehaviour
 
         victoryXPText.text = text;
         StartCoroutine(ReturnAfterDelay(3f));
+
+        if (EncounterManager.ActiveCutscene != null)
+        {
+            EncounterManager.ActiveCutscene.OnBattleComplete();
+            EncounterManager.ActiveCutscene = null;
+        }
     }
 
     public void ShowGameOver()

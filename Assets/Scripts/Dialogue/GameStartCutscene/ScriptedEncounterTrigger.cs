@@ -2,15 +2,16 @@ using UnityEngine;
 
 public class ScriptedEncounterTrigger : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private CutsceneManager cutsceneManager;
+
     void Start()
     {
-        
+        cutsceneManager = Object.FindFirstObjectByType<CutsceneManager>();
     }
 
-    // Update is called once per frame
-    void Update()
+    void OnTriggerEnter2D(Collider2D other)
     {
-        
+        if (other.CompareTag("Player"))
+            cutsceneManager?.TriggerScriptedBattle();
     }
 }

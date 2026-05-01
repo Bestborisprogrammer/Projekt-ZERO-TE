@@ -29,4 +29,6 @@ public class EncounterManager : MonoBehaviour
         CurrentEnemies = enemies;
         SceneManager.LoadScene(combatSceneName);
     }
+
+    public static CutsceneManager ActiveCutscene { get; set; }
 }
