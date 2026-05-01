@@ -12,16 +12,18 @@ public class GearMenuPanel : MonoBehaviour
     public GameObject gearCardPrefab;
 
     [Header("Right Side - Member Slots")]
-    public Transform memberSlotsParent;
-    public GameObject memberGearBlockPrefab;
+    public Transform slotsContainer;
     public GameObject gearSlotPrefab;
+    public TextMeshProUGUI memberNameText;
+    public Button prevMemberButton;
+    public Button nextMemberButton;
 
     [Header("Starting Gear")]
     public List<GearSO> startingGear = new();
 
     public CharacterInstance selectedMember;
+    private int selectedMemberIndex = 0;
 
-    // Static so it persists across scene loads
     static bool initialized = false;
 
     void OnEnable()
@@ -31,15 +33,33 @@ public class GearMenuPanel : MonoBehaviour
             foreach (var gear in startingGear)
                 GearManager.Instance.AddGearToInventory(gear);
             initialized = true;
-            Debug.Log($"Gear inventory initialized with {startingGear.Count} items");
         }
+
+        prevMemberButton.onClick.RemoveAllListeners();
+        nextMemberButton.onClick.RemoveAllListeners();
+        prevMemberButton.onClick.AddListener(PrevMember);
+        nextMemberButton.onClick.AddListener(NextMember);
+
+        selectedMemberIndex = 0;
         Refresh();
     }
 
-    // Call this from GameInitializer to reset on new play session
-    public static void ResetInitialized()
+    public static void ResetInitialized() => initialized = false;
+
+    void PrevMember()
     {
-        initialized = false;
+        selectedMemberIndex--;
+        if (selectedMemberIndex < 0)
+            selectedMemberIndex = PartyManager.Instance.activeParty.Count - 1;
+        RefreshMemberSlots();
+    }
+
+    void NextMember()
+    {
+        selectedMemberIndex++;
+        if (selectedMemberIndex >= PartyManager.Instance.activeParty.Count)
+            selectedMemberIndex = 0;
+        RefreshMemberSlots();
     }
 
     public void Refresh()
@@ -74,40 +94,51 @@ public class GearMenuPanel : MonoBehaviour
 
     void RefreshMemberSlots()
     {
-        foreach (Transform child in memberSlotsParent)
+        foreach (Transform child in slotsContainer)
             Destroy(child.gameObject);
 
-        foreach (var member in PartyManager.Instance.activeParty)
-        {
-            GameObject block = Instantiate(memberGearBlockPrefab, memberSlotsParent);
+        var activeParty = PartyManager.Instance.activeParty;
+        if (activeParty.Count == 0) return;
 
-            var nameText = block.GetComponentInChildren<TextMeshProUGUI>();
-            if (nameText != null)
-                nameText.text = $"{member.Name}\nLv.{member.level}";
+        // Clamp index
+        selectedMemberIndex = Mathf.Clamp(selectedMemberIndex, 0, activeParty.Count - 1);
+        selectedMember = activeParty[selectedMemberIndex];
 
-            var slotsContainer = block.transform.Find("Slots");
-            if (slotsContainer == null) continue;
+        // Update name text
+        if (memberNameText != null)
+            memberNameText.text = $"{selectedMember.Name}  Lv.{selectedMember.level}" +
+                $"  ({selectedMemberIndex + 1}/{activeParty.Count})";
 
-            foreach (Transform child in slotsContainer)
-                Destroy(child.gameObject);
+        // Show/hide nav buttons
+        bool multipleMembers = activeParty.Count > 1;
+        prevMemberButton.gameObject.SetActive(multipleMembers);
+        nextMemberButton.gameObject.SetActive(multipleMembers);
 
-            SpawnSlot(slotsContainer, GearSlot.Weapon, false, member);
-            SpawnSlot(slotsContainer, GearSlot.Helmet, false, member);
-            SpawnSlot(slotsContainer, GearSlot.Torso, false, member);
-            SpawnSlot(slotsContainer, GearSlot.Legs, false, member);
-            SpawnSlot(slotsContainer, GearSlot.Feet, false, member);
-            SpawnSlot(slotsContainer, GearSlot.Ring, false, member);
-            SpawnSlot(slotsContainer, GearSlot.Ring, true, member);
-        }
+        // Spawn gear slots
+        SpawnSlot("Weapon", GearSlot.Weapon, false);
+        SpawnSlot("Helmet", GearSlot.Helmet, false);
+        SpawnSlot("Torso", GearSlot.Torso, false);
+        SpawnSlot("Legs", GearSlot.Legs, false);
+        SpawnSlot("Feet", GearSlot.Feet, false);
+        SpawnSlot("Ring 1", GearSlot.Ring, false);
+        SpawnSlot("Ring 2", GearSlot.Ring, true);
     }
 
-    void SpawnSlot(Transform parent, GearSlot slot, bool isRing2, CharacterInstance member)
+    void SpawnSlot(string label, GearSlot slot, bool isRing2)
     {
-        GameObject slotObj = Instantiate(gearSlotPrefab, parent);
+        GameObject slotObj = Instantiate(gearSlotPrefab, slotsContainer);
         var dropZone = slotObj.GetComponent<GearSlotDropZone>();
         if (dropZone != null)
-            dropZone.Setup(slot, isRing2, member);
-        else
-            Debug.LogWarning("GearSlotDropZone missing from gearSlotPrefab!");
+            dropZone.Setup(slot, isRing2, selectedMember);
+
+        // Set slot label
+        var texts = slotObj.GetComponentsInChildren<TextMeshProUGUI>();
+        if (texts.Length > 0)
+        {
+            var gear = GearManager.Instance.GetGearFor(selectedMember.Name).GetSlot(slot, isRing2);
+            texts[0].text = gear != null
+                ? $"{label}: {gear.gearName}"
+                : $"{label}: Empty";
+        }
     }
 }

@@ -37,8 +37,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 258.765, y: -50}
-  m_SizeDelta: {x: 507.53, y: 10}
+  m_AnchoredPosition: {x: 388.1, y: -90.48135}
+  m_SizeDelta: {x: 766.17, y: 100.9627}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6139432979453900764
 CanvasRenderer:
@@ -267,7 +267,7 @@ GameObject:
   - component: {fileID: 3590020182267615853}
   - component: {fileID: 7227038230813592707}
   - component: {fileID: 6826467024738847263}
-  - component: {fileID: 6773277493197061038}
+  - component: {fileID: 7968048860115712961}
   m_Layer: 5
   m_Name: GearCategoryRow
   m_TagString: Untagged
@@ -293,8 +293,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -285.73743, y: 0}
-  m_SizeDelta: {x: -571.4749, y: 0}
+  m_AnchoredPosition: {x: -574.4088, y: 0}
+  m_SizeDelta: {x: -1148.8176, y: -1025}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &771622675174976949
 CanvasRenderer:
@@ -352,11 +352,11 @@ MonoBehaviour:
     m_Top: 5
     m_Bottom: 5
   m_ChildAlignment: 0
-  m_Spacing: 5
+  m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
-  m_ChildControlHeight: 1
+  m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
@@ -377,7 +377,7 @@ MonoBehaviour:
   itemListParent: {fileID: 3785632621930326977}
   gearCardPrefab: {fileID: 0}
   slot: 0
---- !u!114 &6773277493197061038
+--- !u!114 &7968048860115712961
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -386,11 +386,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 4545737278007846712}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_HorizontalFit: 0
-  m_VerticalFit: 2
+  m_IgnoreLayout: 0
+  m_MinWidth: -1
+  m_MinHeight: 55
+  m_PreferredWidth: -1
+  m_PreferredHeight: 55
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &5787382146432322814
 GameObject:
   m_ObjectHideFlags: 0
@@ -403,7 +409,6 @@ GameObject:
   - component: {fileID: 6270534016619262421}
   - component: {fileID: 6505834843380900217}
   - component: {fileID: 7719587840120782357}
-  - component: {fileID: 2195955974977206476}
   m_Layer: 5
   m_Name: ItemListParent
   m_TagString: Untagged
@@ -427,8 +432,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 203.93794, y: -5}
-  m_SizeDelta: {x: 407.8759, y: 10}
+  m_AnchoredPosition: {x: 383.08, y: -51}
+  m_SizeDelta: {x: 766.17, y: 100.9627}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6270534016619262421
 CanvasRenderer:
@@ -486,7 +491,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 5
+  m_Spacing: 8
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 1
@@ -494,20 +499,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &2195955974977206476
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5787382146432322814}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 0
-  m_VerticalFit: 2
 --- !u!1 &8705113533066950380
 GameObject:
   m_ObjectHideFlags: 0
@@ -546,7 +537,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 500, y: 0}
+  m_SizeDelta: {x: 769.1489, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6410009074262040942
 CanvasRenderer:
@@ -656,9 +647,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 10
+  m_MinHeight: 100
   m_PreferredWidth: -1
-  m_PreferredHeight: 35
+  m_PreferredHeight: 200
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
