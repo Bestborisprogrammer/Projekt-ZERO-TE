@@ -77,7 +77,7 @@ public class CombatSpriteManager : MonoBehaviour
             container.transform.SetParent(enemySpritesParent, false);
 
             var containerRT = container.AddComponent<RectTransform>();
-            containerRT.sizeDelta = new Vector2(130, 170);
+            containerRT.sizeDelta = new Vector2(240, 280);
 
             // Background highlight – green when selected
             var containerBG = container.AddComponent<Image>();
@@ -118,7 +118,7 @@ public class CombatSpriteManager : MonoBehaviour
             labelRT.sizeDelta = new Vector2(122, 35);
 
             var label = labelObj.AddComponent<TextMeshProUGUI>();
-            label.fontSize = 11;
+            label.fontSize = 30;
             label.alignment = TextAlignmentOptions.Center;
             label.text = $"{enemy.Name}\nHP: {enemy.CurrentHP}/{enemy.MaxHP}";
             label.color = Color.white;

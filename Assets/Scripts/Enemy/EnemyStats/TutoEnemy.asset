@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 349a4d0a74bff2e4fa15891083cd5fb8, type: 3}
+  m_Name: TutoEnemy
+  m_EditorClassIdentifier: 
+  enemyName: TestEnemy1
+  sprite: {fileID: 8605205185410670490, guid: 6017e18dd2d32164098c590f999b9bb2, type: 3}
+  level: 1
+  maxHP: 100
+  attack: 6
+  defense: 2
+  speed: 4
+  maxMana: 10
+  xpReward: 30
+  goldReward: 10
+  itemDrops: []
+  gearDrops: []
+  affinities: 
+  spells:
+  - {fileID: 11400000, guid: 142405572d170d8458d836788f895c74, type: 2}
+  combatStyle: 1
