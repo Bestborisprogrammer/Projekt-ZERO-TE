@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a9ff481f6c708747b6a9617fff92311, type: 3}
-  m_Name: MonsterGameStartCutscene
+  m_Name: TutoWin
   m_EditorClassIdentifier: 
   lines:
-  - speakerName: ???
-    portrait: {fileID: 8605205185410670490, guid: 6017e18dd2d32164098c590f999b9bb2, type: 3}
-    text: I'm gonna kill you!
-    typingSpeed: 1
+  - speakerName: Hero
+    portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
+    text: How did I win.. I've never fought anyone ever... trash ahh dialogue
+    typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

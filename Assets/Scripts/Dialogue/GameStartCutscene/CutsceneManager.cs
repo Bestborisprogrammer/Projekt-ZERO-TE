@@ -4,111 +4,74 @@ using System.Collections.Generic;
 
 public class CutsceneManager : MonoBehaviour
 {
-    [Header("Dialogues")]
-    public DialogueSO fullDialogue; // all dialogue in one SO
-    public int monsterDialogueStartIndex = 2; // which line monster starts speaking
-    public int postBattleDialogueStartIndex = 4; // which line post battle starts
-
     [Header("Monster")]
     public GameObject monsterGameObject;
-    public float monsterMoveSpeed = 2f;
+    public float monsterMoveSpeed = 3f;
     public EnemyStatsSO monsterEnemySO;
 
-    [Header("Torch")]
-    public TorchEffect torchEffect;
-
-    [Header("Trigger")]
-    public GameObject triggerObject; // the scripted event trigger GO
+    [Header("Fog")]
+    public FogEffect fogEffect;
 
     private Transform player;
-    private bool cutsceneStarted = false;
     private bool battleDone = false;
-    private string cutsceneSaveKey;
+    private Coroutine chargeCoroutine;
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
-        cutsceneSaveKey = $"cutscene_{transform.position.x}_{transform.position.y}";
-
-        // Hide monster at start
         if (monsterGameObject != null)
             monsterGameObject.SetActive(false);
 
-        // Torch off by default
-        if (torchEffect != null)
-            torchEffect.SetActive(false);
+        if (fogEffect != null)
+            fogEffect.SetActive(false);
     }
 
-    // Called by ScriptedEventTrigger when player steps on it
-    public void StartCutscene()
+    public void StartMonsterSequence()
     {
-        if (cutsceneStarted) return;
-        if (PlayerPrefs.GetInt(cutsceneSaveKey, 0) == 1) return;
-        cutsceneStarted = true;
-
-        // Disable trigger so it cant fire again
-        if (triggerObject != null)
-            triggerObject.SetActive(false);
-
-        // Activate torch effect
-        if (torchEffect != null)
-            torchEffect.SetActive(true);
-
-        StartCoroutine(PlayCutscene());
+        Debug.Log("[CUTSCENE] StartMonsterSequence called");
+        StartCoroutine(MonsterSequence());
     }
 
-    IEnumerator PlayCutscene()
+    IEnumerator MonsterSequence()
     {
-        yield return new WaitForSeconds(0.3f);
+        if (fogEffect != null)
+            fogEffect.SetActive(true);
 
-        // Play lines up to monster dialogue start
-        bool part1Done = false;
-        DialogueUI.Instance.StartDialogueRange(
-            fullDialogue, 0, monsterDialogueStartIndex - 1,
-            () => part1Done = true);
-        yield return new WaitUntil(() => part1Done);
+        yield return new WaitForSeconds(1f);
 
-        // Player can walk briefly
-        yield return new WaitForSeconds(2f);
-
-        // Monster appears
         if (monsterGameObject != null)
+        {
             monsterGameObject.SetActive(true);
+            Debug.Log("[CUTSCENE] Monster spawned");
+        }
 
-        yield return new WaitForSeconds(0.5f);
-
-        // Monster dialogue
-        bool part2Done = false;
-        DialogueUI.Instance.StartDialogueRange(
-            fullDialogue, monsterDialogueStartIndex, postBattleDialogueStartIndex - 1,
-            () => part2Done = true);
-        yield return new WaitUntil(() => part2Done);
-
-        // Monster charges
-        StartCoroutine(MonsterCharge());
+        // Second dialogue trigger handles monster dialogue
+        // Just start charging after spawn delay
+        yield return new WaitForSeconds(0f);
+        chargeCoroutine = StartCoroutine(MonsterCharge());
     }
 
     IEnumerator MonsterCharge()
     {
-        if (monsterGameObject == null || player == null) yield break;
+        if (monsterGameObject == null) yield break;
 
         var rb = monsterGameObject.GetComponent<Rigidbody2D>();
 
         while (!battleDone)
         {
+            if (monsterGameObject == null || player == null) yield break;
+
+            Vector2 dir = ((Vector2)player.position - (Vector2)monsterGameObject.transform.position).normalized;
+
             if (rb != null)
-            {
-                Vector2 dir = (player.position - monsterGameObject.transform.position).normalized;
                 rb.linearVelocity = dir * monsterMoveSpeed;
-            }
             else
-            {
                 monsterGameObject.transform.position = Vector2.MoveTowards(
                     monsterGameObject.transform.position,
                     player.position,
                     monsterMoveSpeed * Time.deltaTime);
-            }
+
             yield return null;
         }
     }
@@ -116,39 +79,30 @@ public class CutsceneManager : MonoBehaviour
     public void TriggerScriptedBattle()
     {
         if (battleDone) return;
-        StopCoroutine(nameof(MonsterCharge));
-
-        var enemies = new List<EnemyStatsSO> { monsterEnemySO };
-        EncounterManager.Instance.StartEncounter(enemies);
-
-        EncounterManager.ActiveCutscene = this;
-    }
-
-    // Call this after returning from battle
-    public void OnBattleComplete()
-    {
+        Debug.Log("[CUTSCENE] Battle triggered!");
         battleDone = true;
 
-        // Disable torch
-        if (torchEffect != null)
-            torchEffect.SetActive(false);
+        if (chargeCoroutine != null)
+            StopCoroutine(chargeCoroutine);
 
-        // Destroy monster
+        if (monsterGameObject != null)
+        {
+            var rb = monsterGameObject.GetComponent<Rigidbody2D>();
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+        }
+
+        EncounterManager.ActiveCutscene = this;
+        EncounterManager.Instance.StartEncounter(new List<EnemyStatsSO> { monsterEnemySO });
+    }
+
+    public void OnBattleComplete()
+    {
+        Debug.Log("[CUTSCENE] Battle complete!");
+
+        if (fogEffect != null)
+            fogEffect.SetActive(false);
+
         if (monsterGameObject != null)
             Destroy(monsterGameObject);
-
-        // Save that this cutscene is done
-        PlayerPrefs.SetInt(cutsceneSaveKey, 1);
-        PlayerPrefs.Save();
-
-        // Post battle dialogue
-        if (postBattleDialogueStartIndex < fullDialogue.lines.Count)
-        {
-            DialogueUI.Instance.StartDialogueRange(
-                fullDialogue,
-                postBattleDialogueStartIndex,
-                fullDialogue.lines.Count - 1,
-                null);
-        }
     }
 }

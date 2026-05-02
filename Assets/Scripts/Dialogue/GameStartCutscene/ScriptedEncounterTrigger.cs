@@ -2,12 +2,7 @@ using UnityEngine;
 
 public class ScriptedEncounterTrigger : MonoBehaviour
 {
-    private CutsceneManager cutsceneManager;
-
-    void Start()
-    {
-        cutsceneManager = Object.FindFirstObjectByType<CutsceneManager>();
-    }
+    public CutsceneManager cutsceneManager;
 
     void OnTriggerEnter2D(Collider2D other)
     {

@@ -526,6 +526,13 @@ public class CombatUI : MonoBehaviour
 
     public void ShowVictory(int xp, int gold, DropResult drops)
     {
+        if (EncounterManager.ActiveCutscene != null)
+        {
+            EncounterManager.ActiveCutscene.OnBattleComplete();
+            EncounterManager.ActiveCutscene = null;
+        }
+
+        victoryPanel.SetActive(true);
         victoryPanel.SetActive(true);
         string text = $"Victory!\n+{xp} XP  +{gold} Gold\n";
 

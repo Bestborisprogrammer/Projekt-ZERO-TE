@@ -3239,6 +3239,99 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &500029351
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 500029354}
+  - component: {fileID: 500029353}
+  - component: {fileID: 500029352}
+  m_Layer: 0
+  m_Name: FogExitZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &500029352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 500029351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ff581b00be879146b791e3ddb7ebf45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fogEffect: {fileID: 1661874074}
+  activateOnEnter: 0
+--- !u!61 &500029353
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 500029351}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 4.04994, y: 0.5130024}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 17.567715, y: 9.415066}
+  m_EdgeRadius: 0
+--- !u!4 &500029354
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 500029351}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1173.1293, y: -464.79697, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1661874073}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &516773219
 GameObject:
   m_ObjectHideFlags: 0
@@ -5020,9 +5113,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   merchantName: Boris
-  interactRange: 4
   interactPrompt: {fileID: 1380160440}
   shopPanel: {fileID: 388959622}
+  greetingDialogue: {fileID: 11400000, guid: 662543e17c5d5404fb507cadc2d8ff3a, type: 2}
 --- !u!58 &1023193725
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -6694,6 +6787,117 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1625291701}
   m_CullTransparentMesh: 1
+--- !u!1 &1652719578
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1652719581}
+  - component: {fileID: 1652719580}
+  - component: {fileID: 1652719579}
+  m_Layer: 0
+  m_Name: ScriptedEventTrigger2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1652719579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1652719578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ede7ae8b3943e64c995949756c5434a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogue: {fileID: 11400000, guid: c4bc3e5cc9a5e3b46b9bb9c225864f49, type: 2}
+  triggerType: 0
+  oneTimeOnly: 1
+  promptText: {fileID: 0}
+  promptMessage: E - Talk
+  onDialogueComplete:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1657635818}
+        m_TargetAssemblyTypeName: CutsceneManager, Assembly-CSharp
+        m_MethodName: StartMonsterSequence
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!61 &1652719580
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1652719578}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 1.2166595}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 1, y: 15.271095}
+  m_EdgeRadius: 0
+--- !u!4 &1652719581
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1652719578}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -111.9, y: -55.6, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1657635817
 GameObject:
   m_ObjectHideFlags: 0
@@ -6723,14 +6927,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fea560e4494d1b42808ddcd1c668183, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fullDialogue: {fileID: 11400000, guid: ff4ca24ca786de24d88341705a834563, type: 2}
-  monsterDialogueStartIndex: 1
-  postBattleDialogueStartIndex: 2
   monsterGameObject: {fileID: 2119892865}
   monsterMoveSpeed: 100
   monsterEnemySO: {fileID: 11400000, guid: 7c90c3ccb5cb64a4594a2a0d5d1fde19, type: 2}
-  torchEffect: {fileID: 1661874072}
-  triggerObject: {fileID: 1919220870}
+  fogEffect: {fileID: 1661874074}
 --- !u!4 &1657635819
 Transform:
   m_ObjectHideFlags: 0
@@ -8907,30 +9107,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1661874073}
-  - component: {fileID: 1661874072}
+  - component: {fileID: 1661874074}
   m_Layer: 0
-  m_Name: TorchEffect
+  m_Name: FogEffect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1661874072
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1661874071}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 017e3db971f9a2b409f631027c5ae5e6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  radius: 250
-  darknessColor: {r: 0, g: 0, b: 0, a: 0.95}
-  player: {fileID: 547836950}
-  canvas: {fileID: 1234272648}
 --- !u!4 &1661874073
 Transform:
   m_ObjectHideFlags: 0
@@ -8943,9 +9127,29 @@ Transform:
   m_LocalPosition: {x: 1167.5293, y: 422.59695, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1761160905}
+  - {fileID: 500029354}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1661874074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1661874071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5b89355a26b002429ef37bef1a7769c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  radius: 150
+  darknessColor: {r: 0, g: 0, b: 0, a: 0.95}
+  player: {fileID: 547836950}
+  canvas: {fileID: 1234272648}
+  enterZone: {fileID: 0}
+  exitZone: {fileID: 0}
 --- !u!1 &1691630529
 GameObject:
   m_ObjectHideFlags: 0
@@ -9093,6 +9297,99 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 268218729}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1761160902
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1761160905}
+  - component: {fileID: 1761160904}
+  - component: {fileID: 1761160903}
+  m_Layer: 0
+  m_Name: FogEnterZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1761160903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1761160902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ff581b00be879146b791e3ddb7ebf45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fogEffect: {fileID: 1661874074}
+  activateOnEnter: 1
+--- !u!61 &1761160904
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1761160902}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 14.664589, y: -2.778078}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 30.329178, y: 15.003437}
+  m_EdgeRadius: 0
+--- !u!4 &1761160905
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1761160902}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1307.2292, y: -474.29697, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1661874073}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1773270018
 GameObject:
@@ -9684,8 +9981,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1919220873}
-  - component: {fileID: 1919220872}
   - component: {fileID: 1919220871}
+  - component: {fileID: 1919220874}
   m_Layer: 0
   m_Name: ScriptedEventTrigger
   m_TagString: Untagged
@@ -9739,19 +10036,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 15.271095}
   m_EdgeRadius: 0
---- !u!114 &1919220872
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1919220870}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 38d6494fe4042bd40a70b37089cf7972, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cutsceneManager: {fileID: 1657635818}
 --- !u!4 &1919220873
 Transform:
   m_ObjectHideFlags: 0
@@ -9760,13 +10044,45 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1919220870}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -130.5, y: -55.9, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -130.5, y: -55.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1919220874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1919220870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ede7ae8b3943e64c995949756c5434a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogue: {fileID: 11400000, guid: ff4ca24ca786de24d88341705a834563, type: 2}
+  triggerType: 0
+  oneTimeOnly: 1
+  promptText: {fileID: 0}
+  promptMessage: E - Talk
+  onDialogueComplete:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1657635818}
+        m_TargetAssemblyTypeName: CutsceneManager, Assembly-CSharp
+        m_MethodName: StartMonsterSequence
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1970223174
 GameObject:
   m_ObjectHideFlags: 0
@@ -10346,6 +10662,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df93524fddacd1f4b909da76b08c5abf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cutsceneManager: {fileID: 1657635818}
 --- !u!1 &2121913987
 GameObject:
   m_ObjectHideFlags: 0
@@ -10519,23 +10836,24 @@ SceneRoots:
   m_Roots:
   - {fileID: 519420032}
   - {fileID: 619394802}
+  - {fileID: 1823131082}
   - {fileID: 547836950}
   - {fileID: 1358174829}
-  - {fileID: 2119892872}
+  - {fileID: 186774059}
   - {fileID: 1234272649}
   - {fileID: 1311096024}
   - {fileID: 1023193727}
   - {fileID: 1534410107}
   - {fileID: 268218729}
   - {fileID: 1970467084}
+  - {fileID: 269733505}
   - {fileID: 770918525}
   - {fileID: 39032943}
   - {fileID: 1207415322}
   - {fileID: 161992799}
   - {fileID: 702884215}
-  - {fileID: 1823131082}
-  - {fileID: 269733505}
-  - {fileID: 186774059}
   - {fileID: 1661874073}
   - {fileID: 1657635819}
   - {fileID: 1919220873}
+  - {fileID: 1652719581}
+  - {fileID: 2119892872}
