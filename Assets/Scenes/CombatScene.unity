@@ -4076,7 +4076,7 @@ MonoBehaviour:
   combatLogText: {fileID: 1020887938}
   partyHPParent: {fileID: 1501494850}
   partyHPEntryPrefab: {fileID: 4207535375213206682, guid: b9cf72d32bd7ab9468e1c6f55ec0f107, type: 3}
-  enemyButtonParent: {fileID: 0}
+  enemyButtonParent: {fileID: 287241627}
   enemyButtonPrefab: {fileID: 2609097840657630335, guid: 42ee573d4e0439f45b67d0ed5f851157, type: 3}
   basicAttackButton: {fileID: 1281502419}
   skillsButton: {fileID: 2063348832}

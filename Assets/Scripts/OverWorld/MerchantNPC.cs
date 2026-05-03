@@ -9,13 +9,18 @@ public class MerchantNPC : MonoBehaviour
     [Header("Interaction")]
     public TextMeshProUGUI interactPrompt;
     public ShopPanel shopPanel;
-    public DialogueSO greetingDialogue; // optional short greeting
+    public DialogueSO greetingDialogue;
 
     private bool playerInRange = false;
     private bool shopOpen = false;
+    private bool greetingPlayed = false;
+    private string greetingSaveKey;
 
     void Start()
     {
+        greetingSaveKey = $"merchant_greeting_{merchantName}";
+        greetingPlayed = PlayerPrefs.GetInt(greetingSaveKey, 0) == 1;
+
         if (interactPrompt != null)
         {
             interactPrompt.text = $"E - Talk to {merchantName}";
@@ -27,22 +32,20 @@ public class MerchantNPC : MonoBehaviour
 
     void Update()
     {
-        if (!playerInRange) return;
-        if (shopOpen) return;
+        if (!playerInRange || shopOpen) return;
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (greetingDialogue != null)
+            if (greetingDialogue != null && !greetingPlayed)
             {
-                // Hide prompt during dialogue
                 if (interactPrompt != null)
                     interactPrompt.gameObject.SetActive(false);
 
-                DialogueUI.Instance.StartDialogue(greetingDialogue, () =>
-                {
-                    // Open shop after dialogue finishes
-                    OpenShop();
-                });
+                greetingPlayed = true;
+                PlayerPrefs.SetInt(greetingSaveKey, 1);
+                PlayerPrefs.Save();
+
+                DialogueUI.Instance.StartDialogue(greetingDialogue, () => OpenShop());
             }
             else
             {
@@ -55,7 +58,7 @@ public class MerchantNPC : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
         playerInRange = true;
-        if (interactPrompt != null)
+        if (!shopOpen && interactPrompt != null)
             interactPrompt.gameObject.SetActive(true);
     }
 
@@ -71,11 +74,14 @@ public class MerchantNPC : MonoBehaviour
     void OpenShop()
     {
         shopOpen = true;
+        if (interactPrompt != null)
+            interactPrompt.gameObject.SetActive(false);
         shopPanel?.OpenShop(merchantName);
     }
 
     public void CloseShop()
     {
+        if (!shopOpen) return;
         shopOpen = false;
         shopPanel?.CloseShop();
         if (playerInRange && interactPrompt != null)

@@ -498,14 +498,17 @@ public class CombatUI : MonoBehaviour
     }
 
     public void SetPlayerButtonsActive(bool active, CombatStyle style = CombatStyle.Block)
+{
+    if (active) ResetActionTaken();
+
+    basicAttackButton.interactable = active;
+    skillsButton.interactable = active;
+    itemsButton.interactable = active;
+    blockButton.interactable = active;
+
+    // Only update block button listener when enabling
+    if (active)
     {
-        if (active) ResetActionTaken();
-
-        basicAttackButton.interactable = active;
-        skillsButton.interactable = active;
-        itemsButton.interactable = active;
-        blockButton.interactable = active;
-
         blockButton.onClick.RemoveAllListeners();
         if (style == CombatStyle.Block)
         {
@@ -517,12 +520,13 @@ public class CombatUI : MonoBehaviour
             if (evadeSprite != null) blockButtonImage.sprite = evadeSprite;
             blockButton.onClick.AddListener(OnEvade);
         }
-
-        if (!active) CloseAllPanels();
-
-        foreach (var btn in enemyButtons)
-            btn.interactable = active;
     }
+
+    if (!active) CloseAllPanels();
+
+    foreach (var btn in enemyButtons)
+        btn.interactable = active;
+}
 
     public void ShowVictory(int xp, int gold, DropResult drops)
     {
