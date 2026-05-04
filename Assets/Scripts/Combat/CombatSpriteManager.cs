@@ -77,7 +77,7 @@ public class CombatSpriteManager : MonoBehaviour
             container.transform.SetParent(enemySpritesParent, false);
 
             var containerRT = container.AddComponent<RectTransform>();
-            containerRT.sizeDelta = new Vector2(240, 280);
+            containerRT.sizeDelta = new Vector2(250, 290);
 
             // Background highlight – green when selected
             var containerBG = container.AddComponent<Image>();
@@ -115,7 +115,7 @@ public class CombatSpriteManager : MonoBehaviour
             labelObj.transform.SetParent(container.transform, false);
 
             var labelRT = labelObj.AddComponent<RectTransform>();
-            labelRT.sizeDelta = new Vector2(122, 35);
+            labelRT.sizeDelta = new Vector2(242, 45);
 
             var label = labelObj.AddComponent<TextMeshProUGUI>();
             label.fontSize = 30;
@@ -134,7 +134,7 @@ public class CombatSpriteManager : MonoBehaviour
             spriteImg.raycastTarget = false;
 
             var spriteRT = spriteObj.GetComponent<RectTransform>();
-            spriteRT.sizeDelta = new Vector2(120, 120);
+            spriteRT.sizeDelta = new Vector2(240, 240);
 
             if (so.sprite != null)
                 spriteImg.sprite = so.sprite;

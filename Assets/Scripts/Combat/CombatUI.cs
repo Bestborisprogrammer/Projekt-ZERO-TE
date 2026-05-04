@@ -105,7 +105,9 @@ public class CombatUI : MonoBehaviour
     {
         if (waitingForInput)
         {
-            if (Input.anyKeyDown && !Input.GetMouseButtonDown(0) && !Input.GetMouseButtonDown(1))
+            if (Input.anyKeyDown &&
+                !Input.GetMouseButtonDown(0) &&
+                !Input.GetMouseButtonDown(1))
                 waitingForInput = false;
         }
     }
@@ -125,15 +127,7 @@ public class CombatUI : MonoBehaviour
     // ── Log System ────────────────────────────────
     public void ShowCombatLog(string message, System.Action callback = null)
     {
-        if (string.IsNullOrEmpty(message))
-        {
-            logQueue.Enqueue(("", callback));
-        }
-        else
-        {
-            logQueue.Enqueue((message, callback));
-        }
-
+        logQueue.Enqueue((message, callback));
         if (!isShowingLog)
             StartCoroutine(ProcessLogQueue());
     }
@@ -159,6 +153,8 @@ public class CombatUI : MonoBehaviour
 
             if (string.IsNullOrEmpty(message))
             {
+                // Clear log and fire callback immediately - no input needed
+                combatLogText.text = "";
                 callback?.Invoke();
                 continue;
             }
@@ -275,7 +271,7 @@ public class CombatUI : MonoBehaviour
         }
 
         int totalPages = Mathf.Max(1, Mathf.CeilToInt((float)currentSpells.Count / spellsPerPage));
-        skillPageText.text = $"{spellPage + 1}/{totalPages}";
+        skillPageText.text = $"{spellPage + 1} / {totalPages}";
         skillPrevButton.gameObject.SetActive(totalPages > 1);
         skillNextButton.gameObject.SetActive(totalPages > 1);
     }
@@ -352,7 +348,7 @@ public class CombatUI : MonoBehaviour
         }
 
         int totalPages = Mathf.Max(1, Mathf.CeilToInt((float)currentItems.Count / itemsPerPage));
-        itemPageText.text = $"{itemPage + 1}/{totalPages}";
+        itemPageText.text = $"{itemPage + 1} / {totalPages}";
         itemPrevButton.gameObject.SetActive(totalPages > 1);
         itemNextButton.gameObject.SetActive(totalPages > 1);
     }
@@ -487,7 +483,8 @@ public class CombatUI : MonoBehaviour
 
     public void BuildEnemyTargetButtons(List<Combatant> enemies)
     {
-        // Now handled by CombatSpriteManager
+        // Enemy selection is handled by CombatSpriteManager
+        // Just update the labels
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
     }
 
@@ -498,35 +495,32 @@ public class CombatUI : MonoBehaviour
     }
 
     public void SetPlayerButtonsActive(bool active, CombatStyle style = CombatStyle.Block)
-{
-    if (active) ResetActionTaken();
-
-    basicAttackButton.interactable = active;
-    skillsButton.interactable = active;
-    itemsButton.interactable = active;
-    blockButton.interactable = active;
-
-    // Only update block button listener when enabling
-    if (active)
     {
-        blockButton.onClick.RemoveAllListeners();
-        if (style == CombatStyle.Block)
+        if (active) ResetActionTaken();
+
+        // Explicitly set every button
+        basicAttackButton.interactable = active;
+        skillsButton.interactable = active;
+        itemsButton.interactable = active;
+        blockButton.interactable = active;
+
+        if (active)
         {
-            if (blockSprite != null) blockButtonImage.sprite = blockSprite;
-            blockButton.onClick.AddListener(OnBlock);
+            blockButton.onClick.RemoveAllListeners();
+            if (style == CombatStyle.Block)
+            {
+                if (blockSprite != null) blockButtonImage.sprite = blockSprite;
+                blockButton.onClick.AddListener(OnBlock);
+            }
+            else
+            {
+                if (evadeSprite != null) blockButtonImage.sprite = evadeSprite;
+                blockButton.onClick.AddListener(OnEvade);
+            }
         }
-        else
-        {
-            if (evadeSprite != null) blockButtonImage.sprite = evadeSprite;
-            blockButton.onClick.AddListener(OnEvade);
-        }
+
+        if (!active) CloseAllPanels();
     }
-
-    if (!active) CloseAllPanels();
-
-    foreach (var btn in enemyButtons)
-        btn.interactable = active;
-}
 
     public void ShowVictory(int xp, int gold, DropResult drops)
     {
@@ -536,7 +530,6 @@ public class CombatUI : MonoBehaviour
             EncounterManager.ActiveCutscene = null;
         }
 
-        victoryPanel.SetActive(true);
         victoryPanel.SetActive(true);
         string text = $"Victory!\n+{xp} XP  +{gold} Gold\n";
 
@@ -555,12 +548,6 @@ public class CombatUI : MonoBehaviour
 
         victoryXPText.text = text;
         StartCoroutine(ReturnAfterDelay(3f));
-
-        if (EncounterManager.ActiveCutscene != null)
-        {
-            EncounterManager.ActiveCutscene.OnBattleComplete();
-            EncounterManager.ActiveCutscene = null;
-        }
     }
 
     public void ShowGameOver()

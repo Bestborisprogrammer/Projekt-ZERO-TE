@@ -26,12 +26,18 @@ public class FogEffect : MonoBehaviour
         if (player == null)
             player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
-        // Create overlay
-        GameObject obj = new GameObject("FogOverlay");
-        obj.transform.SetParent(canvas.transform, false);
-        obj.transform.SetAsLastSibling();
+        // Create its OWN canvas so sort order can be controlled independently
+        GameObject canvasObj = new GameObject("FogCanvas");
+        Canvas fogCanvas = canvasObj.AddComponent<Canvas>();
+        fogCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        fogCanvas.sortingOrder = 1; // BELOW dialogue which should be 50+
+        canvasObj.AddComponent<UnityEngine.UI.CanvasScaler>();
+        canvasObj.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
-        overlay = obj.AddComponent<Image>();
+        GameObject obj = new GameObject("FogOverlay");
+        obj.transform.SetParent(canvasObj.transform, false);
+
+        overlay = obj.AddComponent<UnityEngine.UI.Image>();
         overlayRT = obj.GetComponent<RectTransform>();
         overlayRT.anchorMin = Vector2.zero;
         overlayRT.anchorMax = Vector2.one;
@@ -52,37 +58,27 @@ public class FogEffect : MonoBehaviour
         }
 
         overlay.gameObject.SetActive(false);
+        canvasObj.SetActive(true);
     }
 
     void Update()
     {
         if (!isActive || player == null || mainCam == null) return;
 
-        // Check zone transitions
-        if (exitZone != null && exitZone.bounds.Contains(player.position))
-        {
-            SetActive(false);
-            return;
-        }
-        if (enterZone != null && enterZone.bounds.Contains(player.position))
-        {
-            if (!isActive) SetActive(true);
-        }
-
-        // Update shader
         if (fogMaterial != null)
         {
-            Vector2 screenPos = mainCam.WorldToScreenPoint(player.position);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                overlayRT, screenPos, null, out Vector2 localPos);
+            // Get player screen position - use center of sprite not feet
+            Vector3 worldPos = player.position + new Vector3(0, 1.7f, 0);
+            Vector2 screenPos = mainCam.WorldToScreenPoint(worldPos);
 
-            Vector2 size = overlayRT.rect.size;
-            Vector2 normalized = new Vector2(
-                (localPos.x + size.x * 0.5f) / size.x,
-                (localPos.y + size.y * 0.5f) / size.y);
+            // Convert screen pos to viewport pos (0-1 range)
+            Vector2 viewportPos = new Vector2(
+                screenPos.x / Screen.width,
+                screenPos.y / Screen.height
+            );
 
-            fogMaterial.SetVector("_PlayerPos", normalized);
-            fogMaterial.SetFloat("_Radius", radius / size.x);
+            fogMaterial.SetVector("_PlayerPos", new Vector4(viewportPos.x, viewportPos.y, 0, 0));
+            fogMaterial.SetFloat("_Radius", radius / Screen.width);
             fogMaterial.SetColor("_DarknessColor", darknessColor);
         }
     }

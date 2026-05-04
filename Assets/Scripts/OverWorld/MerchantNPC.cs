@@ -32,6 +32,14 @@ public class MerchantNPC : MonoBehaviour
 
     void Update()
     {
+        // Check if shop was closed externally
+        if (shopOpen && shopPanel != null && !shopPanel.gameObject.activeSelf)
+        {
+            shopOpen = false;
+            if (playerInRange && interactPrompt != null)
+                interactPrompt.gameObject.SetActive(true);
+        }
+
         if (!playerInRange || shopOpen) return;
 
         if (Input.GetKeyDown(KeyCode.E))

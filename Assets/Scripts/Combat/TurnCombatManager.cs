@@ -379,46 +379,45 @@ public class TurnCombatManager : MonoBehaviour
     {
         var dotLogs = attacker.ProcessStatusEffects();
 
-        if (dotLogs.Count > 0)
+        combatUI.UpdateAllHP(party, enemies);
+        combatUI.BuildEnemyTargetButtons(enemies);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+
+        if (!attacker.IsAlive)
         {
-            combatUI.ShowCombatLogs(dotLogs, () =>
+            CombatSpriteManager.Instance?.PlayDefeatedEffect(attacker.Name);
+            if (enemies.All(e => !e.IsAlive))
             {
-                combatUI.UpdateAllHP(party, enemies);
-                combatUI.BuildEnemyTargetButtons(enemies);
-                CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+                if (dotLogs.Count > 0)
+                    combatUI.ShowCombatLogs(dotLogs, () => HandleVictory());
+                else
+                    HandleVictory();
+                return;
+            }
+            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+        }
 
-                if (!attacker.IsAlive)
-                {
-                    CombatSpriteManager.Instance?.PlayDefeatedEffect(attacker.Name);
-                    if (enemies.All(e => !e.IsAlive)) { HandleVictory(); return; }
-                    selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
-                }
-
-                if (PartyManager.Instance.IsGameOver())
+        if (PartyManager.Instance.IsGameOver())
+        {
+            if (dotLogs.Count > 0)
+                combatUI.ShowCombatLogs(dotLogs, () =>
                 {
                     combatUI.ShowGameOver();
                     combatActive = false;
-                    return;
-                }
-
-                NextTurn();
-            });
-        }
-        else
-        {
-            combatUI.UpdateAllHP(party, enemies);
-            combatUI.BuildEnemyTargetButtons(enemies);
-            CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
-
-            if (PartyManager.Instance.IsGameOver())
+                });
+            else
             {
                 combatUI.ShowGameOver();
                 combatActive = false;
-                return;
             }
-
-            NextTurn();
+            return;
         }
+
+        if (dotLogs.Count > 0)
+            // NextTurn only fires after ALL dot logs are read
+            combatUI.ShowCombatLogs(dotLogs, () => NextTurn());
+        else
+            NextTurn();
     }
 
     List<EnemyManaAttackSO> GetEnemyAvailableSpells()
