@@ -9132,8 +9132,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5b89355a26b002429ef37bef1a7769c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius: 200
-  darknessColor: {r: 0, g: 0, b: 0, a: 0.95}
+  radius: 150
+  darknessColor: {r: 0, g: 0, b: 0, a: 0.99607843}
   player: {fileID: 547836950}
   canvas: {fileID: 1234272648}
   enterZone: {fileID: 1761160904}
@@ -10033,7 +10033,7 @@ Transform:
   m_GameObject: {fileID: 1919220870}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -130.5, y: -55.88, z: 0}
+  m_LocalPosition: {x: -130.5, y: -55.9, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

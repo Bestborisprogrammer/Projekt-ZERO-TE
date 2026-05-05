@@ -6,6 +6,7 @@ Shader "UI/TorchEffect"
         _PlayerPos ("Player Position", Vector) = (0.5, 0.5, 0, 0)
         _Radius ("Radius", Float) = 0.15
         _DarknessColor ("Darkness Color", Color) = (0, 0, 0, 0.95)
+        _AspectRatio ("Aspect Ratio", Float) = 1.777
     }
 
     SubShader
@@ -46,6 +47,7 @@ Shader "UI/TorchEffect"
             float4 _PlayerPos;
             float _Radius;
             float4 _DarknessColor;
+            float _AspectRatio;
 
             v2f vert(appdata v)
             {
@@ -58,10 +60,13 @@ Shader "UI/TorchEffect"
             fixed4 frag(v2f i) : SV_Target
             {
                 float2 playerPos = float2(_PlayerPos.x, _PlayerPos.y);
-                float dist = distance(i.uv, playerPos);
 
-                // Smooth edge
-                float edge = 0.02;
+                // Correct for aspect ratio to make circle truly round
+                float2 diff = i.uv - playerPos;
+                diff.x *= _AspectRatio;
+                float dist = length(diff);
+
+                float edge = 0.015;
                 float alpha = smoothstep(_Radius - edge, _Radius + edge, dist);
 
                 return float4(_DarknessColor.rgb, _DarknessColor.a * alpha);

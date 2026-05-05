@@ -3940,11 +3940,11 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1436140829}
+  - {fileID: 1202122161}
   - {fileID: 1177611226}
   - {fileID: 1020887937}
   - {fileID: 1281502418}
-  - {fileID: 1436140829}
-  - {fileID: 1202122161}
   - {fileID: 1357837423}
   - {fileID: 1501494850}
   - {fileID: 2063348831}
@@ -4053,6 +4053,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1651093312}
   - component: {fileID: 1651093311}
+  - component: {fileID: 1651093313}
   m_Layer: 0
   m_Name: CombatUI
   m_TagString: Untagged
@@ -4119,6 +4120,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1651093313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1651093310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bfc574639aeb894b82cfd51da4112a1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1667926975
 GameObject:
   m_ObjectHideFlags: 0

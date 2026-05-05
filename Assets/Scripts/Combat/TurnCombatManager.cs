@@ -389,7 +389,8 @@ public class TurnCombatManager : MonoBehaviour
             if (enemies.All(e => !e.IsAlive))
             {
                 if (dotLogs.Count > 0)
-                    combatUI.ShowCombatLogs(dotLogs, () => HandleVictory());
+                    combatUI.ShowCombatLogs(dotLogs, () =>
+                        combatUI.ShowCombatLog(" ", () => HandleVictory()));
                 else
                     HandleVictory();
                 return;
@@ -401,10 +402,11 @@ public class TurnCombatManager : MonoBehaviour
         {
             if (dotLogs.Count > 0)
                 combatUI.ShowCombatLogs(dotLogs, () =>
-                {
-                    combatUI.ShowGameOver();
-                    combatActive = false;
-                });
+                    combatUI.ShowCombatLog(" ", () =>
+                    {
+                        combatUI.ShowGameOver();
+                        combatActive = false;
+                    }));
             else
             {
                 combatUI.ShowGameOver();
@@ -414,8 +416,8 @@ public class TurnCombatManager : MonoBehaviour
         }
 
         if (dotLogs.Count > 0)
-            // NextTurn only fires after ALL dot logs are read
-            combatUI.ShowCombatLogs(dotLogs, () => NextTurn());
+            combatUI.ShowCombatLogs(dotLogs, () =>
+                combatUI.ShowCombatLog(" ", () => NextTurn()));
         else
             NextTurn();
     }

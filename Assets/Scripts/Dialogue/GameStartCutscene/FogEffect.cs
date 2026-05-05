@@ -60,26 +60,26 @@ public class FogEffect : MonoBehaviour
         overlay.gameObject.SetActive(false);
         canvasObj.SetActive(true);
     }
-
     void Update()
     {
         if (!isActive || player == null || mainCam == null) return;
 
         if (fogMaterial != null)
         {
-            // Get player screen position - use center of sprite not feet
-            Vector3 worldPos = player.position + new Vector3(0, 1.7f, 0);
+            Vector3 worldPos = player.position + new Vector3(0, 1.8f, 0);
             Vector2 screenPos = mainCam.WorldToScreenPoint(worldPos);
 
-            // Convert screen pos to viewport pos (0-1 range)
             Vector2 viewportPos = new Vector2(
                 screenPos.x / Screen.width,
                 screenPos.y / Screen.height
             );
 
+            float aspectRatio = (float)Screen.width / Screen.height;
+
             fogMaterial.SetVector("_PlayerPos", new Vector4(viewportPos.x, viewportPos.y, 0, 0));
-            fogMaterial.SetFloat("_Radius", radius / Screen.width);
+            fogMaterial.SetFloat("_Radius", radius / Screen.height); // use height for consistent size
             fogMaterial.SetColor("_DarknessColor", darknessColor);
+            fogMaterial.SetFloat("_AspectRatio", aspectRatio);
         }
     }
 
