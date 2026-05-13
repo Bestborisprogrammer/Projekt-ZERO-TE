@@ -31,8 +31,6 @@ public class InventoryMenuPanel : MonoBehaviour
             var entryUI = entry.GetComponent<ItemEntryUI>();
             if (entryUI != null)
                 entryUI.Setup(item, this);
-            else
-                Debug.LogWarning("ItemEntryUI component missing from prefab!");
         }
 
         int count = InventoryManager.Instance.items.Count;
@@ -65,20 +63,20 @@ public class InventoryMenuPanel : MonoBehaviour
         {
             GameObject btn = Instantiate(targetMemberPrefab, targetParent);
             var tmps = btn.GetComponentsInChildren<TextMeshProUGUI>();
-            if (tmps.Length > 0)
-            {
-                string preview = "";
-                if (pendingItem.itemType == ItemType.Heal)
-                {
-                    int heal = pendingItem.flatHeal + Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
-                    int actualHeal = Mathf.Min(heal, member.MaxHP - member.currentHP);
-                    preview = $"+{actualHeal} HP";
-                }
-                else if (pendingItem.itemType == ItemType.Buff)
-                    preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
 
-                tmps[0].text = $"{member.Name} Lv.{member.level}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
+            string preview = "";
+            if (pendingItem.itemType == ItemType.Heal)
+            {
+                int heal = pendingItem.flatHeal +
+                    Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
+                int actual = Mathf.Min(heal, member.MaxHP - member.currentHP);
+                preview = $"+{actual} HP";
             }
+            else if (pendingItem.itemType == ItemType.Buff)
+                preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
+
+            if (tmps.Length > 0)
+                tmps[0].text = $"{member.Name}  Lv.{member.level}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
 
             var capturedMember = member;
             btn.GetComponent<Button>()?.onClick.AddListener(() => UseItemOnMember(capturedMember));
@@ -98,17 +96,17 @@ public class InventoryMenuPanel : MonoBehaviour
 
         if (pendingItem.itemType == ItemType.Heal)
         {
-            member.HealHP(pendingItem.flatHeal, pendingItem.percentHeal);
             int heal = pendingItem.flatHeal +
                 Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
-            Debug.Log($"Used {pendingItem.itemName} on {member.Name} for {heal} HP!");
+            heal = Mathf.Max(0, Mathf.Min(heal, member.MaxHP - member.currentHP));
+            member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + heal);
+            Debug.Log($"Healed {member.Name} for {heal} HP! Now: {member.currentHP}/{member.MaxHP}");
         }
         else if (pendingItem.itemType == ItemType.Buff)
         {
             member.ApplyStatModifier(pendingItem.statType,
                 pendingItem.statModifier, pendingItem.modifierDuration);
-            Debug.Log($"Applied {pendingItem.statType} +{pendingItem.statModifier} " +
-                $"to {member.Name} for {pendingItem.modifierDuration} turns!");
+            Debug.Log($"Buffed {member.Name}: {pendingItem.statType} +{pendingItem.statModifier}");
         }
 
         InventoryManager.Instance.RemoveItem(pendingItem);

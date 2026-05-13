@@ -32,7 +32,7 @@ public class CharacterInstance
             int val = baseData.maxHP + (level - 1) * baseData.hpGrowth;
             val += Gear?.TotalBonusHP ?? 0;
             val += statModifiers.Where(m => m.statType == StatType.HP).Sum(m => m.modifier);
-            return val;
+            return Mathf.Max(1, val);
         }
     }
 
@@ -82,7 +82,7 @@ public class CharacterInstance
             int val = baseData.maxMana + (level - 1) * baseData.manaGrowth;
             val += Gear?.TotalBonusMP ?? 0;
             val += statModifiers.Where(m => m.statType == StatType.MP).Sum(m => m.modifier);
-            return val;
+            return Mathf.Max(0, val);
         }
     }
 
@@ -121,17 +121,21 @@ public class CharacterInstance
         Debug.Log($"{Name} stat modifier: {type} {modifier:+#;-#} for {duration} turns");
     }
 
-    public void TickStatModifiers()
+    public List<string> TickStatModifiers()
     {
+        List<string> logs = new();
         for (int i = statModifiers.Count - 1; i >= 0; i--)
         {
-            statModifiers[i].turnsRemaining--;
-            if (statModifiers[i].turnsRemaining <= 0)
+            var mod = statModifiers[i];
+            mod.turnsRemaining--;
+            if (mod.turnsRemaining <= 0)
             {
-                Debug.Log($"{Name}'s {statModifiers[i].statType} modifier wore off!");
+                string dir = mod.modifier > 0 ? "UP" : "DOWN";
+                logs.Add($"{Name}'s {mod.statType} {dir} wore off!");
                 statModifiers.RemoveAt(i);
             }
         }
+        return logs;
     }
 
     public bool UseMana(int cost)
@@ -141,7 +145,8 @@ public class CharacterInstance
         return true;
     }
 
-    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration, float dotPercent = 0f, float defenseReduction = 0f, int speedReduction = 0)
+    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration,
+        float dotPercent = 0f, float defenseReduction = 0f, int speedReduction = 0)
     {
         if (UnityEngine.Random.value <= chance)
         {

@@ -92,6 +92,8 @@ public class CombatUI : MonoBehaviour
         itemNextButton.gameObject.SetActive(false);
         itemPageText.gameObject.SetActive(false);
 
+        victoryPanel.transform.SetAsLastSibling();
+
         basicAttackButton.onClick.AddListener(OnBasicAttack);
         skillsButton.onClick.AddListener(ToggleSkillPanel);
         itemsButton.onClick.AddListener(ToggleItemPanel);
@@ -112,16 +114,11 @@ public class CombatUI : MonoBehaviour
         }
     }
 
-    public void ResetActionTaken()
-    {
-        actionTaken = false;
-    }
+    public void ResetActionTaken() => actionTaken = false;
 
-    // ── Sprites ───────────────────────────────────
     public void SetupCombatSprites(List<Combatant> party, List<Combatant> enemies)
     {
-        if (spriteManager != null)
-            spriteManager.SetupSprites(party, enemies);
+        spriteManager?.SetupSprites(party, enemies);
     }
 
     // ── Log System ────────────────────────────────
@@ -153,8 +150,6 @@ public class CombatUI : MonoBehaviour
 
             if (string.IsNullOrEmpty(message))
             {
-                // Clear log and fire callback immediately - no input needed
-                combatLogText.text = "";
                 callback?.Invoke();
                 continue;
             }
@@ -184,11 +179,8 @@ public class CombatUI : MonoBehaviour
         skillsButton.interactable = false;
         itemsButton.interactable = false;
         blockButton.interactable = false;
-        foreach (var btn in enemyButtons)
-            btn.interactable = false;
     }
 
-    // ── Basic Attack ──────────────────────────────
     void OnBasicAttack()
     {
         if (!TryTakeAction()) return;
@@ -395,6 +387,8 @@ public class CombatUI : MonoBehaviour
     {
         if (pendingItem == null) return;
 
+        // Get name of who is using the item
+        string userName = GetCurrentTurnMemberName();
         string logMsg = "";
 
         if (pendingItem.itemData.itemType == ItemType.Heal)
@@ -403,13 +397,13 @@ public class CombatUI : MonoBehaviour
                 Mathf.RoundToInt(member.MaxHP * pendingItem.itemData.percentHeal);
             heal = Mathf.Min(heal, member.MaxHP - member.currentHP);
             member.HealHP(pendingItem.itemData.flatHeal, pendingItem.itemData.percentHeal);
-            logMsg = $"{member.Name} used {pendingItem.itemData.itemName} and recovered {heal} HP!";
+            logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! Recovered {heal} HP!";
         }
         else if (pendingItem.itemData.itemType == ItemType.Buff)
         {
             member.ApplyStatModifier(pendingItem.itemData.statType,
                 pendingItem.itemData.statModifier, pendingItem.itemData.modifierDuration);
-            logMsg = $"{member.Name} used {pendingItem.itemData.itemName}! " +
+            logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! " +
                 $"{pendingItem.itemData.statType} +{pendingItem.itemData.statModifier} " +
                 $"for {pendingItem.itemData.modifierDuration} turns!";
         }
@@ -417,9 +411,15 @@ public class CombatUI : MonoBehaviour
         InventoryManager.Instance.RemoveItem(pendingItem.itemData);
         pendingItem = null;
         memberSelectPopup.SetActive(false);
-        UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
 
-        ShowCombatLog(logMsg, () => TurnCombatManager.Instance.NextTurnPublic());
+        UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
+        TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
+
+        ShowCombatLog(logMsg, () =>
+        {
+            combatLogText.text = "";
+            TurnCombatManager.Instance.NextTurnPublic();
+        });
     }
 
     void UseItemOnEnemy(InventoryItem item)
@@ -427,7 +427,8 @@ public class CombatUI : MonoBehaviour
         var target = TurnCombatManager.Instance.enemies.Find(e => e.IsAlive);
         if (target == null) return;
 
-        string logMsg = $"Used {item.itemData.itemName} on {target.Name}!";
+        string userName = GetCurrentTurnMemberName();
+        string logMsg = $"{userName} uses {item.itemData.itemName} on {target.Name}!";
 
         if (item.itemData.itemType == ItemType.Debuff)
         {
@@ -436,12 +437,34 @@ public class CombatUI : MonoBehaviour
                 item.itemData.dotPercent, 0f, 0);
 
             if (item.itemData.statModifier != 0)
-                logMsg += $" {item.itemData.statType} -{item.itemData.statModifier} " +
+                logMsg += $" {item.itemData.statType} -{Mathf.Abs(item.itemData.statModifier)} " +
                     $"for {item.itemData.modifierDuration} turns!";
         }
 
         InventoryManager.Instance.RemoveItem(item.itemData);
-        ShowCombatLog(logMsg, () => TurnCombatManager.Instance.NextTurnPublic());
+        TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
+
+        ShowCombatLog(logMsg, () =>
+        {
+            combatLogText.text = "";
+            TurnCombatManager.Instance.NextTurnPublic();
+        });
+    }
+
+    string GetCurrentTurnMemberName()
+    {
+        var inst = TurnCombatManager.Instance;
+        if (inst == null || inst.party.Count == 0) return "Hero";
+
+        int idx = inst.CurrentTurnIndex;
+        if (idx < inst.turnOrder.Count)
+        {
+            var currentCombatant = inst.turnOrder[idx];
+            if (!currentCombatant.IsEnemy)
+                return currentCombatant.Name;
+        }
+
+        return inst.party[0].Name;
     }
 
     // ── Helpers ───────────────────────────────────
@@ -483,8 +506,6 @@ public class CombatUI : MonoBehaviour
 
     public void BuildEnemyTargetButtons(List<Combatant> enemies)
     {
-        // Enemy selection is handled by CombatSpriteManager
-        // Just update the labels
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
     }
 
@@ -498,7 +519,6 @@ public class CombatUI : MonoBehaviour
     {
         if (active) ResetActionTaken();
 
-        // Explicitly set every button
         basicAttackButton.interactable = active;
         skillsButton.interactable = active;
         itemsButton.interactable = active;
@@ -531,8 +551,9 @@ public class CombatUI : MonoBehaviour
         }
 
         victoryPanel.SetActive(true);
-        string text = $"Victory!\n+{xp} XP  +{gold} Gold\n";
+        victoryPanel.transform.SetAsLastSibling();
 
+        string text = $"Victory!\n+{xp} XP  +{gold} Gold\n";
         if (drops.itemsDropped.Count > 0)
         {
             text += "\nItems obtained:\n";
@@ -554,7 +575,9 @@ public class CombatUI : MonoBehaviour
     {
         foreach (var member in PartyManager.Instance.activeParty)
             member.currentHP = 1;
+
         victoryPanel.SetActive(true);
+        victoryPanel.transform.SetAsLastSibling();
         victoryXPText.text = "Your party has been defeated...";
         StartCoroutine(ReturnAfterDelay(3f));
     }

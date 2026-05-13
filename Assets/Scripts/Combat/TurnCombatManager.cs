@@ -9,13 +9,23 @@ public class TurnCombatManager : MonoBehaviour
     [Header("UI")]
     public CombatUI combatUI;
 
-    private List<Combatant> turnOrder = new();
+    public List<Combatant> turnOrder = new();
     private int currentTurnIndex = 0;
     private bool combatActive = false;
 
     public int selectedEnemyIndex = 0;
     public List<Combatant> enemies = new();
     public List<Combatant> party = new();
+    private Dictionary<string, EnemyInstance> enemyInstanceDict = new();
+
+    public void UpdateStatusIndicatorsPublic() => UpdateStatusIndicators();
+
+    public int CurrentTurnIndex => currentTurnIndex;
+
+    public EnemyInstance GetEnemyInstance(string name)
+    {
+        return enemyInstanceDict.ContainsKey(name) ? enemyInstanceDict[name] : null;
+    }
 
     void Awake()
     {
@@ -33,6 +43,7 @@ public class TurnCombatManager : MonoBehaviour
         turnOrder.Clear();
         enemies.Clear();
         party.Clear();
+        enemyInstanceDict.Clear();
 
         foreach (var member in PartyManager.Instance.activeParty)
         {
@@ -51,6 +62,7 @@ public class TurnCombatManager : MonoBehaviour
             var c = new Combatant(enemyInstance);
             turnOrder.Add(c);
             enemies.Add(c);
+            enemyInstanceDict[enemyData.enemyName] = enemyInstance;
         }
 
         turnOrder = turnOrder.OrderByDescending(c => c.Speed).ToList();
@@ -64,7 +76,16 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.UpdateAllHP(party, enemies);
         combatUI.SetupCombatSprites(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
         StartTurn();
+    }
+
+    void UpdateStatusIndicators()
+    {
+        var all = new List<Combatant>();
+        all.AddRange(party);
+        all.AddRange(enemies);
+        CombatSpriteManager.Instance?.UpdateStatusIndicators(all);
     }
 
     void StartTurn()
@@ -81,10 +102,36 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
 
+        List<string> modLogs = TickCombatantModifiers(current);
+        UpdateStatusIndicators();
+
+        if (modLogs.Count > 0)
+        {
+            combatUI.ShowCombatLogs(modLogs, () => ContinueStartTurn(current));
+            return;
+        }
+
+        ContinueStartTurn(current);
+    }
+
+    List<string> TickCombatantModifiers(Combatant combatant)
+    {
+        if (combatant.IsEnemy)
+        {
+            var inst = GetEnemyInstance(combatant.Name);
+            return inst?.TickStatModifiers() ?? new List<string>();
+        }
+        var member = PartyManager.Instance.activeParty.Find(m => m.Name == combatant.Name);
+        return member?.TickStatModifiers() ?? new List<string>();
+    }
+
+    void ContinueStartTurn(Combatant current)
+    {
+        if (!combatActive) return;
+
         if (current.IsFrozen)
         {
             current.ConsumeFreezeIfActive();
-            Debug.Log($"{current.Name} is frozen!");
             combatUI.ShowCombatLog($"{current.Name} is frozen and cannot move!", () => NextTurn());
             return;
         }
@@ -92,7 +139,6 @@ public class TurnCombatManager : MonoBehaviour
         if (current.IsParalyzed)
         {
             bool skips = Random.value < 0.5f;
-            Debug.Log($"{current.Name} is paralyzed - skips: {skips}");
             if (skips)
             {
                 combatUI.ShowCombatLog($"{current.Name} is paralyzed and cannot move!", () => NextTurn());
@@ -166,7 +212,6 @@ public class TurnCombatManager : MonoBehaviour
             target.ApplyStatusEffect(spell.statusEffect, spell.statusChance, spell.statusDuration,
                 spell.dotPercent, spell.defenseReduction, speedReduction);
             bool wasApplied = target.HasStatusEffect(spell.statusEffect);
-
             if (wasApplied)
             {
                 if (spell.statusEffect == StatusEffectType.Wet)
@@ -177,6 +222,7 @@ public class TurnCombatManager : MonoBehaviour
             else
                 combatUI.ShowCombatLog($"{spell.spellName} effect missed on {target.Name}!");
         }
+        UpdateStatusIndicators();
     }
 
     void ApplyEnemySpellEffects(EnemyManaAttackSO spell, Combatant attacker, Combatant target, int damage)
@@ -189,6 +235,7 @@ public class TurnCombatManager : MonoBehaviour
             if (target.HasStatusEffect(spell.statusEffect))
                 combatUI.ShowCombatLog($"{target.Name} is afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
         }
+        UpdateStatusIndicators();
     }
 
     bool ResolveAttack(Combatant attacker, Combatant target, int damage, string attackName)
@@ -212,7 +259,6 @@ public class TurnCombatManager : MonoBehaviour
             CombatSpriteManager.Instance?.PlayHitEffect(target.Name);
             combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage!");
         }
-
         return true;
     }
 
@@ -232,6 +278,7 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
 
         if (hit && !target.IsAlive)
         {
@@ -247,7 +294,7 @@ public class TurnCombatManager : MonoBehaviour
             combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         }
 
-        combatUI.ShowCombatLog("", () => NextTurn());
+        combatUI.ShowCombatLog(" ", () => NextTurn());
     }
 
     public void PlayerBlock()
@@ -301,6 +348,7 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
 
         if (hit && !target.IsAlive)
         {
@@ -316,7 +364,7 @@ public class TurnCombatManager : MonoBehaviour
             combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         }
 
-        combatUI.ShowCombatLog("", () => NextTurn());
+        combatUI.ShowCombatLog(" ", () => NextTurn());
     }
 
     void EnemyTurn()
@@ -371,8 +419,9 @@ public class TurnCombatManager : MonoBehaviour
 
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
 
-        combatUI.ShowCombatLog("", () => ProcessDotsAndNextTurn(attacker));
+        combatUI.ShowCombatLog(" ", () => ProcessDotsAndNextTurn(attacker));
     }
 
     void ProcessDotsAndNextTurn(Combatant attacker)
@@ -382,10 +431,15 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.UpdateAllHP(party, enemies);
         combatUI.BuildEnemyTargetButtons(enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
 
         if (!attacker.IsAlive)
         {
-            CombatSpriteManager.Instance?.PlayDefeatedEffect(attacker.Name);
+            if (attacker.IsEnemy)
+                CombatSpriteManager.Instance?.PlayDefeatedEffect(attacker.Name);
+            else
+                CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
+
             if (enemies.All(e => !e.IsAlive))
             {
                 if (dotLogs.Count > 0)
@@ -395,11 +449,38 @@ public class TurnCombatManager : MonoBehaviour
                     HandleVictory();
                 return;
             }
-            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+
+            if (!attacker.IsEnemy && PartyManager.Instance.IsGameOver())
+            {
+                foreach (var member in party)
+                    if (!member.IsAlive)
+                        CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(member.Name);
+
+                if (dotLogs.Count > 0)
+                    combatUI.ShowCombatLogs(dotLogs, () =>
+                        combatUI.ShowCombatLog(" ", () =>
+                        {
+                            combatUI.ShowGameOver();
+                            combatActive = false;
+                        }));
+                else
+                {
+                    combatUI.ShowGameOver();
+                    combatActive = false;
+                }
+                return;
+            }
+
+            if (attacker.IsEnemy)
+                selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
         }
 
         if (PartyManager.Instance.IsGameOver())
         {
+            foreach (var member in party)
+                if (!member.IsAlive)
+                    CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(member.Name);
+
             if (dotLogs.Count > 0)
                 combatUI.ShowCombatLogs(dotLogs, () =>
                     combatUI.ShowCombatLog(" ", () =>
@@ -426,10 +507,10 @@ public class TurnCombatManager : MonoBehaviour
     {
         Combatant current = turnOrder[currentTurnIndex];
         if (!current.IsEnemy) return null;
-        int enemyListIndex = enemies.IndexOf(current);
-        if (enemyListIndex < 0 || enemyListIndex >= EncounterManager.CurrentEnemies.Count) return null;
-        var enemyData = EncounterManager.CurrentEnemies[enemyListIndex];
-        return enemyData.spells.FindAll(s => current.GetCurrentMana() >= s.manaCost);
+        int idx = enemies.IndexOf(current);
+        if (idx < 0 || idx >= EncounterManager.CurrentEnemies.Count) return null;
+        return EncounterManager.CurrentEnemies[idx].spells
+            .FindAll(s => current.GetCurrentMana() >= s.manaCost);
     }
 
     void NextTurn()
