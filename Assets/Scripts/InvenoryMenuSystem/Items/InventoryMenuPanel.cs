@@ -104,8 +104,10 @@ public class InventoryMenuPanel : MonoBehaviour
         }
         else if (pendingItem.itemType == ItemType.Buff)
         {
-            member.ApplyStatModifier(pendingItem.statType,
-                pendingItem.statModifier, pendingItem.modifierDuration);
+            member.ApplyStatModifier(
+                pendingItem.statType,
+                pendingItem.statModifier,
+                pendingItem.modifierDuration);
             Debug.Log($"Buffed {member.Name}: {pendingItem.statType} +{pendingItem.statModifier}");
         }
 

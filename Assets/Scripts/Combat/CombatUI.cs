@@ -148,6 +148,15 @@ public class CombatUI : MonoBehaviour
         {
             var (message, callback) = logQueue.Dequeue();
 
+            // Space character = blank pause that auto-advances then fires callback
+            if (message == " ")
+            {
+                combatLogText.text = "";
+                callback?.Invoke();
+                continue;
+            }
+
+            // Truly empty = just fire callback no display
             if (string.IsNullOrEmpty(message))
             {
                 callback?.Invoke();
@@ -387,7 +396,6 @@ public class CombatUI : MonoBehaviour
     {
         if (pendingItem == null) return;
 
-        // Get name of who is using the item
         string userName = GetCurrentTurnMemberName();
         string logMsg = "";
 
@@ -396,7 +404,7 @@ public class CombatUI : MonoBehaviour
             int heal = pendingItem.itemData.flatHeal +
                 Mathf.RoundToInt(member.MaxHP * pendingItem.itemData.percentHeal);
             heal = Mathf.Min(heal, member.MaxHP - member.currentHP);
-            member.HealHP(pendingItem.itemData.flatHeal, pendingItem.itemData.percentHeal);
+            member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + heal);
             logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! Recovered {heal} HP!";
         }
         else if (pendingItem.itemData.itemType == ItemType.Buff)
@@ -412,6 +420,7 @@ public class CombatUI : MonoBehaviour
         pendingItem = null;
         memberSelectPopup.SetActive(false);
 
+        // Update HP display immediately
         UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
         TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
 
@@ -430,18 +439,37 @@ public class CombatUI : MonoBehaviour
         string userName = GetCurrentTurnMemberName();
         string logMsg = $"{userName} uses {item.itemData.itemName} on {target.Name}!";
 
-        if (item.itemData.itemType == ItemType.Debuff)
+        // Apply stat debuff
+        if (item.itemData.statModifier != 0)
+        {
+            // Negative modifier for debuff
+            int mod = item.itemData.itemType == ItemType.Debuff
+                ? -Mathf.Abs(item.itemData.statModifier)
+                : item.itemData.statModifier;
+
+            var enemyInst = TurnCombatManager.Instance.GetEnemyInstance(target.Name);
+            if (enemyInst != null)
+            {
+                enemyInst.ApplyStatModifier(item.itemData.statType, mod, item.itemData.modifierDuration);
+                target.Refresh();
+                logMsg += $" {item.itemData.statType} {(mod > 0 ? "+" : "")}{mod} " +
+                    $"for {item.itemData.modifierDuration} turns!";
+            }
+        }
+
+        // Apply status effect
+        if (item.itemData.statusEffect != StatusEffectType.None)
         {
             target.ApplyStatusEffect(item.itemData.statusEffect,
                 item.itemData.statusChance, item.itemData.statusDuration,
                 item.itemData.dotPercent, 0f, 0);
-
-            if (item.itemData.statModifier != 0)
-                logMsg += $" {item.itemData.statType} -{Mathf.Abs(item.itemData.statModifier)} " +
-                    $"for {item.itemData.modifierDuration} turns!";
+            if (target.HasStatusEffect(item.itemData.statusEffect))
+                logMsg += $" {item.itemData.statusEffect} applied!";
         }
 
         InventoryManager.Instance.RemoveItem(item.itemData);
+
+        UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
         TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
 
         ShowCombatLog(logMsg, () =>
