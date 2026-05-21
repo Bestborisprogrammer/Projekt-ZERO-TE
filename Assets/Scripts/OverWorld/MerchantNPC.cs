@@ -11,9 +11,6 @@ public class MerchantNPC : MonoBehaviour
     public ShopPanel shopPanel;
     public DialogueSO greetingDialogue;
 
-    [Header("Sprite")]
-    public SpriteRenderer merchantSprite;
-
     private bool playerInRange = false;
     private bool shopOpen = false;
     private bool greetingPlayed = false;
@@ -29,6 +26,7 @@ public class MerchantNPC : MonoBehaviour
             interactPrompt.text = $"E - Talk to {merchantName}";
             interactPrompt.gameObject.SetActive(false);
         }
+
         if (shopPanel != null)
             shopPanel.gameObject.SetActive(false);
     }
@@ -39,11 +37,13 @@ public class MerchantNPC : MonoBehaviour
         if (shopOpen && shopPanel != null && !shopPanel.gameObject.activeSelf)
         {
             shopOpen = false;
+
             if (playerInRange && interactPrompt != null)
                 interactPrompt.gameObject.SetActive(true);
         }
 
-        if (!playerInRange || shopOpen) return;
+        if (!playerInRange || shopOpen)
+            return;
 
         if (Input.GetKeyDown(KeyCode.E))
         {
@@ -53,10 +53,14 @@ public class MerchantNPC : MonoBehaviour
                     interactPrompt.gameObject.SetActive(false);
 
                 greetingPlayed = true;
+
                 PlayerPrefs.SetInt(greetingSaveKey, 1);
                 PlayerPrefs.Save();
 
-                DialogueUI.Instance.StartDialogue(greetingDialogue, () => OpenShop());
+                DialogueUI.Instance.StartDialogue(greetingDialogue, () =>
+                {
+                    OpenShop();
+                });
             }
             else
             {
@@ -67,34 +71,47 @@ public class MerchantNPC : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player"))
+            return;
+
         playerInRange = true;
+
         if (!shopOpen && interactPrompt != null)
             interactPrompt.gameObject.SetActive(true);
     }
 
     void OnTriggerExit2D(Collider2D other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player"))
+            return;
+
         playerInRange = false;
+
         if (interactPrompt != null)
             interactPrompt.gameObject.SetActive(false);
+
         CloseShop();
     }
 
     void OpenShop()
     {
         shopOpen = true;
+
         if (interactPrompt != null)
             interactPrompt.gameObject.SetActive(false);
+
         shopPanel?.OpenShop(merchantName);
     }
 
     public void CloseShop()
     {
-        if (!shopOpen) return;
+        if (!shopOpen)
+            return;
+
         shopOpen = false;
+
         shopPanel?.CloseShop();
+
         if (playerInRange && interactPrompt != null)
             interactPrompt.gameObject.SetActive(true);
     }
