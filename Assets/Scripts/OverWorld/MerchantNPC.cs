@@ -11,6 +11,9 @@ public class MerchantNPC : MonoBehaviour
     public ShopPanel shopPanel;
     public DialogueSO greetingDialogue;
 
+    [Header("Sprite")]
+    public SpriteRenderer merchantSprite;
+
     private bool playerInRange = false;
     private bool shopOpen = false;
     private bool greetingPlayed = false;

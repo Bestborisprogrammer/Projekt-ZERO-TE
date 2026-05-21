@@ -272,7 +272,7 @@ public class CombatUI : MonoBehaviour
         }
 
         int totalPages = Mathf.Max(1, Mathf.CeilToInt((float)currentSpells.Count / spellsPerPage));
-        skillPageText.text = $"{spellPage + 1} / {totalPages}";
+        skillPageText.text = $"{spellPage + 1}/{totalPages}";
         skillPrevButton.gameObject.SetActive(totalPages > 1);
         skillNextButton.gameObject.SetActive(totalPages > 1);
     }
@@ -349,7 +349,7 @@ public class CombatUI : MonoBehaviour
         }
 
         int totalPages = Mathf.Max(1, Mathf.CeilToInt((float)currentItems.Count / itemsPerPage));
-        itemPageText.text = $"{itemPage + 1} / {totalPages}";
+        itemPageText.text = $"{itemPage + 1}/{totalPages}";
         itemPrevButton.gameObject.SetActive(totalPages > 1);
         itemNextButton.gameObject.SetActive(totalPages > 1);
     }
@@ -522,14 +522,61 @@ public class CombatUI : MonoBehaviour
         foreach (var member in party)
         {
             GameObject entry = Instantiate(partyHPEntryPrefab, partyHPParent);
-            var tmp = entry.GetComponent<TextMeshProUGUI>();
+            SetupHPEntry(entry, member);
+        }
+    }
+
+    void SetupHPEntry(GameObject entry, Combatant member)
+    {
+        // Find all children by name
+        var nameText = entry.transform.Find("NameText")?.GetComponent<TextMeshProUGUI>();
+        var portrait = entry.transform.Find("Portrait")?.GetComponent<Image>();
+        var hpBar = entry.transform.Find("HPBar")?.GetComponent<Image>();
+        var hpText = entry.transform.Find("HPText")?.GetComponent<TextMeshProUGUI>();
+        var mpBar = entry.transform.Find("MPBar")?.GetComponent<Image>();
+        var mpText = entry.transform.Find("MPText")?.GetComponent<TextMeshProUGUI>();
+
+        if (nameText != null)
+        {
             string indicator = "";
             if (member.IsBlocking) indicator = " B!";
             else if (member.CombatStyle == CombatStyle.Evade && member.IsEvading) indicator = " E!";
-            tmp.text = $"{member.Name}  HP: {member.CurrentHP}/{member.MaxHP}" +
-                $"  MP: {member.GetCurrentMana()}{indicator}";
-            tmp.color = member.IsAlive ? Color.white : Color.red;
+            nameText.text = member.Name + indicator;
+            nameText.color = member.IsAlive ? Color.white : Color.red;
         }
+
+        // Portrait
+        if (portrait != null)
+        {
+            var so = PartyManager.Instance.allMembers.Find(m => m.Name == member.Name)?.baseData;
+            if (so != null && so.portrait != null)
+                portrait.sprite = so.portrait;
+        }
+
+        // HP bar fill
+        if (hpBar != null)
+        {
+            float hpFill = member.MaxHP > 0 ? (float)member.CurrentHP / member.MaxHP : 0f;
+            hpBar.fillAmount = hpFill;
+            hpBar.color = hpFill > 0.5f ? Color.red :
+                          hpFill > 0.25f ? new Color(1f, 0.5f, 0f) : new Color(0.8f, 0f, 0f);
+        }
+
+        if (hpText != null)
+            hpText.text = $"{member.CurrentHP}/{member.MaxHP}";
+
+        // MP bar fill
+        if (mpBar != null)
+        {
+            int maxMP = member.GetCurrentMana() > 0 || member.CurrentHP > 0
+                ? PartyManager.Instance.allMembers.Find(m => m.Name == member.Name)?.MaxMana ?? 1
+                : 1;
+            float mpFill = maxMP > 0 ? (float)member.GetCurrentMana() / maxMP : 0f;
+            mpBar.fillAmount = mpFill;
+        }
+
+        if (mpText != null)
+            mpText.text = $"{member.GetCurrentMana()}";
     }
 
     public void BuildEnemyTargetButtons(List<Combatant> enemies)

@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using System.Collections.Generic;
 
 public class InventoryMenuPanel : MonoBehaviour
 {
@@ -67,19 +66,21 @@ public class InventoryMenuPanel : MonoBehaviour
             string preview = "";
             if (pendingItem.itemType == ItemType.Heal)
             {
-                int heal = pendingItem.flatHeal +
+                int totalHeal = pendingItem.flatHeal +
                     Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
-                int actual = Mathf.Min(heal, member.MaxHP - member.currentHP);
-                preview = $"+{actual} HP";
+                int actual = Mathf.Min(totalHeal, member.MaxHP - member.currentHP);
+                preview = $"Heals +{actual} HP";
             }
             else if (pendingItem.itemType == ItemType.Buff)
                 preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
 
             if (tmps.Length > 0)
-                tmps[0].text = $"{member.Name}  Lv.{member.level}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
+                tmps[0].text = $"{member.Name}  Lv.{member.level}\n" +
+                    $"HP: {member.currentHP}/{member.MaxHP}\n{preview}";
 
             var capturedMember = member;
-            btn.GetComponent<Button>()?.onClick.AddListener(() => UseItemOnMember(capturedMember));
+            btn.GetComponent<Button>()?.onClick.AddListener(() =>
+                UseItemOnMember(capturedMember));
         }
     }
 
@@ -96,11 +97,12 @@ public class InventoryMenuPanel : MonoBehaviour
 
         if (pendingItem.itemType == ItemType.Heal)
         {
-            int heal = pendingItem.flatHeal +
+            int totalHeal = pendingItem.flatHeal +
                 Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
-            heal = Mathf.Max(0, Mathf.Min(heal, member.MaxHP - member.currentHP));
-            member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + heal);
-            Debug.Log($"Healed {member.Name} for {heal} HP! Now: {member.currentHP}/{member.MaxHP}");
+            totalHeal = Mathf.Max(0, totalHeal);
+            // Directly set HP – no method call that could fail
+            member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + totalHeal);
+            Debug.Log($"[HEAL] {member.Name}: +{totalHeal} HP → {member.currentHP}/{member.MaxHP}");
         }
         else if (pendingItem.itemType == ItemType.Buff)
         {
@@ -108,7 +110,7 @@ public class InventoryMenuPanel : MonoBehaviour
                 pendingItem.statType,
                 pendingItem.statModifier,
                 pendingItem.modifierDuration);
-            Debug.Log($"Buffed {member.Name}: {pendingItem.statType} +{pendingItem.statModifier}");
+            Debug.Log($"[BUFF] {member.Name}: {pendingItem.statType} +{pendingItem.statModifier}");
         }
 
         InventoryManager.Instance.RemoveItem(pendingItem);

@@ -758,7 +758,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 5.4586, y: -269.6371}
+  m_AnchoredPosition: {x: 5.4586, y: -223}
   m_SizeDelta: {x: 182.0087, y: 48.1772}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &347534032
@@ -894,7 +894,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 5.4586, y: -269.6371}
+  m_AnchoredPosition: {x: 5.4586, y: -223}
   m_SizeDelta: {x: 182.0087, y: 48.1772}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &355418588
@@ -3755,7 +3755,7 @@ GameObject:
   - component: {fileID: 1501494850}
   - component: {fileID: 1501494853}
   - component: {fileID: 1501494852}
-  - component: {fileID: 1501494851}
+  - component: {fileID: 1501494854}
   m_Layer: 5
   m_Name: PartyHPPanel
   m_TagString: Untagged
@@ -3782,32 +3782,6 @@ RectTransform:
   m_AnchoredPosition: {x: -696.47, y: 286}
   m_SizeDelta: {x: -1444.1, y: -615.53}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1501494851
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1501494849}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 0
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!114 &1501494852
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3846,6 +3820,32 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1501494849}
   m_CullTransparentMesh: 1
+--- !u!114 &1501494854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1501494849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &1571577981
 GameObject:
   m_ObjectHideFlags: 0
@@ -4076,7 +4076,7 @@ MonoBehaviour:
   turnText: {fileID: 1177611227}
   combatLogText: {fileID: 1020887938}
   partyHPParent: {fileID: 1501494850}
-  partyHPEntryPrefab: {fileID: 4207535375213206682, guid: b9cf72d32bd7ab9468e1c6f55ec0f107, type: 3}
+  partyHPEntryPrefab: {fileID: 6294176144952651872, guid: b9cf72d32bd7ab9468e1c6f55ec0f107, type: 3}
   enemyButtonParent: {fileID: 287241627}
   enemyButtonPrefab: {fileID: 2609097840657630335, guid: 42ee573d4e0439f45b67d0ed5f851157, type: 3}
   basicAttackButton: {fileID: 1281502419}
