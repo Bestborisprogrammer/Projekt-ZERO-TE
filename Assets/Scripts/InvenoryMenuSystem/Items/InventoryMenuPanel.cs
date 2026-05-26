@@ -100,17 +100,18 @@ public class InventoryMenuPanel : MonoBehaviour
             int totalHeal = pendingItem.flatHeal +
                 Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
             totalHeal = Mathf.Max(0, totalHeal);
-            // Directly set HP – no method call that could fail
+            int before = member.currentHP;
             member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + totalHeal);
-            Debug.Log($"[HEAL] {member.Name}: +{totalHeal} HP → {member.currentHP}/{member.MaxHP}");
+            int actual = member.currentHP - before;
+            Debug.Log($"[HEAL] {member.Name}: +{actual} HP → {member.currentHP}/{member.MaxHP}");
         }
         else if (pendingItem.itemType == ItemType.Buff)
         {
-            member.ApplyStatModifier(
+            member.statModifiers.Add(new StatModifier(
                 pendingItem.statType,
                 pendingItem.statModifier,
-                pendingItem.modifierDuration);
-            Debug.Log($"[BUFF] {member.Name}: {pendingItem.statType} +{pendingItem.statModifier}");
+                pendingItem.modifierDuration));
+            Debug.Log($"[BUFF] {member.Name}: {pendingItem.statType} +{pendingItem.statModifier} for {pendingItem.modifierDuration} turns");
         }
 
         InventoryManager.Instance.RemoveItem(pendingItem);
