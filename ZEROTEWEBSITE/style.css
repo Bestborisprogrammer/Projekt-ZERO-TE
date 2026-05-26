@@ -15,23 +15,29 @@ body {
     z-index: -1;
 }
 
-/* NAVBAR FIX */
+/* NAVBAR */
 
 header {
     position: fixed;
     width: 100%;
-    padding: 20px 60px;
+    padding: 20px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-sizing: border-box;
     transition: 0.3s ease;
     z-index: 1000;
+    gap: 20px;
 }
 
 header.scrolled {
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(6px);
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: bold;
 }
 
 nav {
@@ -50,11 +56,11 @@ nav a:hover {
     color: #a855f7;
 }
 
-/* HERO CENTER FIX */
+/* HERO */
 
 .hero {
     height: 100vh;
-    background: url("https://th.bing.com/th/id/R.0da9c0dd2d3db2ce4b348cdbddb11849?rik=UeoLIIRrR8d5VA&pid=ImgRaw&r=0") center/cover no-repeat fixed;
+    background: url("sc5.png") center/cover no-repeat fixed;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -80,6 +86,7 @@ button {
     color: white;
     cursor: pointer;
     transition: 0.3s;
+    font-size: 16px;
 }
 
 button:hover {
@@ -94,6 +101,12 @@ section {
     margin: auto;
 }
 
+section h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 38px;
+}
+
 /* GALLERY */
 
 .gallery-grid {
@@ -104,6 +117,7 @@ section {
 
 .gallery-grid img {
     width: 100%;
+    border-radius: 8px;
     transition: 0.4s;
 }
 
@@ -130,9 +144,10 @@ section {
 video {
     width: 80%;
     border: 2px solid #a855f7;
+    border-radius: 10px;
 }
 
-/* FADE IN EFFECT */
+/* FADE IN */
 
 .fade-in {
     opacity: 0;
@@ -145,8 +160,6 @@ video {
     transform: translateY(0);
 }
 
-
-
 /* FOOTER */
 
 footer {
@@ -154,4 +167,3 @@ footer {
     padding: 40px;
     background: #111;
 }
-

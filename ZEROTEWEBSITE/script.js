@@ -30,8 +30,8 @@ faders.forEach(fader => {
 // Particle background
 particlesJS("particles-js", {
     particles: {
-        number: { value: 60 },
-        size: { value: 3 },
+        number: { value: 70 },
+        size: { value: 5 },
         color: { value: "#a855f7" },
         line_linked: {
             enable: true,
