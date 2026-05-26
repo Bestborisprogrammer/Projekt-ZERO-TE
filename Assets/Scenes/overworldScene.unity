@@ -5798,7 +5798,7 @@ Transform:
   m_GameObject: {fileID: 547836945}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -137.79, y: -56.53, z: 0}
+  m_LocalPosition: {x: -138.2, y: -55.4, z: 0}
   m_LocalScale: {x: 15.033914, y: 15.033914, z: 15.033914}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6040,7 +6040,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   monsterGameObject: {fileID: 752703152}
   monsterMoveSpeed: 100
-  monsterEnemySO: {fileID: 11400000, guid: 7c90c3ccb5cb64a4594a2a0d5d1fde19, type: 2}
+  monsterEnemySO: {fileID: 11400000, guid: ec4d4a2944444cf43ad4bef84cf752eb, type: 2}
   fogEffect: {fileID: 0}
 --- !u!4 &654413874
 Transform:
@@ -8048,6 +8048,7 @@ GameObject:
   - component: {fileID: 1039724385}
   - component: {fileID: 1039724384}
   - component: {fileID: 1039724383}
+  - component: {fileID: 1039724386}
   m_Layer: 0
   m_Name: DemoEnd
   m_TagString: Untagged
@@ -8067,12 +8068,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aab5b202a001e0e4eb961197fe06cc5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  message: 'DEMO FINISHED
-
-
-    TO BE CONTINUED...'
-  textDelay: 1
-  endDuration: 4
 --- !u!61 &1039724384
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -8134,6 +8129,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1039724386
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1039724382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5ca68c06eb3478419ca612317151cd6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1097774162
 GameObject:
   m_ObjectHideFlags: 0
