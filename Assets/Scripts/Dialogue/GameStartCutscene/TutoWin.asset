@@ -15,7 +15,7 @@ MonoBehaviour:
   lines:
   - speakerName: Hero
     portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
-    text: How did I win.. I've never fought anyone ever... trash ahh dialogue
+    text: How did I win.. I've never fought anyone ever...
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

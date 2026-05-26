@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ClawSlash
   m_EditorClassIdentifier: 
   spellName: Slash
-  description: Biggggg Slash
+  description: A devastating slash.
   affinity: 0
   manaCost: 2
   flatDamage: 40
@@ -21,3 +21,4 @@ MonoBehaviour:
   statusChance: 0
   statusDuration: 2
   dotPercent: 0.05
+  defenseReduction: 0.25

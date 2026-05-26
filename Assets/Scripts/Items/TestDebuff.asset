@@ -12,11 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef6ab2f2cbba5374f85f093a2f2e8fea, type: 3}
   m_Name: TestDebuff
   m_EditorClassIdentifier: 
-  itemName: EvilPotion
-  description: Ow
+  itemName: Debuff-Potion
+  description: A potion that debuffs enemy defense.
   icon: {fileID: 0}
   itemType: 2
   itemTarget: 1
+  buyPrice: 10
+  sellPrice: 5
   flatHeal: 50
   percentHeal: 0
   statType: 2

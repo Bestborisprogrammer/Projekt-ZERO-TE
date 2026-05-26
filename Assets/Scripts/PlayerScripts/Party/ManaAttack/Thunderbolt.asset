@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e8eec2a7d6085f943b79425f5fa08148, type: 3}
-  m_Name: WaterSpell
+  m_Name: Thunderbolt
   m_EditorClassIdentifier: 
-  spellName: Water
-  description: A basic fire attack.
-  affinity: 7
+  spellName: Thunderbolt
+  description: A basic thunder attack.
+  affinity: 3
   manaCost: 10
   levelRequirement: 1
   flatDamage: 20
-  statusEffect: 5
+  statusEffect: 3
   statusChance: 1
-  statusDuration: 2
+  statusDuration: 1
   dotPercent: 0.05
   defenseReduction: 0.25

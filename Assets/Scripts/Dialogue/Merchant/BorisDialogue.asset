@@ -14,20 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lines:
   - speakerName: Boris
-    portrait: {fileID: -4653036966477985299, guid: fb85e73d61d44a94abd1422f738d7a71, type: 3}
-    text: Yo you new here?
+    portrait: {fileID: 4796411974396303719, guid: e640810668840b540a9a78a05e45a5c3, type: 3}
+    text: Hey! Are you new here?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Hero
     portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
-    text: I need more bullets
+    text: Yeah.. What is this place?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Boris
-    portrait: {fileID: -4653036966477985299, guid: fb85e73d61d44a94abd1422f738d7a71, type: 3}
-    text: Well come shop here if you want to survive!
+    portrait: {fileID: 4796411974396303719, guid: e640810668840b540a9a78a05e45a5c3, type: 3}
+    text: It's a dangerous world, you'll have to buy a few supplies to survive!
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

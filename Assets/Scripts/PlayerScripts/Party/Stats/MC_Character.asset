@@ -15,11 +15,11 @@ MonoBehaviour:
   characterName: Hero
   portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
   startingLevel: 1
-  maxHP: 4000
+  maxHP: 100
   attack: 10
   defense: 5
   speed: 8
-  maxMana: 30000
+  maxMana: 50
   hpGrowth: 15
   attackGrowth: 3
   defenseGrowth: 2
@@ -28,11 +28,6 @@ MonoBehaviour:
   baseXPToNextLevel: 100
   affinities: 0200000003000000
   spells:
-  - {fileID: 11400000, guid: 897956c33a48372489cc7fd34b3a7ed8, type: 2}
-  - {fileID: 11400000, guid: 0e8850a7bb690de45bbd575ee5971816, type: 2}
-  - {fileID: 11400000, guid: df4b5e78e500c5e4c8a3690ee932d2fd, type: 2}
-  - {fileID: 11400000, guid: 9022d3136c6720e48a22a57f3976eef1, type: 2}
-  - {fileID: 11400000, guid: 8e9cb85cbe9162146821fdcb7843e3e9, type: 2}
+  - {fileID: 11400000, guid: ac80df4eb998cc440b14aa48c374c4c8, type: 2}
   - {fileID: 11400000, guid: 15a456db98950c04c84877a0820fea5d, type: 2}
-  - {fileID: 11400000, guid: 439ce99c045dc184c88950b830fc3dd6, type: 2}
   combatStyle: 0
