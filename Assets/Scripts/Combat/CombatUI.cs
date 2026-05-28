@@ -107,9 +107,9 @@ public class CombatUI : MonoBehaviour
     {
         if (waitingForInput)
         {
-            if (Input.anyKeyDown &&
-                !Input.GetMouseButtonDown(0) &&
-                !Input.GetMouseButtonDown(1))
+            if (Input.GetKeyDown(KeyCode.Space) ||
+                Input.GetMouseButtonDown(0) ||
+                Input.anyKeyDown)
                 waitingForInput = false;
         }
     }
@@ -531,7 +531,6 @@ public class CombatUI : MonoBehaviour
 
     void SetupHPEntry(GameObject entry, Combatant member)
     {
-        // Find all children by name
         var nameText = entry.transform.Find("NameText")?.GetComponent<TextMeshProUGUI>();
         var portrait = entry.transform.Find("Portrait")?.GetComponent<Image>();
         var hpBar = entry.transform.Find("HPBar")?.GetComponent<Image>();
@@ -548,34 +547,37 @@ public class CombatUI : MonoBehaviour
             nameText.color = member.IsAlive ? Color.white : Color.red;
         }
 
-        // Portrait
+        // Use head portrait for HP panel
         if (portrait != null)
         {
-            var so = PartyManager.Instance.allMembers.Find(m => m.Name == member.Name)?.baseData;
-            if (so != null && so.portrait != null)
-                portrait.sprite = so.portrait;
+            var so = PartyManager.Instance.allMembers
+                .Find(m => m.Name == member.Name)?.baseData;
+            if (so != null)
+            {
+                // Prefer head portrait, fall back to full portrait
+                portrait.sprite = so.headPortrait != null ? so.headPortrait : so.portrait;
+            }
         }
 
-        // HP bar fill
         if (hpBar != null)
         {
             float hpFill = member.MaxHP > 0 ? (float)member.CurrentHP / member.MaxHP : 0f;
             hpBar.fillAmount = hpFill;
             hpBar.color = hpFill > 0.5f ? Color.red :
-                          hpFill > 0.25f ? new Color(1f, 0.5f, 0f) : new Color(0.8f, 0f, 0f);
+                          hpFill > 0.25f ? new Color(1f, 0.5f, 0f) :
+                          new Color(0.8f, 0f, 0f);
         }
 
         if (hpText != null)
             hpText.text = $"{member.CurrentHP}/{member.MaxHP}";
 
-        // MP bar fill
         if (mpBar != null)
         {
-            int maxMP = member.GetCurrentMana() > 0 || member.CurrentHP > 0
-                ? PartyManager.Instance.allMembers.Find(m => m.Name == member.Name)?.MaxMana ?? 1
-                : 1;
+            var memberData = PartyManager.Instance.allMembers
+                .Find(m => m.Name == member.Name);
+            int maxMP = memberData?.MaxMana ?? 1;
             float mpFill = maxMP > 0 ? (float)member.GetCurrentMana() / maxMP : 0f;
-            mpBar.fillAmount = mpFill;
+            mpBar.fillAmount = Mathf.Clamp01(mpFill);
         }
 
         if (mpText != null)

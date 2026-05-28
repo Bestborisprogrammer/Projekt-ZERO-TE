@@ -8,7 +8,8 @@ public class CharacterStatsSO : ScriptableObject
 {
     [Header("Identity")]
     public string characterName = "Hero";
-    public Sprite portrait;
+    public Sprite portrait;      // full body
+    public Sprite headPortrait;  // head/face only
 
     [Header("Starting Level")]
     public int startingLevel = 1;
