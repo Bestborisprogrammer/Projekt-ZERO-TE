@@ -36,8 +36,16 @@ public class DraggableMemberCard : MonoBehaviour, IBeginDragHandler, IDragHandle
     public void RefreshText()
     {
         var tmp = GetComponentInChildren<TextMeshProUGUI>();
-        if (tmp == null) return;
-        tmp.text = $"{member.Name}\nLv.{member.level}\nHP:{member.currentHP}/{member.MaxHP}";
+        if (tmp != null)
+        {
+            bool isActive = PartyManager.Instance.activeParty.Contains(member);
+            tmp.text = $"{member.Name}\nLv.{member.level}\nHP:{member.currentHP}/{member.MaxHP}";
+        }
+
+        // Show portrait on card
+        var img = transform.Find("Portrait")?.GetComponent<Image>();
+        if (img != null && member.baseData.portrait != null)
+            img.sprite = member.baseData.portrait;
     }
 
     public void OnBeginDrag(PointerEventData eventData)

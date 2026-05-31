@@ -26,6 +26,9 @@ public class GearMenuPanel : MonoBehaviour
 
     static bool initialized = false;
 
+    [Header("Member Portrait")]
+    public Image memberPortraitImage;
+
     void OnEnable()
     {
         if (!initialized)
@@ -100,19 +103,29 @@ public class GearMenuPanel : MonoBehaviour
         var activeParty = PartyManager.Instance.activeParty;
         if (activeParty.Count == 0) return;
 
-        // Clamp index
         selectedMemberIndex = Mathf.Clamp(selectedMemberIndex, 0, activeParty.Count - 1);
         selectedMember = activeParty[selectedMemberIndex];
 
-        // Update name text
         if (memberNameText != null)
             memberNameText.text = $"{selectedMember.Name}  Lv.{selectedMember.level}" +
                 $"  ({selectedMemberIndex + 1}/{activeParty.Count})";
 
-        // Show/hide nav buttons
         bool multipleMembers = activeParty.Count > 1;
         prevMemberButton.gameObject.SetActive(multipleMembers);
         nextMemberButton.gameObject.SetActive(multipleMembers);
+
+        // Show full body portrait
+        if (memberPortraitImage != null)
+        {
+            var so = selectedMember.baseData;
+            if (so.portrait != null)
+            {
+                memberPortraitImage.sprite = so.portrait;
+                memberPortraitImage.gameObject.SetActive(true);
+            }
+            else
+                memberPortraitImage.gameObject.SetActive(false);
+        }
 
         // Spawn gear slots
         SpawnSlot("Weapon", GearSlot.Weapon, false);

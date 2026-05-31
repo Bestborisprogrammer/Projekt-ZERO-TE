@@ -52,9 +52,35 @@ public class GearCategoryRow : MonoBehaviour
         {
             if (stack.quantity <= 0) continue;
             GameObject card = Instantiate(gearCardPrefab, itemListParent);
-            card.GetComponent<GearCard>()?.Setup(stack.gear, stack.quantity);
+            var gearCard = card.GetComponent<GearCard>();
+            if (gearCard != null)
+            {
+                gearCard.Setup(stack.gear, stack.quantity);
+
+                // Add click to auto equip
+                var btn = card.GetComponent<UnityEngine.UI.Button>();
+                if (btn == null) btn = card.AddComponent<UnityEngine.UI.Button>();
+
+                var capturedGear = stack.gear;
+                btn.onClick.AddListener(() => AutoEquip(capturedGear));
+            }
         }
     }
+
+    void AutoEquip(GearSO gear)
+    {
+        var gearPanel = Object.FindFirstObjectByType<GearMenuPanel>();
+        if (gearPanel == null || gearPanel.selectedMember == null)
+        {
+            Debug.Log("No member selected for auto equip!");
+            return;
+        }
+
+        GearManager.Instance.EquipGear(gearPanel.selectedMember.Name, gear, false);
+        Debug.Log($"Auto equipped {gear.gearName} on {gearPanel.selectedMember.Name}!");
+        gearPanel.Refresh();
+    }
+
 
     public void RefreshGearList(List<GearStack> gear)
     {

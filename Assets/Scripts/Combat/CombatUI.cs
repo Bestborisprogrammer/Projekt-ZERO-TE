@@ -531,12 +531,13 @@ public class CombatUI : MonoBehaviour
 
     void SetupHPEntry(GameObject entry, Combatant member)
     {
-        var nameText = entry.transform.Find("NameText")?.GetComponent<TextMeshProUGUI>();
-        var portrait = entry.transform.Find("Portrait")?.GetComponent<Image>();
-        var hpBar = entry.transform.Find("HPBar")?.GetComponent<Image>();
-        var hpText = entry.transform.Find("HPText")?.GetComponent<TextMeshProUGUI>();
-        var mpBar = entry.transform.Find("MPBar")?.GetComponent<Image>();
-        var mpText = entry.transform.Find("MPText")?.GetComponent<TextMeshProUGUI>();
+        // Search recursively through all children
+        var nameText = FindDeep<TextMeshProUGUI>(entry, "NameText");
+        var portrait = FindDeep<Image>(entry, "Portrait");
+        var hpBar = FindDeep<Image>(entry, "HPBar");
+        var hpText = FindDeep<TextMeshProUGUI>(entry, "HPText");
+        var mpBar = FindDeep<Image>(entry, "MPBar");
+        var mpText = FindDeep<TextMeshProUGUI>(entry, "MPText");
 
         if (nameText != null)
         {
@@ -547,25 +548,22 @@ public class CombatUI : MonoBehaviour
             nameText.color = member.IsAlive ? Color.white : Color.red;
         }
 
-        // Use head portrait for HP panel
         if (portrait != null)
         {
             var so = PartyManager.Instance.allMembers
                 .Find(m => m.Name == member.Name)?.baseData;
             if (so != null)
-            {
-                // Prefer head portrait, fall back to full portrait
                 portrait.sprite = so.headPortrait != null ? so.headPortrait : so.portrait;
-            }
         }
 
         if (hpBar != null)
         {
             float hpFill = member.MaxHP > 0 ? (float)member.CurrentHP / member.MaxHP : 0f;
-            hpBar.fillAmount = hpFill;
+            hpBar.fillAmount = Mathf.Clamp01(hpFill);
             hpBar.color = hpFill > 0.5f ? Color.red :
                           hpFill > 0.25f ? new Color(1f, 0.5f, 0f) :
                           new Color(0.8f, 0f, 0f);
+            Debug.Log($"[HP BAR] {member.Name}: {member.CurrentHP}/{member.MaxHP} fill:{hpFill}");
         }
 
         if (hpText != null)
@@ -573,15 +571,26 @@ public class CombatUI : MonoBehaviour
 
         if (mpBar != null)
         {
-            var memberData = PartyManager.Instance.allMembers
-                .Find(m => m.Name == member.Name);
+            var memberData = PartyManager.Instance.allMembers.Find(m => m.Name == member.Name);
             int maxMP = memberData?.MaxMana ?? 1;
             float mpFill = maxMP > 0 ? (float)member.GetCurrentMana() / maxMP : 0f;
             mpBar.fillAmount = Mathf.Clamp01(mpFill);
+            Debug.Log($"[MP BAR] {member.Name}: {member.GetCurrentMana()}/{maxMP} fill:{mpFill}");
         }
 
         if (mpText != null)
             mpText.text = $"{member.GetCurrentMana()}";
+    }
+
+    T FindDeep<T>(GameObject root, string name) where T : Component
+    {
+        foreach (Transform child in root.GetComponentsInChildren<Transform>())
+            if (child.name == name)
+            {
+                var comp = child.GetComponent<T>();
+                if (comp != null) return comp;
+            }
+        return null;
     }
 
     public void BuildEnemyTargetButtons(List<Combatant> enemies)
