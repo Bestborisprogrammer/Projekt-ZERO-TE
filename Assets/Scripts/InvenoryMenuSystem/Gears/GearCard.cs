@@ -56,8 +56,8 @@ public class GearCard : MonoBehaviour,
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (isDragging) return;
-        // Always show gear stats even without a selected member
-        GearTooltip.Instance?.Show(gear, null);
+        var gearPanel = Object.FindFirstObjectByType<GearMenuPanel>();
+        GearTooltip.Instance?.Show(gear, gearPanel?.selectedMember);
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -69,6 +69,7 @@ public class GearCard : MonoBehaviour,
     {
         isDragging = true;
         GearTooltip.Instance?.Hide();
+        // ... rest of existing OnBeginDrag code
 
         if (rootCanvas == null)
             rootCanvas = GetComponentInParent<Canvas>();

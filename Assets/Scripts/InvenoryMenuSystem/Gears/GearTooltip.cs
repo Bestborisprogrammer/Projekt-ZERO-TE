@@ -7,13 +7,11 @@ public class GearTooltip : MonoBehaviour
     public GameObject tooltipPanel;
     public TextMeshProUGUI tooltipText;
     private RectTransform panelRT;
-    private Canvas rootCanvas;
 
     void Awake()
     {
         Instance = this;
         panelRT = tooltipPanel.GetComponent<RectTransform>();
-        rootCanvas = GetComponentInParent<Canvas>();
 
         var canvasGroup = tooltipPanel.GetComponent<CanvasGroup>();
         if (canvasGroup == null)
@@ -21,23 +19,33 @@ public class GearTooltip : MonoBehaviour
         canvasGroup.blocksRaycasts = false;
         canvasGroup.interactable = false;
 
-        if (tooltipPanel != null)
-            tooltipPanel.SetActive(false);
+        tooltipPanel.SetActive(false);
     }
 
     void Update()
     {
-        if (tooltipPanel != null && tooltipPanel.activeSelf)
+        if (tooltipPanel.activeSelf)
         {
+            // Hide on click
+            if (Input.GetMouseButtonDown(0))
+            {
+                Hide();
+                return;
+            }
+
+            // Follow mouse – offset below and to the right
             Vector2 mousePos = Input.mousePosition;
             float xPos = mousePos.x + 15f;
-            float yPos = mousePos.y;
+            float yPos = mousePos.y - 285f; // below mouse
 
             float panelWidth = panelRT.rect.width;
             float panelHeight = panelRT.rect.height;
+
+            // Keep on screen
             if (xPos + panelWidth > Screen.width)
                 xPos = mousePos.x - panelWidth - 10f;
-            yPos = Mathf.Min(yPos, Screen.height - panelHeight);
+            if (yPos - panelHeight < 0)
+                yPos = mousePos.y + panelHeight + 10f;
 
             panelRT.position = new Vector2(xPos, yPos);
         }
@@ -45,11 +53,7 @@ public class GearTooltip : MonoBehaviour
 
     public void Show(GearSO gear, CharacterInstance member = null)
     {
-        if (gear == null)
-        {
-            Hide();
-            return;
-        }
+        if (gear == null) { Hide(); return; }
 
         string text =
             $"{gear.gearName}\n" +
