@@ -1741,6 +1741,7 @@ MonoBehaviour:
   partySpritesParent: {fileID: 152848615}
   enemySpritesParent: {fileID: 287241627}
   combatSpritePrefab: {fileID: 8573713753543988171, guid: 70a83fdacbc5c6a4fabefbbe9ec9dfee, type: 3}
+  combatCanvas: {fileID: 1571577984}
 --- !u!4 &926279148
 Transform:
   m_ObjectHideFlags: 0

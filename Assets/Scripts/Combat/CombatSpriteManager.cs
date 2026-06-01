@@ -25,6 +25,9 @@ public class CombatSpriteManager : MonoBehaviour
     private Color selectedColor = new Color(0.2f, 0.8f, 0.2f, 0.7f);
     private Color defeatedColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
 
+    [Header("Damage Numbers")]
+    public Canvas combatCanvas; // assign your combat scene canvas
+
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -348,12 +351,12 @@ public class CombatSpriteManager : MonoBehaviour
     }
 
     // ───────────────── HIT EFFECTS ─────────────────
-    public void PlayHitEffect(string name)
+    public void PlayHitEffect(string name, int damage = 0)
     {
-        if (!spriteMap.ContainsKey(name))
-            return;
-
+        if (!spriteMap.ContainsKey(name)) return;
         StartCoroutine(ShakeAndFlash(name));
+        if (damage > 0 && combatCanvas != null)
+            ShowDamageNumber(name, damage);
     }
 
     public void PlayDefeatedEffect(string name)
@@ -425,5 +428,91 @@ public class CombatSpriteManager : MonoBehaviour
         }
 
         img.color = grey;
+    }
+
+    public void ShowDamageNumber(string targetName, int damage, bool isHeal = false)
+    {
+        if (combatCanvas == null) return;
+        if (!rectMap.ContainsKey(targetName)) return;
+
+        var rt = rectMap[targetName];
+
+        GameObject dmgObj = new GameObject("DamageNumber");
+        dmgObj.transform.SetParent(combatCanvas.transform, false);
+
+        var tmp = dmgObj.AddComponent<TextMeshProUGUI>();
+        tmp.text = isHeal ? $"+{damage}" : $"-{damage}";
+        tmp.fontSize = 36;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = isHeal ? Color.green : Color.red;
+        tmp.raycastTarget = false;
+
+        var dmgRT = dmgObj.GetComponent<RectTransform>();
+        dmgRT.sizeDelta = new Vector2(150, 60);
+
+        // Get top of the sprite rect in screen space
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        // corners[1] = top left, corners[2] = top right
+        Vector3 topCenter = (corners[1] + corners[2]) / 2f;
+
+        // Add upward offset so it appears above the sprite
+        topCenter.y += 40f;
+        topCenter.x += Random.Range(-30f, 30f);
+
+        dmgRT.position = topCenter;
+
+        Vector2 floatDir = new Vector2(
+            Random.Range(-40f, 40f),
+            Random.Range(80f, 140f));
+
+        StartCoroutine(AnimateDamageNumber(dmgObj, tmp, dmgRT, floatDir));
+    }
+
+    IEnumerator AnimateDamageNumber(GameObject obj, TextMeshProUGUI tmp,
+        RectTransform rt, Vector2 floatDir)
+    {
+        float duration = 1.2f;
+        float elapsed = 0f;
+        Vector3 startPos = rt.position;
+        bool isRed = true;
+        float flashInterval = 0.08f;
+        float nextFlash = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+
+            // Float upward in random direction
+            rt.position = startPos + new Vector3(
+                floatDir.x * t,
+                floatDir.y * t,
+                0);
+
+            // Flash red/white
+            nextFlash -= Time.deltaTime;
+            if (nextFlash <= 0f)
+            {
+                isRed = !isRed;
+                tmp.color = new Color(
+                    isRed ? 1f : 1f,
+                    isRed ? 0f : 1f,
+                    isRed ? 0f : 1f,
+                    1f - (t * t)); // fade out as it floats
+                nextFlash = flashInterval;
+            }
+
+            // Scale up then down
+            float scale = t < 0.2f
+                ? Mathf.Lerp(0.5f, 1.3f, t / 0.2f)
+                : Mathf.Lerp(1.3f, 0.8f, (t - 0.2f) / 0.8f);
+            rt.localScale = Vector3.one * scale;
+
+            yield return null;
+        }
+
+        Destroy(obj);
     }
 }

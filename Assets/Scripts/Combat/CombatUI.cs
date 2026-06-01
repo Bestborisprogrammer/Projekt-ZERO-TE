@@ -102,7 +102,6 @@ public class CombatUI : MonoBehaviour
         itemPrevButton.onClick.AddListener(ItemPagePrev);
         itemNextButton.onClick.AddListener(ItemPageNext);
     }
-
     void Update()
     {
         if (waitingForInput)
@@ -111,7 +110,31 @@ public class CombatUI : MonoBehaviour
                 Input.GetMouseButtonDown(0) ||
                 Input.anyKeyDown)
                 waitingForInput = false;
+            return;
         }
+
+        // Keybinds only when player buttons are active and no action taken
+        if (actionTaken) return;
+        if (!basicAttackButton.interactable) return;
+
+        // E – Basic Attack
+        if (Input.GetKeyDown(KeyCode.E))
+            OnBasicAttack();
+
+        // R – Skills/Mana
+        if (Input.GetKeyDown(KeyCode.R))
+            ToggleSkillPanel();
+
+        // F – Block/Evade
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (blockButton.interactable)
+                blockButton.onClick.Invoke();
+        }
+
+        // I – Items
+        if (Input.GetKeyDown(KeyCode.I))
+            ToggleItemPanel();
     }
 
     public void ResetActionTaken() => actionTaken = false;

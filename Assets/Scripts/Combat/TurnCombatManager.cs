@@ -18,14 +18,10 @@ public class TurnCombatManager : MonoBehaviour
     public List<Combatant> party = new();
     private Dictionary<string, EnemyInstance> enemyInstanceDict = new();
 
-    public void UpdateStatusIndicatorsPublic() => UpdateStatusIndicators();
-
     public int CurrentTurnIndex => currentTurnIndex;
 
-    public EnemyInstance GetEnemyInstance(string name)
-    {
-        return enemyInstanceDict.ContainsKey(name) ? enemyInstanceDict[name] : null;
-    }
+    public EnemyInstance GetEnemyInstance(string name) =>
+        enemyInstanceDict.ContainsKey(name) ? enemyInstanceDict[name] : null;
 
     void Awake()
     {
@@ -33,10 +29,7 @@ public class TurnCombatManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    void Start()
-    {
-        SetupCombat();
-    }
+    void Start() => SetupCombat();
 
     void SetupCombat()
     {
@@ -80,6 +73,8 @@ public class TurnCombatManager : MonoBehaviour
         StartTurn();
     }
 
+    public void UpdateStatusIndicatorsPublic() => UpdateStatusIndicators();
+
     void UpdateStatusIndicators()
     {
         var all = new List<Combatant>();
@@ -95,8 +90,6 @@ public class TurnCombatManager : MonoBehaviour
         Combatant current = turnOrder[currentTurnIndex];
         current.SetBlocking(false);
         current.SetEvading(false);
-
-        Debug.Log($"--- {current.Name}'s Turn --- HP:{current.CurrentHP}/{current.MaxHP} MP:{current.GetCurrentMana()}");
 
         combatUI.UpdateTurnText(current.Name);
         combatUI.UpdateAllHP(party, enemies);
@@ -169,7 +162,8 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
     }
 
-    string HandleElementalCombos(Combatant attacker, Combatant target, SpellAffinity affinity, ref float damageMult)
+    string HandleElementalCombos(Combatant attacker, Combatant target,
+        SpellAffinity affinity, ref float damageMult)
     {
         string comboMsg = "";
         if (affinity == SpellAffinity.Thunder && target.IsWet)
@@ -202,6 +196,7 @@ public class TurnCombatManager : MonoBehaviour
             if (charRef != null)
             {
                 charRef.currentHP = Mathf.Min(charRef.MaxHP, charRef.currentHP + healAmount);
+                CombatSpriteManager.Instance?.ShowDamageNumber(attacker.Name, healAmount, true);
                 combatUI.ShowCombatLog($"{attacker.Name} absorbs {healAmount} HP from the light!");
             }
         }
@@ -212,6 +207,7 @@ public class TurnCombatManager : MonoBehaviour
             target.ApplyStatusEffect(spell.statusEffect, spell.statusChance, spell.statusDuration,
                 spell.dotPercent, spell.defenseReduction, speedReduction);
             bool wasApplied = target.HasStatusEffect(spell.statusEffect);
+
             if (wasApplied)
             {
                 if (spell.statusEffect == StatusEffectType.Wet)
@@ -222,10 +218,12 @@ public class TurnCombatManager : MonoBehaviour
             else
                 combatUI.ShowCombatLog($"{spell.spellName} effect missed on {target.Name}!");
         }
+
         UpdateStatusIndicators();
     }
 
-    void ApplyEnemySpellEffects(EnemyManaAttackSO spell, Combatant attacker, Combatant target, int damage)
+    void ApplyEnemySpellEffects(EnemyManaAttackSO spell, Combatant attacker,
+        Combatant target, int damage)
     {
         if (spell.statusEffect != StatusEffectType.None)
         {
@@ -235,6 +233,7 @@ public class TurnCombatManager : MonoBehaviour
             if (target.HasStatusEffect(spell.statusEffect))
                 combatUI.ShowCombatLog($"{target.Name} is afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
         }
+
         UpdateStatusIndicators();
     }
 
@@ -242,7 +241,7 @@ public class TurnCombatManager : MonoBehaviour
     {
         if (target.CombatStyle == CombatStyle.Evade && target.TryEvade())
         {
-            combatUI.ShowCombatLog($"{target.Name} evaded the attack! (E! - Dodge: {target.EvadeChance * 100f:F1}%)");
+            combatUI.ShowCombatLog($"{target.Name} evaded the attack!");
             return false;
         }
 
@@ -250,15 +249,17 @@ public class TurnCombatManager : MonoBehaviour
         {
             int reduced = Mathf.RoundToInt(damage * (1f - target.BlockReduction));
             target.TakeDamage(reduced);
-            CombatSpriteManager.Instance?.PlayHitEffect(target.Name);
-            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage! (B! reduced to {reduced} - {target.BlockReduction * 100f:F1}% reduction)");
+            CombatSpriteManager.Instance?.PlayHitEffect(target.Name, reduced);
+            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage! " +
+                $"(B! reduced to {reduced})");
         }
         else
         {
             target.TakeDamage(damage);
-            CombatSpriteManager.Instance?.PlayHitEffect(target.Name);
+            CombatSpriteManager.Instance?.PlayHitEffect(target.Name, damage);
             combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage!");
         }
+
         return true;
     }
 
@@ -303,7 +304,8 @@ public class TurnCombatManager : MonoBehaviour
         blocker.SetBlocking(true);
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
-        combatUI.ShowCombatLog($"{blocker.Name} guards! Damage reduction: {blocker.BlockReduction * 100f:F1}%",
+        combatUI.ShowCombatLog(
+            $"{blocker.Name} guards! Damage reduction: {blocker.BlockReduction * 100f:F1}%",
             () => NextTurn());
     }
 
@@ -313,7 +315,8 @@ public class TurnCombatManager : MonoBehaviour
         evader.SetEvading(true);
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
-        combatUI.ShowCombatLog($"{evader.Name} readies an evade! Dodge chance: {evader.EvadeChance * 100f:F1}%",
+        combatUI.ShowCombatLog(
+            $"{evader.Name} readies an evade! Dodge chance: {evader.EvadeChance * 100f:F1}%",
             () => NextTurn());
     }
 
@@ -332,7 +335,8 @@ public class TurnCombatManager : MonoBehaviour
         if (selectedEnemyIndex >= enemies.Count) return;
 
         Combatant target = enemies[selectedEnemyIndex];
-        float affinityMult = attacker.Affinities.Contains(spell.affinity) && spell.affinity != SpellAffinity.None ? 1.5f : 1f;
+        float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
+            spell.affinity != SpellAffinity.None ? 1.5f : 1f;
         string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref affinityMult);
 
         int damage = Mathf.Max(1, Mathf.RoundToInt((spell.flatDamage - target.Defense) * affinityMult));
@@ -380,13 +384,15 @@ public class TurnCombatManager : MonoBehaviour
             if (attacker.CombatStyle == CombatStyle.Block)
             {
                 attacker.SetBlocking(true);
-                combatUI.ShowCombatLog($"{attacker.Name} guards! (B! - {attacker.BlockReduction * 100f:F1}% reduction)",
+                combatUI.ShowCombatLog(
+                    $"{attacker.Name} guards!",
                     () => ProcessDotsAndNextTurn(attacker));
             }
             else
             {
                 attacker.SetEvading(true);
-                combatUI.ShowCombatLog($"{attacker.Name} readies an evade! Dodge: {attacker.EvadeChance * 100f:F1}%",
+                combatUI.ShowCombatLog(
+                    $"{attacker.Name} readies an evade!",
                     () => ProcessDotsAndNextTurn(attacker));
             }
             return;
@@ -394,16 +400,20 @@ public class TurnCombatManager : MonoBehaviour
 
         Combatant target = aliveParty[Random.Range(0, aliveParty.Count)];
         var availableSpells = GetEnemyAvailableSpells();
-        bool useSpell = availableSpells != null && availableSpells.Count > 0 && Random.value > 0.5f;
+        bool useSpell = availableSpells != null &&
+            availableSpells.Count > 0 && Random.value > 0.5f;
 
         if (useSpell)
         {
             var spell = availableSpells[Random.Range(0, availableSpells.Count)];
             attacker.SpendMana(spell.manaCost);
 
-            float affinityMult = attacker.Affinities.Contains(spell.affinity) && spell.affinity != SpellAffinity.None ? 1.5f : 1f;
-            string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref affinityMult);
-            int damage = Mathf.Max(1, Mathf.RoundToInt((spell.flatDamage - target.Defense) * affinityMult));
+            float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
+                spell.affinity != SpellAffinity.None ? 1.5f : 1f;
+            string comboMsg = HandleElementalCombos(
+                attacker, target, spell.affinity, ref affinityMult);
+            int damage = Mathf.Max(1,
+                Mathf.RoundToInt((spell.flatDamage - target.Defense) * affinityMult));
 
             combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}!");
             if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
@@ -426,7 +436,14 @@ public class TurnCombatManager : MonoBehaviour
 
     void ProcessDotsAndNextTurn(Combatant attacker)
     {
-        var dotLogs = attacker.ProcessStatusEffects();
+        var detailed = attacker.ProcessStatusEffectsDetailed();
+
+        // Show damage numbers for DOT
+        foreach (var (log, damage, isDot) in detailed)
+            if (isDot && damage > 0)
+                CombatSpriteManager.Instance?.ShowDamageNumber(attacker.Name, damage);
+
+        var dotLogs = detailed.ConvertAll(d => d.log);
 
         combatUI.UpdateAllHP(party, enemies);
         combatUI.BuildEnemyTargetButtons(enemies);
@@ -443,8 +460,8 @@ public class TurnCombatManager : MonoBehaviour
             if (enemies.All(e => !e.IsAlive))
             {
                 if (dotLogs.Count > 0)
-                    combatUI.ShowCombatLogs(dotLogs, () =>
-                        combatUI.ShowCombatLog(" ", () => HandleVictory()));
+                    combatUI.ShowCombatLogs(dotLogs,
+                        () => combatUI.ShowCombatLog(" ", () => HandleVictory()));
                 else
                     HandleVictory();
                 return;
@@ -452,9 +469,9 @@ public class TurnCombatManager : MonoBehaviour
 
             if (!attacker.IsEnemy && PartyManager.Instance.IsGameOver())
             {
-                foreach (var member in party)
-                    if (!member.IsAlive)
-                        CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(member.Name);
+                foreach (var m in party)
+                    if (!m.IsAlive)
+                        CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(m.Name);
 
                 if (dotLogs.Count > 0)
                     combatUI.ShowCombatLogs(dotLogs, () =>
@@ -463,11 +480,7 @@ public class TurnCombatManager : MonoBehaviour
                             combatUI.ShowGameOver();
                             combatActive = false;
                         }));
-                else
-                {
-                    combatUI.ShowGameOver();
-                    combatActive = false;
-                }
+                else { combatUI.ShowGameOver(); combatActive = false; }
                 return;
             }
 
@@ -477,9 +490,9 @@ public class TurnCombatManager : MonoBehaviour
 
         if (PartyManager.Instance.IsGameOver())
         {
-            foreach (var member in party)
-                if (!member.IsAlive)
-                    CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(member.Name);
+            foreach (var m in party)
+                if (!m.IsAlive)
+                    CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(m.Name);
 
             if (dotLogs.Count > 0)
                 combatUI.ShowCombatLogs(dotLogs, () =>
@@ -488,17 +501,13 @@ public class TurnCombatManager : MonoBehaviour
                         combatUI.ShowGameOver();
                         combatActive = false;
                     }));
-            else
-            {
-                combatUI.ShowGameOver();
-                combatActive = false;
-            }
+            else { combatUI.ShowGameOver(); combatActive = false; }
             return;
         }
 
         if (dotLogs.Count > 0)
-            combatUI.ShowCombatLogs(dotLogs, () =>
-                combatUI.ShowCombatLog(" ", () => NextTurn()));
+            combatUI.ShowCombatLogs(dotLogs,
+                () => combatUI.ShowCombatLog(" ", () => NextTurn()));
         else
             NextTurn();
     }
@@ -543,8 +552,7 @@ public class TurnCombatManager : MonoBehaviour
 
             foreach (var drop in enemyData.itemDrops)
             {
-                float roll = Random.Range(0f, 100f);
-                if (roll <= drop.dropChance)
+                if (Random.Range(0f, 100f) <= drop.dropChance)
                 {
                     InventoryManager.Instance.AddItem(drop.item);
                     drops.itemsDropped.Add(drop.item);
@@ -553,8 +561,7 @@ public class TurnCombatManager : MonoBehaviour
 
             foreach (var drop in enemyData.gearDrops)
             {
-                float roll = Random.Range(0f, 100f);
-                if (roll <= drop.dropChance)
+                if (Random.Range(0f, 100f) <= drop.dropChance)
                 {
                     GearManager.Instance.AddGearToInventory(drop.gear);
                     drops.gearDropped.Add(drop.gear);

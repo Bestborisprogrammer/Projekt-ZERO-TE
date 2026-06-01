@@ -47,9 +47,7 @@ public class Combatant
     {
         if (CombatStyle != CombatStyle.Evade) return false;
         if (!IsEvading) return false;
-        bool evaded = Random.value < EvadeChance;
-        Debug.Log($"{Name} evade check: chance={EvadeChance * 100f:F1}% result={evaded}");
-        return evaded;
+        return Random.value < EvadeChance;
     }
 
     public void TakeDamage(int damage)
@@ -57,7 +55,6 @@ public class Combatant
         if (IsBlocking)
         {
             int reduced = Mathf.RoundToInt(damage * (1f - BlockReduction));
-            Debug.Log($"{Name} blocked! {damage} -> {reduced} damage (reduction: {BlockReduction * 100f:F1}%)");
             damage = reduced;
         }
         if (IsEnemy) enemyRef.TakeDamage(damage);
@@ -79,30 +76,40 @@ public class Combatant
         Refresh();
     }
 
-    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration, float dotPercent = 0f, float defenseReduction = 0f, int speedReduction = 0)
+    public void ApplyStatusEffect(StatusEffectType type, float chance, int duration,
+        float dotPercent = 0f, float defenseReduction = 0f, int speedReduction = 0)
     {
-        if (IsEnemy) enemyRef.ApplyStatusEffect(type, chance, duration, dotPercent, defenseReduction, speedReduction);
-        else characterRef.ApplyStatusEffect(type, chance, duration, dotPercent, defenseReduction, speedReduction);
+        if (IsEnemy)
+            enemyRef.ApplyStatusEffect(type, chance, duration, dotPercent, defenseReduction, speedReduction);
+        else
+            characterRef.ApplyStatusEffect(type, chance, duration, dotPercent, defenseReduction, speedReduction);
         Refresh();
     }
 
     public bool HasStatusEffect(StatusEffectType type)
     {
-        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
+        List<ActiveStatusEffect> effects = IsEnemy
+            ? enemyRef.activeEffects
+            : characterRef.activeEffects;
         return effects.Exists(e => e.type == type && e.turnsRemaining > 0);
     }
 
     public void RemoveStatusEffect(StatusEffectType type)
     {
-        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
+        List<ActiveStatusEffect> effects = IsEnemy
+            ? enemyRef.activeEffects
+            : characterRef.activeEffects;
         effects.RemoveAll(e => e.type == type);
         Refresh();
     }
 
-    public List<string> ProcessStatusEffects()
+    // Returns logs AND dot damage amounts for damage numbers
+    public List<(string log, int damage, bool isDot)> ProcessStatusEffectsDetailed()
     {
-        List<string> logs = new();
-        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
+        List<(string, int, bool)> results = new();
+        List<ActiveStatusEffect> effects = IsEnemy
+            ? enemyRef.activeEffects
+            : characterRef.activeEffects;
 
         for (int i = effects.Count - 1; i >= 0; i--)
         {
@@ -111,61 +118,69 @@ public class Combatant
             if (effect.type == StatusEffectType.Burn || effect.type == StatusEffectType.Poison)
             {
                 int dotDamage = Mathf.Max(1, Mathf.RoundToInt(MaxHP * effect.dotPercent));
-                TakeDamage(dotDamage);
+                if (IsEnemy) enemyRef.TakeDamage(dotDamage);
+                else characterRef.TakeDamage(dotDamage);
                 effect.turnsRemaining--;
 
                 if (effect.turnsRemaining <= 0)
                 {
-                    logs.Add($"{Name} takes {dotDamage} {effect.type} damage! {effect.type} wore off!");
+                    results.Add(($"{Name} takes {dotDamage} {effect.type} damage! {effect.type} wore off!", dotDamage, true));
                     effects.RemoveAt(i);
                 }
                 else
-                    logs.Add($"{Name} takes {dotDamage} {effect.type} damage! ({effect.turnsRemaining} turns remaining)");
+                    results.Add(($"{Name} takes {dotDamage} {effect.type} damage! ({effect.turnsRemaining} turns remaining)", dotDamage, true));
             }
             else if (effect.type == StatusEffectType.Wet)
             {
                 effect.turnsRemaining--;
                 if (effect.turnsRemaining <= 0)
                 {
-                    logs.Add($"{Name}'s Wet effect wore off! Speed returns to normal.");
-                    Debug.Log($"[WET] {Name}'s Wet wore off!");
+                    results.Add(($"{Name}'s Wet effect wore off!", 0, false));
                     effects.RemoveAt(i);
                 }
                 else
-                {
-                    logs.Add($"{Name} is Wet! Speed reduced by {effect.speedReduction} ({effect.turnsRemaining} turns remaining)");
-                    Debug.Log($"[WET] {Name} Speed reduced by {effect.speedReduction} | {effect.turnsRemaining} turns remaining");
-                }
+                    results.Add(($"{Name} is Wet! Speed reduced. ({effect.turnsRemaining} turns remaining)", 0, false));
             }
             else if (effect.type == StatusEffectType.Dark)
             {
                 effect.turnsRemaining--;
                 if (effect.turnsRemaining <= 0)
                 {
-                    logs.Add($"{Name}'s Defense reduction wore off!");
+                    results.Add(($"{Name}'s Defense reduction wore off!", 0, false));
                     effects.RemoveAt(i);
                 }
                 else
-                    logs.Add($"{Name}'s Defense is reduced! ({effect.turnsRemaining} turns remaining)");
+                    results.Add(($"{Name}'s Defense is reduced! ({effect.turnsRemaining} turns remaining)", 0, false));
             }
             else if (effect.type == StatusEffectType.Paralyze)
             {
                 effect.turnsRemaining--;
                 if (effect.turnsRemaining <= 0)
                 {
-                    logs.Add($"{Name}'s paralysis wore off!");
+                    results.Add(($"{Name}'s paralysis wore off!", 0, false));
                     effects.RemoveAt(i);
                 }
+                else
+                    results.Add(($"{Name} is paralyzed! ({effect.turnsRemaining} turns remaining)", 0, false));
             }
         }
 
         Refresh();
-        return logs;
+        return results;
+    }
+
+    // Keep old method for compatibility
+    public List<string> ProcessStatusEffects()
+    {
+        var detailed = ProcessStatusEffectsDetailed();
+        return detailed.ConvertAll(d => d.log);
     }
 
     public bool ConsumeFreezeIfActive()
     {
-        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
+        List<ActiveStatusEffect> effects = IsEnemy
+            ? enemyRef.activeEffects
+            : characterRef.activeEffects;
         var freeze = effects.Find(e => e.type == StatusEffectType.Freeze);
         if (freeze == null) return false;
         freeze.turnsRemaining--;
