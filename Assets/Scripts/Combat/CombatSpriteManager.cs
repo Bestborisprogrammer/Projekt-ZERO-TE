@@ -458,7 +458,7 @@ public class CombatSpriteManager : MonoBehaviour
         Vector3 topCenter = (corners[1] + corners[2]) / 2f;
 
         // Add upward offset so it appears above the sprite
-        topCenter.y += 40f;
+        topCenter.y += 100f;
         topCenter.x += Random.Range(-30f, 30f);
 
         dmgRT.position = topCenter;
