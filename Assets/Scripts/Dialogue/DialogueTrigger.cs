@@ -21,6 +21,10 @@ public class DialogueTrigger : MonoBehaviour
     private bool playerNearby = false;
     private string saveKey;
 
+
+    [Header("Recruit Cutscene (optional)")]
+    public RecruitCutsceneManager linkedRecruitCutscene;
+
     void Start()
     {
         saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
@@ -72,6 +76,8 @@ public class DialogueTrigger : MonoBehaviour
         DialogueUI.Instance.StartDialogue(dialogue, () =>
         {
             onDialogueComplete?.Invoke();
+            linkedCutscene?.OnDialogueComplete();
+            linkedRecruitCutscene?.StartRecruitCutscene();
 
             if (oneTimeOnly)
             {

@@ -11,6 +11,7 @@ public class EncounterManager : MonoBehaviour
     public static List<EnemyStatsSO> CurrentEnemies { get; private set; } = new();
     public static Vector3 PlayerReturnPosition { get; set; }
     public static CutsceneManager ActiveCutscene { get; set; }
+    public static RecruitCutsceneManager ActiveRecruitCutscene { get; set; }
 
     void Awake()
     {

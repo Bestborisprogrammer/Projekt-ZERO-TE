@@ -16,6 +16,8 @@ public class CutsceneManager : MonoBehaviour
     private bool battleDone = false;
     private Coroutine chargeCoroutine;
 
+
+
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;

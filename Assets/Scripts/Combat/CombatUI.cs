@@ -662,6 +662,13 @@ public class CombatUI : MonoBehaviour
             EncounterManager.ActiveCutscene = null;
         }
 
+        // Recruit cutscene
+        if (EncounterManager.ActiveRecruitCutscene != null)
+        {
+            EncounterManager.ActiveRecruitCutscene.OnBattleComplete();
+            EncounterManager.ActiveRecruitCutscene = null;
+        }
+
         victoryPanel.SetActive(true);
         victoryPanel.transform.SetAsLastSibling();
 
