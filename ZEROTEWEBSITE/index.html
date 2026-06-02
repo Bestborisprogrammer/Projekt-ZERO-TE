@@ -34,9 +34,8 @@
 
 <section id="about" class="fade-in">
     <h2>About the Game</h2>
-
     <p>
-        ZERO-TE is a Dark-Fantasy 2D JRPG-inspired RPG.
+        ZERO-TE is a Fantasy 2D RPG.
         Captured at the peak of a mysterious tower,
         you now awaken at its lowest depths.
         Every floor hides secrets, enemies and forgotten truths.
@@ -45,17 +44,15 @@
 
 <section id="gallery" class="fade-in">
     <h2>Screenshots</h2>
-
     <div class="gallery-grid">
-        <img src="sc4.png">
-        <img src="sc2.png">
-        <img src="sc3.png">
+        <img src="sc4.png" alt="Screenshot 1">
+        <img src="sc2.png" alt="Screenshot 2">
+        <img src="sc3.png" alt="Screenshot 3">
     </div>
 </section>
 
 <section id="creators" class="fade-in">
     <h2>Creators</h2>
-
     <div class="creator-list">
         <p><strong>Boris Djumic</strong> – Main Programmer</p>
         <p><strong>Dominik Nemeth</strong> – Main Gamedesigner, Storywriter, Main Composer</p>
@@ -65,22 +62,31 @@
 
 <section id="trailer" class="fade-in">
     <h2>Trailer</h2>
-
     <div class="video-container">
-        <a 
-            href="https://www.youtube.com/watch?v=eOQSxYzTvww" 
-            target="_blank"
-            style="color: white; text-decoration: none; font-size: 20px;"
-        >
-            Watch the ZERO-TE Trailer on YouTube
-        </a>
+        <iframe 
+            src="https://www.youtube.com/embed/eOQSxYzTvww" 
+            title="ZERO-TE Trailer" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen
+        ></iframe>
     </div>
 </section>
 
 <section id="contact" class="fade-in">
     <h2>Contact</h2>
+    <form id="contact-form" action="mailto:djumic.boris@hak-liezen.at" method="POST" enctype="text/plain">
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name" required><br>
 
-    <p>E-mail: djumic.boris@hak-liezen.at</p>
+        <label for="email">E-Mail:</label><br>
+        <input type="email" id="email" name="email" required><br>
+
+        <label for="message">Message:</label><br>
+        <textarea id="message" name="message" rows="6" required></textarea><br>
+
+        <button type="submit">Send Message</button>
+    </form>
 </section>
 
 <footer>
