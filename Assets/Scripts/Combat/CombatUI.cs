@@ -662,12 +662,9 @@ public class CombatUI : MonoBehaviour
             EncounterManager.ActiveCutscene = null;
         }
 
-        // Recruit cutscene
-        if (EncounterManager.ActiveRecruitCutscene != null)
-        {
-            EncounterManager.ActiveRecruitCutscene.OnBattleComplete();
-            EncounterManager.ActiveRecruitCutscene = null;
-        }
+        // Recruit is handled purely via PendingRecruitCompletion flag
+        // No reference needed here
+        Debug.Log($"[RECRUIT] ShowVictory - PendingCompletion: {EncounterManager.PendingRecruitCompletion}");
 
         victoryPanel.SetActive(true);
         victoryPanel.transform.SetAsLastSibling();

@@ -17,13 +17,13 @@ public class DialogueTrigger : MonoBehaviour
     [Header("After Dialogue (optional)")]
     public UnityEngine.Events.UnityEvent onDialogueComplete;
 
+    [Header("Linked Systems (optional)")]
+    public CutsceneManager linkedCutsceneManager;
+    public RecruitCutsceneManager linkedRecruitCutscene;
+
     private bool triggered = false;
     private bool playerNearby = false;
     private string saveKey;
-
-
-    [Header("Recruit Cutscene (optional)")]
-    public RecruitCutsceneManager linkedRecruitCutscene;
 
     void Start()
     {
@@ -39,7 +39,9 @@ public class DialogueTrigger : MonoBehaviour
 
     void Update()
     {
-        if (triggerType == TriggerType.Interact && playerNearby && Input.GetKeyDown(KeyCode.E))
+        if (triggerType == TriggerType.Interact &&
+            playerNearby &&
+            Input.GetKeyDown(KeyCode.E))
             Trigger();
     }
 
@@ -76,7 +78,7 @@ public class DialogueTrigger : MonoBehaviour
         DialogueUI.Instance.StartDialogue(dialogue, () =>
         {
             onDialogueComplete?.Invoke();
-            linkedCutscene?.OnDialogueComplete();
+            linkedCutsceneManager?.StartMonsterSequence();
             linkedRecruitCutscene?.StartRecruitCutscene();
 
             if (oneTimeOnly)

@@ -3,44 +3,41 @@ using UnityEngine;
 public class ZoneTrigger : MonoBehaviour
 {
     [Header("Destination")]
-    public Transform destinationPoint;   // Drag the exit point here
-    public Vector3 manualDestination;    // Or set a manual position manually
+    public Transform destinationPoint;
+    public Vector3 manualDestination;
     public bool useManualDestination = false;
 
     [Header("Interaction")]
-    public bool requireKeyPress = false; // If true, player must press E
+    public bool requireKeyPress = false;
     public KeyCode interactKey = KeyCode.E;
 
     [Header("UI Prompt")]
-    public GameObject interactText; // Assign "Press E to Enter" text object
+    public GameObject interactText;
+
+    [Header("NPC Despawn (optional)")]
+    public RecruitCutsceneManager recruitCutsceneToNotify;
 
     private bool isTransitioning = false;
     private bool playerInside = false;
 
-    private void Start()
+    void Start()
     {
         if (interactText != null)
             interactText.SetActive(false);
     }
 
-    private void Update()
+    void Update()
     {
         if (requireKeyPress && playerInside && !isTransitioning)
-        {
             if (Input.GetKeyDown(interactKey))
-            {
                 TeleportPlayer();
-            }
-        }
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("Player")) return;
-
         playerInside = true;
 
-        // Show prompt if interaction required
         if (requireKeyPress)
         {
             if (interactText != null)
@@ -48,30 +45,38 @@ public class ZoneTrigger : MonoBehaviour
         }
         else
         {
-            // Instant transition
             if (!isTransitioning)
                 TeleportPlayer();
         }
     }
 
-    private void OnTriggerExit2D(Collider2D other)
+    void OnTriggerExit2D(Collider2D other)
     {
         if (!other.CompareTag("Player")) return;
-
         playerInside = false;
-
         if (interactText != null)
             interactText.SetActive(false);
     }
 
-    private void TeleportPlayer()
+    void TeleportPlayer()
     {
         if (isTransitioning) return;
-
         isTransitioning = true;
 
         if (interactText != null)
             interactText.SetActive(false);
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            var movement = player.GetComponent<PlayerMovement2D>();
+            if (movement != null) movement.enabled = false;
+            var rb = player.GetComponent<Rigidbody2D>();
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+        }
+
+        if (recruitCutsceneToNotify != null)
+            recruitCutsceneToNotify.DespawnNPC();
 
         Vector3 target = useManualDestination
             ? manualDestination
@@ -84,10 +89,24 @@ public class ZoneTrigger : MonoBehaviour
             Debug.Log($"Teleported to {target}");
         });
 
-        Invoke(nameof(ResetTransition), 2f);
+        // fadeDuration is the Inspector value (1.2f)
+        // FadeToPosition does: fade in + 0.1s pause + fade out
+        // So total = fadeDuration + 0.1 + fadeDuration
+        // Unfreeze right as fade out completes
+        float totalFade = FadeTransition.Instance.fadeDuration * 2f + 0.15f;
+        Invoke(nameof(UnfreezePlayer), totalFade);
+        Invoke(nameof(ResetTransition), totalFade + 0.3f);
     }
 
-    private void ResetTransition()
+    void UnfreezePlayer()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return;
+        var movement = player.GetComponent<PlayerMovement2D>();
+        if (movement != null) movement.enabled = true;
+    }
+
+    void ResetTransition()
     {
         isTransitioning = false;
     }

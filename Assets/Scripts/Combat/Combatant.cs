@@ -234,7 +234,9 @@ public class Combatant
     public List<ManaAttackSO> GetPartySpells(int level)
     {
         if (IsEnemy) return null;
-        return characterRef.baseData.spells.FindAll(s => s.levelRequirement <= level);
+        if (characterRef?.baseData?.spells == null) return new List<ManaAttackSO>();
+        return characterRef.baseData.spells
+            .FindAll(s => s != null && s.levelRequirement <= level);
     }
 
     public int GetCurrentMana() => IsEnemy ? enemyRef.currentMana : characterRef.currentMana;

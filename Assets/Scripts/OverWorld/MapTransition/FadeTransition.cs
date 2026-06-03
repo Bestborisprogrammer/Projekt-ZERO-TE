@@ -5,7 +5,6 @@ using System.Collections;
 public class FadeTransition : MonoBehaviour
 {
     public static FadeTransition Instance;
-
     public Image fadeImage;
     public float fadeDuration = 0.5f;
 
@@ -21,7 +20,6 @@ public class FadeTransition : MonoBehaviour
 
     void Start()
     {
-        // Start fully transparent
         SetAlpha(0f);
     }
 
@@ -32,35 +30,34 @@ public class FadeTransition : MonoBehaviour
 
     IEnumerator FadeRoutine(Vector3 targetPosition, System.Action onMidFade)
     {
-        // Fade to black
         yield return StartCoroutine(Fade(0f, 1f));
 
-        // Teleport player
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
             player.transform.position = targetPosition;
 
         onMidFade?.Invoke();
-
-        // Small pause at black
         yield return new WaitForSeconds(0.1f);
 
-        // Fade back in
         yield return StartCoroutine(Fade(1f, 0f));
+    }
+
+    // Public so ZoneTrigger can use it directly
+    public IEnumerator FadeCoroutine(float from, float to)
+    {
+        yield return StartCoroutine(Fade(from, to));
     }
 
     IEnumerator Fade(float from, float to)
     {
         float elapsed = 0f;
         SetAlpha(from);
-
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
             SetAlpha(Mathf.Lerp(from, to, elapsed / fadeDuration));
             yield return null;
         }
-
         SetAlpha(to);
     }
 

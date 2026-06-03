@@ -696,17 +696,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   preDialogue: {fileID: 11400000, guid: d80be33464c4e9f43b6830b7ca5b39dd, type: 2}
-  midDialogue: {fileID: 11400000, guid: 7ae9f46114004f1408bb74b1a6a574a9, type: 2}
   postDialogue: {fileID: 11400000, guid: 3b22e0276415d204096b169164a0884c, type: 2}
-  joinDialogue: {fileID: 11400000, guid: 9ec7415283679eb448b63f483fd381bc, type: 2}
+  npcTalkDialogue: {fileID: 0}
   newMember: {fileID: 11400000, guid: 400d6b9354f7d4d4bbef493626fd23e3, type: 2}
   enemyToFight: {fileID: 11400000, guid: be2ef90c974705348a0edcc8fdc4536e, type: 2}
+  enemyGameObject: {fileID: 1313654131}
   npcGameObject: {fileID: 1254511036}
-  npcSprite: {fileID: 1313654132}
   triggerObject: {fileID: 206825347}
-  joinMessagePanel: {fileID: 521785237}
-  joinMessageText: {fileID: 212709881}
-  joinMemberPortrait: {fileID: 270729462}
+  joinMessageText: {fileID: 537240310}
+  joinMessageDuration: 3
 --- !u!4 &194251019
 Transform:
   m_ObjectHideFlags: 0
@@ -719,10 +717,7 @@ Transform:
   m_LocalPosition: {x: 558.8, y: -128.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1254511038}
-  - {fileID: 1313654133}
-  - {fileID: 206825350}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &206825347
@@ -809,6 +804,7 @@ MonoBehaviour:
   onDialogueComplete:
     m_PersistentCalls:
       m_Calls: []
+  linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 194251018}
 --- !u!4 &206825350
 Transform:
@@ -819,11 +815,11 @@ Transform:
   m_GameObject: {fileID: 206825347}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -26.599976, y: -5.3, z: 0}
+  m_LocalPosition: {x: 532.2, y: -133.40001, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 194251019}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &212709878
 GameObject:
@@ -1296,6 +1292,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!1 &268218728
 GameObject:
   m_ObjectHideFlags: 0
@@ -6282,9 +6279,10 @@ MonoBehaviour:
   destinationPoint: {fileID: 7910246}
   manualDestination: {x: 0, y: 0, z: 0}
   useManualDestination: 0
-  requireKeyPress: 1
+  requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 1859991967}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &470933372
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -6906,6 +6904,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &532866995
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -6952,6 +6951,142 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 5.140053, y: 5.2300525}
   m_EdgeRadius: 0
+--- !u!1 &537240308
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 537240309}
+  - component: {fileID: 537240311}
+  - component: {fileID: 537240310}
+  m_Layer: 5
+  m_Name: JoinText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &537240309
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 537240308}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1234272649}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0.48702, y: 285}
+  m_SizeDelta: {x: 1921, y: 131.3549}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &537240310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 537240308}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: .
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8e32e0be0b3deaa4bb902fb11853df72, type: 2}
+  m_sharedMaterial: {fileID: -4223603851402617989, guid: 8e32e0be0b3deaa4bb902fb11853df72, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 70
+  m_fontSizeBase: 70
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 256
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &537240311
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 537240308}
+  m_CullTransparentMesh: 1
 --- !u!1 &547836945
 GameObject:
   m_ObjectHideFlags: 0
@@ -7127,7 +7262,7 @@ Transform:
   m_GameObject: {fileID: 547836945}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 533.6, y: -153.3, z: 0}
+  m_LocalPosition: {x: 532, y: -154.4, z: 0}
   m_LocalScale: {x: 15.033914, y: 15.033914, z: 15.033914}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8023,6 +8158,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &764137322
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -8180,6 +8316,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
 --- !u!61 &796269835
 BoxCollider2D:
@@ -8729,6 +8866,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &927301695
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -9797,6 +9935,7 @@ RectTransform:
   - {fileID: 1859991970}
   - {fileID: 989021235}
   - {fileID: 224562078}
+  - {fileID: 537240309}
   - {fileID: 1408854393}
   - {fileID: 521785238}
   m_Father: {fileID: 0}
@@ -9847,6 +9986,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1254511038}
   - component: {fileID: 1254511037}
+  - component: {fileID: 1254511039}
+  - component: {fileID: 1254511040}
   m_Layer: 0
   m_Name: Theman
   m_TagString: Untagged
@@ -9918,12 +10059,80 @@ Transform:
   m_GameObject: {fileID: 1254511036}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -31.799988, y: -2.899994, z: 0}
+  m_LocalPosition: {x: 527, y: -131, z: 0}
   m_LocalScale: {x: 20, y: 20, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 194251019}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1254511039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1254511036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ede7ae8b3943e64c995949756c5434a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogue: {fileID: 11400000, guid: c4bc3e5cc9a5e3b46b9bb9c225864f49, type: 2}
+  triggerType: 1
+  oneTimeOnly: 1
+  promptText: {fileID: 0}
+  promptMessage: E - Talk
+  onDialogueComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  linkedCutsceneManager: {fileID: 0}
+  linkedRecruitCutscene: {fileID: 0}
+--- !u!61 &1254511040
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1254511036}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0.16}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0}
+    oldSize: {x: 0.18, y: 0.32}
+    newSize: {x: 0.18, y: 0.32}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.18, y: 0.32}
+  m_EdgeRadius: 0
 --- !u!1 &1276810584
 GameObject:
   m_ObjectHideFlags: 0
@@ -10434,11 +10643,11 @@ Transform:
   m_GameObject: {fileID: 1313654131}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -21, y: -3, z: 0}
+  m_LocalPosition: {x: 537.8, y: -131.1, z: 0}
   m_LocalScale: {x: 25, y: 25, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 194251019}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1358174827
 GameObject:
@@ -10969,6 +11178,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &1383064230
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -11141,6 +11351,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &1445765625
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -11238,6 +11449,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &1484744737
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -11626,6 +11838,7 @@ MonoBehaviour:
   onDialogueComplete:
     m_PersistentCalls:
       m_Calls: []
+  linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
 --- !u!61 &1652719580
 BoxCollider2D:
@@ -18964,6 +19177,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &1773270021
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -19412,6 +19626,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &1837489143
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -19834,7 +20049,7 @@ Transform:
   m_GameObject: {fileID: 1919220870}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -130.5, y: -55.9, z: 0}
+  m_LocalPosition: {x: -130.5, y: -47.3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -19872,6 +20087,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
 --- !u!1 &1928049946
 GameObject:
@@ -20160,6 +20376,7 @@ MonoBehaviour:
   requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 0}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!61 &1970223177
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -20880,9 +21097,10 @@ MonoBehaviour:
   destinationPoint: {fileID: 1940253243}
   manualDestination: {x: 0, y: 0, z: 0}
   useManualDestination: 0
-  requireKeyPress: 1
+  requireKeyPress: 0
   interactKey: 101
   interactText: {fileID: 989021234}
+  recruitCutsceneToNotify: {fileID: 0}
 --- !u!1 &2119892865
 GameObject:
   m_ObjectHideFlags: 0
@@ -21267,4 +21485,7 @@ SceneRoots:
   - {fileID: 1771347615}
   - {fileID: 1039724385}
   - {fileID: 994349772}
+  - {fileID: 1254511038}
+  - {fileID: 1313654133}
+  - {fileID: 206825350}
   - {fileID: 194251019}

@@ -13,6 +13,10 @@ public class EncounterManager : MonoBehaviour
     public static CutsceneManager ActiveCutscene { get; set; }
     public static RecruitCutsceneManager ActiveRecruitCutscene { get; set; }
 
+    // Persist recruit flag across scene loads
+    public static bool PendingRecruitCompletion { get; set; } = false;
+    public static string PendingRecruitMemberName { get; set; } = "";
+
     void Awake()
     {
         if (Instance == null)
@@ -36,18 +40,11 @@ public class EncounterManager : MonoBehaviour
     IEnumerator BattleTransition()
     {
         var overlay = GetOrCreateOverlay();
-
-        // Flash white like Pokemon
         yield return StartCoroutine(FlashScreen(overlay, 6, 0.07f));
-
-        // Fade to black
         yield return StartCoroutine(FadeToBlack(overlay));
-
-        // Load scene then destroy overlay
         SceneManager.LoadScene(combatSceneName);
-
-        // Destroy after tiny delay so scene loads first
         Destroy(overlay.transform.parent.gameObject, 0.1f);
+        overlayImage = null;
     }
 
     IEnumerator FlashScreen(UnityEngine.UI.Image overlay, int flashes, float interval)
