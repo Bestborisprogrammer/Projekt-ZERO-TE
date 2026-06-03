@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c0b7cff27c70304daa6b451724dc34c, type: 3}
   m_Name: MC_Character
   m_EditorClassIdentifier: 
-  characterName: Hero
+  characterName: Edward
   portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
   headPortrait: {fileID: -8149888002822582395, guid: 530e0ed278e99284fa54da1e61ccbdd0, type: 3}
   startingLevel: 1
@@ -31,5 +31,4 @@ MonoBehaviour:
   spells:
   - {fileID: 11400000, guid: ac80df4eb998cc440b14aa48c374c4c8, type: 2}
   - {fileID: 11400000, guid: 15a456db98950c04c84877a0820fea5d, type: 2}
-  - {fileID: 11400000, guid: bd5ce6a98b0049b438742aec25b46335, type: 2}
   combatStyle: 0

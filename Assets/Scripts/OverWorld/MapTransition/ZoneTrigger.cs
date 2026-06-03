@@ -93,7 +93,7 @@ public class ZoneTrigger : MonoBehaviour
         // FadeToPosition does: fade in + 0.1s pause + fade out
         // So total = fadeDuration + 0.1 + fadeDuration
         // Unfreeze right as fade out completes
-        float totalFade = FadeTransition.Instance.fadeDuration * 2f + 0.15f;
+        float totalFade = FadeTransition.Instance.fadeDuration * 1f + 0.15f;
         Invoke(nameof(UnfreezePlayer), totalFade);
         Invoke(nameof(ResetTransition), totalFade + 0.3f);
     }

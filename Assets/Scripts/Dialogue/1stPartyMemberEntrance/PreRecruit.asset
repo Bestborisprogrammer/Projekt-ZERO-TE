@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: PreRecruit
   m_EditorClassIdentifier: 
   lines:
-  - speakerName: 
-    portrait: {fileID: 0}
-    text: hello lebron
-    typingSpeed: 0
+  - speakerName: Edward
+    portrait: {fileID: -8149888002822582395, guid: 530e0ed278e99284fa54da1e61ccbdd0, type: 3}
+    text: Hmm, I hear something from the upper floor...
+    typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

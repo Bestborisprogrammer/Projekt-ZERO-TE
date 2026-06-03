@@ -13,9 +13,15 @@ MonoBehaviour:
   m_Name: PreDia
   m_EditorClassIdentifier: 
   lines:
-  - speakerName: test
+  - speakerName: 
     portrait: {fileID: 0}
-    text: Intense fighting over here bro
-    typingSpeed: 0
+    text: you see a guy and a couple monsters fighting
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
+  - speakerName: Edward
+    portrait: {fileID: -8149888002822582395, guid: 530e0ed278e99284fa54da1e61ccbdd0, type: 3}
+    text: I guess I should help him, I really need more people alongside me.
+    typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

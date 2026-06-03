@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public class MenuManager : MonoBehaviour
 {
     [Header("Panels")]
+    public GameObject buttonPanel;
     public GameObject partyPanel;
     public GameObject inventoryPanel;
     public GameObject gearPanel;
@@ -13,11 +14,32 @@ public class MenuManager : MonoBehaviour
 
     void Start()
     {
-        ShowParty();
+        ShowButtonPanel();
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab))
+        {
+            // If any sub panel is open go back to button panel
+            if (partyPanel.activeSelf || inventoryPanel.activeSelf || gearPanel.activeSelf)
+                ShowButtonPanel();
+            else
+                ReturnToOverworld();
+        }
+    }
+
+    public void ShowButtonPanel()
+    {
+        buttonPanel.SetActive(true);
+        partyPanel.SetActive(false);
+        inventoryPanel.SetActive(false);
+        gearPanel.SetActive(false);
     }
 
     public void ShowParty()
     {
+        buttonPanel.SetActive(false);
         partyPanel.SetActive(true);
         inventoryPanel.SetActive(false);
         gearPanel.SetActive(false);
@@ -26,6 +48,7 @@ public class MenuManager : MonoBehaviour
 
     public void ShowInventory()
     {
+        buttonPanel.SetActive(false);
         partyPanel.SetActive(false);
         inventoryPanel.SetActive(true);
         gearPanel.SetActive(false);
@@ -34,6 +57,7 @@ public class MenuManager : MonoBehaviour
 
     public void ShowGear()
     {
+        buttonPanel.SetActive(false);
         partyPanel.SetActive(false);
         inventoryPanel.SetActive(false);
         gearPanel.SetActive(true);

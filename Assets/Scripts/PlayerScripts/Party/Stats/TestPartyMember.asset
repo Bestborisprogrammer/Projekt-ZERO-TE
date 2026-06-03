@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c0b7cff27c70304daa6b451724dc34c, type: 3}
   m_Name: TestPartyMember
   m_EditorClassIdentifier: 
-  characterName: RinItoshi
+  characterName: Hirose
   portrait: {fileID: -7903754828726696838, guid: afdfe06408cddb444b57c4eb65c0838a, type: 3}
   headPortrait: {fileID: -7903754828726696838, guid: adc875e48d55fb94c8080cb9d1ceb3a9, type: 3}
   startingLevel: 2
-  maxHP: 4000
-  attack: 10
+  maxHP: 100
+  attack: 20
   defense: 5
-  speed: 2147
-  maxMana: 3000000
+  speed: 4
+  maxMana: 40
   hpGrowth: 15
   attackGrowth: 3
   defenseGrowth: 2
@@ -29,7 +29,5 @@ MonoBehaviour:
   baseXPToNextLevel: 100
   affinities: 01000000
   spells:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: bd5ce6a98b0049b438742aec25b46335, type: 2}
   combatStyle: 1

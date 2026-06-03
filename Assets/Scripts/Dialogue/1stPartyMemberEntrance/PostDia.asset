@@ -13,9 +13,15 @@ MonoBehaviour:
   m_Name: PostDia
   m_EditorClassIdentifier: 
   lines:
-  - speakerName: test
+  - speakerName: Hirose
     portrait: {fileID: 0}
-    text: thanks for helping me mate
-    typingSpeed: 0
+    text: Thanks for earlier, I have to ask though, what is your plan going forward?
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
+  - speakerName: Edward
+    portrait: {fileID: -8149888002822582395, guid: 530e0ed278e99284fa54da1e61ccbdd0, type: 3}
+    text: Going up to the top of this place, you should come with me.
+    typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7a9ff481f6c708747b6a9617fff92311, type: 3}
-  m_Name: JoinDia
+  m_Name: PostRecruit
   m_EditorClassIdentifier: 
   lines:
-  - speakerName: test
+  - speakerName: Hirose
     portrait: {fileID: 0}
-    text: dude has joined the party
-    typingSpeed: 0
+    text: Wanted to thank you one more time, let's get going now.
+    typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
