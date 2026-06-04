@@ -26,6 +26,7 @@ public class InventoryMenuPanel : MonoBehaviour
 
         foreach (var item in InventoryManager.Instance.items)
         {
+            if (item.quantity <= 0) continue;
             GameObject entry = Instantiate(itemEntryPrefab, itemListParent);
             var entryUI = entry.GetComponent<ItemEntryUI>();
             if (entryUI != null)
@@ -44,11 +45,12 @@ public class InventoryMenuPanel : MonoBehaviour
     {
         if (item.itemTarget == ItemTarget.Enemy)
         {
-            Debug.Log("Enemy items can only be used in combat!");
+            Debug.Log("[MENU] Enemy items can only be used in combat!");
             return;
         }
 
         pendingItem = item;
+        Debug.Log($"[MENU] Opening target panel for: {item.itemName} type:{item.itemType}");
 
         if (targetTitleText != null)
             targetTitleText.text = $"Use {item.itemName} on who?";
@@ -61,6 +63,12 @@ public class InventoryMenuPanel : MonoBehaviour
         foreach (var member in PartyManager.Instance.activeParty)
         {
             GameObject btn = Instantiate(targetMemberPrefab, targetParent);
+
+            // Get button from root OR any child
+            Button button = btn.GetComponent<Button>();
+            if (button == null)
+                button = btn.GetComponentInChildren<Button>();
+
             var tmps = btn.GetComponentsInChildren<TextMeshProUGUI>();
 
             string preview = "";
@@ -78,9 +86,18 @@ public class InventoryMenuPanel : MonoBehaviour
                 tmps[0].text = $"{member.Name}  Lv.{member.level}\n" +
                     $"HP: {member.currentHP}/{member.MaxHP}\n{preview}";
 
-            var capturedMember = member;
-            btn.GetComponent<Button>()?.onClick.AddListener(() =>
-                UseItemOnMember(capturedMember));
+            Debug.Log($"[MENU] Spawned button for {member.Name}, button null: {button == null}");
+
+            if (button != null)
+            {
+                button.onClick.RemoveAllListeners();
+                var capturedMember = member;
+                button.onClick.AddListener(() =>
+                {
+                    Debug.Log($"[MENU] Button clicked for {capturedMember.Name}");
+                    UseItemOnMember(capturedMember);
+                });
+            }
         }
     }
 
@@ -93,7 +110,14 @@ public class InventoryMenuPanel : MonoBehaviour
 
     void UseItemOnMember(CharacterInstance member)
     {
-        if (pendingItem == null) return;
+        if (pendingItem == null)
+        {
+            Debug.LogError("[MENU] pendingItem is NULL!");
+            return;
+        }
+
+        Debug.Log($"[MENU] Using {pendingItem.itemName} (type:{pendingItem.itemType}) on {member.Name}");
+        Debug.Log($"[MENU] Before - HP: {member.currentHP}/{member.MaxHP}  statMods: {member.statModifiers.Count}");
 
         if (pendingItem.itemType == ItemType.Heal)
         {
@@ -103,7 +127,9 @@ public class InventoryMenuPanel : MonoBehaviour
             int before = member.currentHP;
             member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + totalHeal);
             int actual = member.currentHP - before;
-            Debug.Log($"[HEAL] {member.Name}: +{actual} HP → {member.currentHP}/{member.MaxHP}");
+            Debug.Log($"[MENU] Heal: flatHeal={pendingItem.flatHeal} " +
+                $"percentHeal={pendingItem.percentHeal} total={totalHeal} actual={actual}");
+            Debug.Log($"[MENU] After HP: {member.currentHP}/{member.MaxHP}");
         }
         else if (pendingItem.itemType == ItemType.Buff)
         {
@@ -111,12 +137,16 @@ public class InventoryMenuPanel : MonoBehaviour
                 pendingItem.statType,
                 pendingItem.statModifier,
                 pendingItem.modifierDuration));
-            Debug.Log($"[BUFF] {member.Name}: {pendingItem.statType} +{pendingItem.statModifier} for {pendingItem.modifierDuration} turns");
+            Debug.Log($"[MENU] Buff applied: {pendingItem.statType} +{pendingItem.statModifier} " +
+                $"for {pendingItem.modifierDuration} turns");
+            Debug.Log($"[MENU] statMods after: {member.statModifiers.Count}");
         }
 
         InventoryManager.Instance.RemoveItem(pendingItem);
         pendingItem = null;
         targetPanel.SetActive(false);
         Refresh();
+
+        Debug.Log($"[MENU] Done. Item removed from inventory.");
     }
 }

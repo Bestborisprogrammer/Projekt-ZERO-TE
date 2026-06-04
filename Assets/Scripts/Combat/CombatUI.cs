@@ -126,6 +126,25 @@ public class CombatUI : MonoBehaviour
 
     void Update()
     {
+        // Cancel member select with Escape or click outside
+        if (memberSelectPopup.activeSelf)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                CancelMemberSelect();
+                return;
+            }
+            if (Input.GetMouseButtonDown(0))
+            {
+                var rt = memberSelectPopup.GetComponent<RectTransform>();
+                if (!RectTransformUtility.RectangleContainsScreenPoint(rt, Input.mousePosition, null))
+                {
+                    CancelMemberSelect();
+                    return;
+                }
+            }
+        }
+
         if (waitingForInput)
         {
             if (Input.GetKeyDown(KeyCode.Space) ||
@@ -145,7 +164,23 @@ public class CombatUI : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.I)) ToggleItemPanel();
     }
 
+    void CancelMemberSelect()
+    {
+        memberSelectPopup.SetActive(false);
+        pendingItem = null;
+        actionTaken = false;
+
+        var inst = TurnCombatManager.Instance;
+        if (inst == null) return;
+        var current = inst.turnOrder[inst.CurrentTurnIndex];
+        SetPlayerButtonsActive(true, current.CombatStyle);
+        ShowSpellButtons(
+            current.GetPartySpells(current.GetCurrentLevel()),
+            current.GetCurrentMana());
+    }
+
     public void ResetActionTaken() => actionTaken = false;
+    public void ClearCombatLog() => combatLogText.text = "";
 
     public void SetupCombatSprites(List<Combatant> party, List<Combatant> enemies)
     {
@@ -317,9 +352,11 @@ public class CombatUI : MonoBehaviour
         {
             itemPanel.SetActive(true);
             itemPageText.gameObject.SetActive(true);
+            // Only show items with quantity > 0
             currentItems = InventoryManager.Instance.items
-                .FindAll(i => i.itemData.itemTarget == ItemTarget.Ally ||
-                              i.itemData.itemTarget == ItemTarget.Enemy);
+                .FindAll(i => i.quantity > 0 &&
+                    (i.itemData.itemTarget == ItemTarget.Ally ||
+                     i.itemData.itemTarget == ItemTarget.Enemy));
             itemPage = 0;
             RebuildItemPage();
         }
@@ -424,7 +461,6 @@ public class CombatUI : MonoBehaviour
         }
     }
 
-    // Called by TurnCombatManager for heal/buff spells
     public void OpenSpellMemberSelect(ManaAttackSO spell, Combatant caster,
         System.Action<CharacterInstance> onMemberSelected)
     {
@@ -710,8 +746,7 @@ public class CombatUI : MonoBehaviour
             EncounterManager.ActiveCutscene = null;
         }
 
-        if (EncounterManager.PendingRecruitCompletion == false &&
-            EncounterManager.ActiveRecruitCutscene != null)
+        if (EncounterManager.ActiveRecruitCutscene != null)
         {
             EncounterManager.PendingRecruitCompletion = true;
             EncounterManager.PendingRecruitMemberName =

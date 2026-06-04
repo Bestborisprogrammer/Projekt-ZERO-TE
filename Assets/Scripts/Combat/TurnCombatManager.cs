@@ -96,15 +96,32 @@ public class TurnCombatManager : MonoBehaviour
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
 
         List<string> modLogs = TickCombatantModifiers(current);
-        UpdateStatusIndicators();
 
         if (modLogs.Count > 0)
         {
-            combatUI.ShowCombatLogs(modLogs, () => ContinueStartTurn(current));
+            combatUI.ShowCombatLogs(modLogs, () =>
+            {
+                combatUI.ClearCombatLog();
+                UpdateStatusIndicators();
+                SetupTurnUI(current);
+                ContinueStartTurn(current);
+            });
             return;
         }
 
+        UpdateStatusIndicators();
+        SetupTurnUI(current);
         ContinueStartTurn(current);
+    }
+
+    void SetupTurnUI(Combatant current)
+    {
+        if (!current.IsEnemy)
+        {
+            // Reset and re-setup to ensure block/evade sprite is correct
+            combatUI.SetPlayerButtonsActive(false);
+            combatUI.SetPlayerButtonsActive(true, current.CombatStyle);
+        }
     }
 
     List<string> TickCombatantModifiers(Combatant combatant)
@@ -148,7 +165,6 @@ public class TurnCombatManager : MonoBehaviour
         }
         else
         {
-            combatUI.SetPlayerButtonsActive(true, current.CombatStyle);
             combatUI.ShowSpellButtons(
                 current.GetPartySpells(current.GetCurrentLevel()),
                 current.GetCurrentMana());
@@ -203,7 +219,6 @@ public class TurnCombatManager : MonoBehaviour
             }
         }
 
-        // Skip status if fire just thawed the target
         bool wasJustThawed = spell.affinity == SpellAffinity.Fire && !target.IsFrozen;
         if (!wasJustThawed && spell.statusEffect != StatusEffectType.None)
         {
@@ -310,7 +325,7 @@ public class TurnCombatManager : MonoBehaviour
         UpdateStatusIndicators();
         combatUI.ShowCombatLog(
             $"{blocker.Name} guards! Damage reduction: {blocker.BlockReduction * 100f:F1}%",
-            () => NextTurn());
+            () => combatUI.ShowCombatLog(" ", () => NextTurn()));
     }
 
     public void PlayerEvade()
@@ -322,7 +337,7 @@ public class TurnCombatManager : MonoBehaviour
         UpdateStatusIndicators();
         combatUI.ShowCombatLog(
             $"{evader.Name} readies an evade! Dodge chance: {evader.EvadeChance * 100f:F1}%",
-            () => NextTurn());
+            () => combatUI.ShowCombatLog(" ", () => NextTurn()));
     }
 
     public void PlayerManaAttack(ManaAttackSO spell)
@@ -335,27 +350,20 @@ public class TurnCombatManager : MonoBehaviour
             return;
         }
 
-        // Heal spell – open member select popup
         if (spell.spellType == SpellType.Heal)
         {
             combatUI.OpenSpellMemberSelect(spell, attacker, (selectedMember) =>
-            {
-                ExecuteHealSpell(spell, attacker, selectedMember);
-            });
+                ExecuteHealSpell(spell, attacker, selectedMember));
             return;
         }
 
-        // Buff spell – open member select popup
         if (spell.spellType == SpellType.Buff)
         {
             combatUI.OpenSpellMemberSelect(spell, attacker, (selectedMember) =>
-            {
-                ExecuteBuffSpell(spell, attacker, selectedMember);
-            });
+                ExecuteBuffSpell(spell, attacker, selectedMember));
             return;
         }
 
-        // Debuff spell – targets enemy, no popup needed
         if (spell.spellType == SpellType.Debuff)
         {
             ExecuteDebuffSpell(spell, attacker);
@@ -404,14 +412,12 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.ShowCombatLog(" ", () => NextTurn());
     }
 
-    // Called after member select popup confirms
     public void ExecuteHealSpell(ManaAttackSO spell, Combatant caster, CharacterInstance target)
     {
         int heal = spell.flatHeal + Mathf.RoundToInt(target.MaxHP * spell.percentHeal);
         heal = Mathf.Max(0, Mathf.Min(heal, target.MaxHP - target.currentHP));
         target.currentHP = Mathf.Min(target.MaxHP, target.currentHP + heal);
 
-        // Refresh combatant
         var combatant = party.Find(p => p.Name == target.Name);
         combatant?.Refresh();
 
@@ -456,7 +462,6 @@ public class TurnCombatManager : MonoBehaviour
             combatUI.ShowCombatLog($"{target.Name}'s {spell.statType} {mod} for {spell.modifierDuration} turns!");
         }
 
-        // Also apply status effect if set
         if (spell.statusEffect != StatusEffectType.None)
         {
             target.ApplyStatusEffect(spell.statusEffect, spell.statusChance,
@@ -510,10 +515,8 @@ public class TurnCombatManager : MonoBehaviour
 
             float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
                 spell.affinity != SpellAffinity.None ? 1.5f : 1f;
-            string comboMsg = HandleElementalCombos(
-                attacker, target, spell.affinity, ref affinityMult);
-            int damage = Mathf.Max(1,
-                Mathf.RoundToInt((spell.flatDamage - target.Defense) * affinityMult));
+            string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref affinityMult);
+            int damage = Mathf.Max(1, Mathf.RoundToInt((spell.flatDamage - target.Defense) * affinityMult));
 
             combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}!");
             if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
