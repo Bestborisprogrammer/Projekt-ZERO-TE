@@ -238,19 +238,21 @@ public class CombatSpriteManager : MonoBehaviour
     {
         foreach (var combatant in allCombatants)
         {
-            if (!statusTextMap.ContainsKey(combatant.Name))
-                continue;
+            if (!statusTextMap.ContainsKey(combatant.Name)) continue;
 
             List<string> parts = new();
 
+            // Block / Evade indicator
+            if (combatant.IsBlocking)
+                parts.Add("B!");
+            else if (combatant.CombatStyle == CombatStyle.Evade && combatant.IsEvading)
+                parts.Add("E!");
+
             // Stat modifiers
             List<StatModifier> mods = GetModifiers(combatant);
-
             foreach (var mod in mods)
             {
-                if (mod.turnsRemaining <= 0)
-                    continue;
-
+                if (mod.turnsRemaining <= 0) continue;
                 string label = mod.statType switch
                 {
                     StatType.ATK => mod.modifier > 0 ? "ATK+" : "ATK-",
@@ -260,18 +262,14 @@ public class CombatSpriteManager : MonoBehaviour
                     StatType.MP => mod.modifier > 0 ? "MP+" : "MP-",
                     _ => mod.modifier > 0 ? "UP" : "DWN"
                 };
-
                 parts.Add($"{label}({mod.turnsRemaining})");
             }
 
             // Status effects
             List<ActiveStatusEffect> effects = GetEffects(combatant);
-
             foreach (var effect in effects)
             {
-                if (effect.turnsRemaining <= 0)
-                    continue;
-
+                if (effect.turnsRemaining <= 0) continue;
                 string label = effect.type switch
                 {
                     StatusEffectType.Burn => "BRN",
@@ -282,7 +280,6 @@ public class CombatSpriteManager : MonoBehaviour
                     StatusEffectType.Dark => "DRK",
                     _ => effect.type.ToString()
                 };
-
                 parts.Add($"{label}({effect.turnsRemaining})");
             }
 

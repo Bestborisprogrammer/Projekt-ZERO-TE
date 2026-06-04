@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8eec2a7d6085f943b79425f5fa08148, type: 3}
+  m_Name: Heal
+  m_EditorClassIdentifier: 
+  spellName: Heal
+  description: A basic heal
+  affinity: 0
+  spellType: 1
+  manaCost: 5
+  levelRequirement: 1
+  flatDamage: 20
+  flatHeal: 10
+  percentHeal: 0
+  statType: 0
+  statModifier: 0
+  modifierDuration: 3
+  statusEffect: 0
+  statusChance: 0
+  statusDuration: 2
+  dotPercent: 0.05
+  defenseReduction: 0.25

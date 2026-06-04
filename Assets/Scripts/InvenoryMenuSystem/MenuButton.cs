@@ -3,13 +3,30 @@ using UnityEngine.SceneManagement;
 
 public class MenuButton : MonoBehaviour
 {
-    public void OpenMenu()
+    public string menuScene = "MenuScene";
+    private Vector3 savedPosition;
+
+    void Update()
     {
-        // Save player position before opening menu
+        if (Input.GetKeyDown(KeyCode.M))
+            OpenMenu();
+        if (Input.GetKeyDown(KeyCode.P))
+            OpenPartyStatus();
+    }
+
+    void OpenMenu()
+    {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
-            EncounterManager.PlayerReturnPosition = player.transform.position;
+            PlayerPrefs.SetString("PlayerReturnPos",
+                $"{player.transform.position.x},{player.transform.position.y},{player.transform.position.z}");
+        SceneManager.LoadScene(menuScene);
+    }
 
-        SceneManager.LoadScene("MenuScene");
+    void OpenPartyStatus()
+    {
+        var partyStatusUI = FindFirstObjectByType<PartyStatusUI>();
+        if (partyStatusUI != null)
+            partyStatusUI.TogglePanel();
     }
 }

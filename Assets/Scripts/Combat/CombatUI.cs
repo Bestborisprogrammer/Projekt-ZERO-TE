@@ -415,6 +415,43 @@ public class CombatUI : MonoBehaviour
         }
     }
 
+    // Called by TurnCombatManager for heal/buff spells
+    public void OpenSpellMemberSelect(ManaAttackSO spell, Combatant caster,
+        System.Action<CharacterInstance> onMemberSelected)
+    {
+        memberSelectPopup.SetActive(true);
+
+        foreach (Transform child in memberSelectParent)
+            Destroy(child.gameObject);
+
+        foreach (var member in PartyManager.Instance.activeParty)
+        {
+            if (!member.IsAlive) continue;
+
+            GameObject btn = Instantiate(memberSelectButtonPrefab, memberSelectParent);
+            var tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
+
+            string preview = "";
+            if (spell.spellType == SpellType.Heal)
+            {
+                int heal = spell.flatHeal + Mathf.RoundToInt(member.MaxHP * spell.percentHeal);
+                int actual = Mathf.Min(heal, member.MaxHP - member.currentHP);
+                preview = $"+{actual} HP";
+            }
+            else if (spell.spellType == SpellType.Buff)
+                preview = $"+{spell.statModifier} {spell.statType} ({spell.modifierDuration} turns)";
+
+            tmp.text = $"{member.Name}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
+
+            var capturedMember = member;
+            btn.GetComponent<Button>()?.onClick.AddListener(() =>
+            {
+                memberSelectPopup.SetActive(false);
+                onMemberSelected?.Invoke(capturedMember);
+            });
+        }
+    }
+
     void UseItemOnAlly(CharacterInstance member)
     {
         if (pendingItem == null) return;

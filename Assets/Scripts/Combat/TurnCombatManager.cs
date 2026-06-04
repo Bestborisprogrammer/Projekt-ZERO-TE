@@ -176,13 +176,13 @@ public class TurnCombatManager : MonoBehaviour
         {
             damageMult *= 1.5f;
             target.RemoveStatusEffect(StatusEffectType.Freeze);
-            comboMsg = "Fire melts the ice! Bonus fire damage!";
+            comboMsg = "Fire melts the ice! Target thawed! Bonus damage!";
         }
         else if (affinity == SpellAffinity.Water && target.IsBurning)
         {
             damageMult *= 1.5f;
             target.RemoveStatusEffect(StatusEffectType.Burn);
-            comboMsg = "Water extinguishes the flames! Bonus water damage!";
+            comboMsg = "Water extinguishes the flames! Bonus damage!";
         }
         return comboMsg;
     }
@@ -196,12 +196,16 @@ public class TurnCombatManager : MonoBehaviour
             if (charRef != null)
             {
                 charRef.currentHP = Mathf.Min(charRef.MaxHP, charRef.currentHP + healAmount);
+                attacker.Refresh();
                 CombatSpriteManager.Instance?.ShowDamageNumber(attacker.Name, healAmount, true);
                 combatUI.ShowCombatLog($"{attacker.Name} absorbs {healAmount} HP from the light!");
+                combatUI.UpdateAllHP(party, enemies);
             }
         }
 
-        if (spell.statusEffect != StatusEffectType.None)
+        // Skip status if fire just thawed the target
+        bool wasJustThawed = spell.affinity == SpellAffinity.Fire && !target.IsFrozen;
+        if (!wasJustThawed && spell.statusEffect != StatusEffectType.None)
         {
             int speedReduction = spell.affinity == SpellAffinity.Water ? 3 : 0;
             target.ApplyStatusEffect(spell.statusEffect, spell.statusChance, spell.statusDuration,
@@ -211,7 +215,7 @@ public class TurnCombatManager : MonoBehaviour
             if (wasApplied)
             {
                 if (spell.statusEffect == StatusEffectType.Wet)
-                    combatUI.ShowCombatLog($"{target.Name} is Wet! Speed reduced by 3 for {spell.statusDuration} turns!");
+                    combatUI.ShowCombatLog($"{target.Name} is Wet! Speed reduced for {spell.statusDuration} turns!");
                 else
                     combatUI.ShowCombatLog($"{target.Name} is afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
             }
@@ -233,7 +237,6 @@ public class TurnCombatManager : MonoBehaviour
             if (target.HasStatusEffect(spell.statusEffect))
                 combatUI.ShowCombatLog($"{target.Name} is afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
         }
-
         UpdateStatusIndicators();
     }
 
@@ -304,6 +307,7 @@ public class TurnCombatManager : MonoBehaviour
         blocker.SetBlocking(true);
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
         combatUI.ShowCombatLog(
             $"{blocker.Name} guards! Damage reduction: {blocker.BlockReduction * 100f:F1}%",
             () => NextTurn());
@@ -315,6 +319,7 @@ public class TurnCombatManager : MonoBehaviour
         evader.SetEvading(true);
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
         combatUI.ShowCombatLog(
             $"{evader.Name} readies an evade! Dodge chance: {evader.EvadeChance * 100f:F1}%",
             () => NextTurn());
@@ -330,6 +335,34 @@ public class TurnCombatManager : MonoBehaviour
             return;
         }
 
+        // Heal spell – open member select popup
+        if (spell.spellType == SpellType.Heal)
+        {
+            combatUI.OpenSpellMemberSelect(spell, attacker, (selectedMember) =>
+            {
+                ExecuteHealSpell(spell, attacker, selectedMember);
+            });
+            return;
+        }
+
+        // Buff spell – open member select popup
+        if (spell.spellType == SpellType.Buff)
+        {
+            combatUI.OpenSpellMemberSelect(spell, attacker, (selectedMember) =>
+            {
+                ExecuteBuffSpell(spell, attacker, selectedMember);
+            });
+            return;
+        }
+
+        // Debuff spell – targets enemy, no popup needed
+        if (spell.spellType == SpellType.Debuff)
+        {
+            ExecuteDebuffSpell(spell, attacker);
+            return;
+        }
+
+        // Damage spell
         while (selectedEnemyIndex < enemies.Count && !enemies[selectedEnemyIndex].IsAlive)
             selectedEnemyIndex++;
         if (selectedEnemyIndex >= enemies.Count) return;
@@ -371,6 +404,73 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.ShowCombatLog(" ", () => NextTurn());
     }
 
+    // Called after member select popup confirms
+    public void ExecuteHealSpell(ManaAttackSO spell, Combatant caster, CharacterInstance target)
+    {
+        int heal = spell.flatHeal + Mathf.RoundToInt(target.MaxHP * spell.percentHeal);
+        heal = Mathf.Max(0, Mathf.Min(heal, target.MaxHP - target.currentHP));
+        target.currentHP = Mathf.Min(target.MaxHP, target.currentHP + heal);
+
+        // Refresh combatant
+        var combatant = party.Find(p => p.Name == target.Name);
+        combatant?.Refresh();
+
+        CombatSpriteManager.Instance?.ShowDamageNumber(target.Name, heal, true);
+        combatUI.ShowCombatLog($"{caster.Name} uses {spell.spellName} on {target.Name}! Recovered {heal} HP!");
+        combatUI.UpdateAllHP(party, enemies);
+        UpdateStatusIndicators();
+        combatUI.ShowCombatLog(" ", () => NextTurn());
+    }
+
+    public void ExecuteBuffSpell(ManaAttackSO spell, Combatant caster, CharacterInstance target)
+    {
+        target.statModifiers.Add(new StatModifier(
+            spell.statType, spell.statModifier, spell.modifierDuration));
+
+        var combatant = party.Find(p => p.Name == target.Name);
+        combatant?.Refresh();
+
+        combatUI.ShowCombatLog($"{caster.Name} uses {spell.spellName} on {target.Name}! " +
+            $"{spell.statType} +{spell.statModifier} for {spell.modifierDuration} turns!");
+        combatUI.UpdateAllHP(party, enemies);
+        UpdateStatusIndicators();
+        combatUI.ShowCombatLog(" ", () => NextTurn());
+    }
+
+    void ExecuteDebuffSpell(ManaAttackSO spell, Combatant caster)
+    {
+        while (selectedEnemyIndex < enemies.Count && !enemies[selectedEnemyIndex].IsAlive)
+            selectedEnemyIndex++;
+        if (selectedEnemyIndex >= enemies.Count) return;
+
+        Combatant target = enemies[selectedEnemyIndex];
+        var enemyInst = GetEnemyInstance(target.Name);
+
+        combatUI.ShowCombatLog($"{caster.Name} uses {spell.spellName} on {target.Name}!");
+
+        if (enemyInst != null && spell.statModifier != 0)
+        {
+            int mod = -Mathf.Abs(spell.statModifier);
+            enemyInst.statModifiers.Add(new StatModifier(spell.statType, mod, spell.modifierDuration));
+            target.Refresh();
+            combatUI.ShowCombatLog($"{target.Name}'s {spell.statType} {mod} for {spell.modifierDuration} turns!");
+        }
+
+        // Also apply status effect if set
+        if (spell.statusEffect != StatusEffectType.None)
+        {
+            target.ApplyStatusEffect(spell.statusEffect, spell.statusChance,
+                spell.statusDuration, spell.dotPercent, spell.defenseReduction, 0);
+            if (target.HasStatusEffect(spell.statusEffect))
+                combatUI.ShowCombatLog($"{target.Name} is afflicted with {spell.statusEffect}!");
+        }
+
+        combatUI.UpdateAllHP(party, enemies);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
+        combatUI.ShowCombatLog(" ", () => NextTurn());
+    }
+
     void EnemyTurn()
     {
         Combatant attacker = turnOrder[currentTurnIndex];
@@ -384,15 +484,15 @@ public class TurnCombatManager : MonoBehaviour
             if (attacker.CombatStyle == CombatStyle.Block)
             {
                 attacker.SetBlocking(true);
-                combatUI.ShowCombatLog(
-                    $"{attacker.Name} guards!",
+                UpdateStatusIndicators();
+                combatUI.ShowCombatLog($"{attacker.Name} guards!",
                     () => ProcessDotsAndNextTurn(attacker));
             }
             else
             {
                 attacker.SetEvading(true);
-                combatUI.ShowCombatLog(
-                    $"{attacker.Name} readies an evade!",
+                UpdateStatusIndicators();
+                combatUI.ShowCombatLog($"{attacker.Name} readies an evade!",
                     () => ProcessDotsAndNextTurn(attacker));
             }
             return;
@@ -438,7 +538,6 @@ public class TurnCombatManager : MonoBehaviour
     {
         var detailed = attacker.ProcessStatusEffectsDetailed();
 
-        // Show damage numbers for DOT
         foreach (var (log, damage, isDot) in detailed)
             if (isDot && damage > 0)
                 CombatSpriteManager.Instance?.ShowDamageNumber(attacker.Name, damage);
@@ -551,22 +650,18 @@ public class TurnCombatManager : MonoBehaviour
             totalGold += enemyData.goldReward;
 
             foreach (var drop in enemyData.itemDrops)
-            {
                 if (Random.Range(0f, 100f) <= drop.dropChance)
                 {
                     InventoryManager.Instance.AddItem(drop.item);
                     drops.itemsDropped.Add(drop.item);
                 }
-            }
 
             foreach (var drop in enemyData.gearDrops)
-            {
                 if (Random.Range(0f, 100f) <= drop.dropChance)
                 {
                     GearManager.Instance.AddGearToInventory(drop.gear);
                     drops.gearDropped.Add(drop.gear);
                 }
-            }
         }
 
         GoldManager.Instance.AddGold(totalGold);

@@ -31,4 +31,6 @@ MonoBehaviour:
   spells:
   - {fileID: 11400000, guid: ac80df4eb998cc440b14aa48c374c4c8, type: 2}
   - {fileID: 11400000, guid: 15a456db98950c04c84877a0820fea5d, type: 2}
+  - {fileID: 11400000, guid: 774a6db5da13e8c4bbe004dfe5efd7ae, type: 2}
+  - {fileID: 11400000, guid: 213af501dc308bb468259791fe486a15, type: 2}
   combatStyle: 0
