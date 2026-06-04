@@ -14,6 +14,12 @@ public class CombatSpriteManager : MonoBehaviour
     public Transform enemySpritesParent;
     public GameObject combatSpritePrefab;
 
+    [Header("Font")]
+    public TMP_FontAsset combatFont;
+
+    [Header("Canvas")]
+    public Canvas combatCanvas;
+
     private Dictionary<string, Image> spriteMap = new();
     private Dictionary<string, RectTransform> rectMap = new();
     private Dictionary<string, TextMeshProUGUI> enemyLabelMap = new();
@@ -25,36 +31,35 @@ public class CombatSpriteManager : MonoBehaviour
     private Color selectedColor = new Color(0.2f, 0.8f, 0.2f, 0.7f);
     private Color defeatedColor = new Color(0.1f, 0.1f, 0.1f, 0.8f);
 
-    [Header("Damage Numbers")]
-    public Canvas combatCanvas; // assign your combat scene canvas
-
     void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
 
+    void SetFont(TextMeshProUGUI tmp)
+    {
+        if (combatFont != null && tmp != null)
+            tmp.font = combatFont;
+    }
+
     public void SetupSprites(List<Combatant> party, List<Combatant> enemies)
     {
         if (combatSpritePrefab == null)
         {
-            Debug.LogError("combatSpritePrefab is NULL! Assign it in Inspector.");
+            Debug.LogError("combatSpritePrefab is NULL!");
             return;
         }
-
         if (partySpritesParent == null)
         {
-            Debug.LogError("partySpritesParent is NULL! Assign it in Inspector.");
+            Debug.LogError("partySpritesParent is NULL!");
             return;
         }
-
         if (enemySpritesParent == null)
         {
-            Debug.LogError("enemySpritesParent is NULL! Assign it in Inspector.");
+            Debug.LogError("enemySpritesParent is NULL!");
             return;
         }
-
-        Debug.Log($"SetupSprites called - party:{party.Count} enemies:{enemies.Count}");
 
         spriteMap.Clear();
         rectMap.Clear();
@@ -63,24 +68,19 @@ public class CombatSpriteManager : MonoBehaviour
         statusTextMap.Clear();
         enemyNameOrder.Clear();
 
-        foreach (Transform child in partySpritesParent)
-            Destroy(child.gameObject);
+        foreach (Transform child in partySpritesParent) Destroy(child.gameObject);
+        foreach (Transform child in enemySpritesParent) Destroy(child.gameObject);
 
-        foreach (Transform child in enemySpritesParent)
-            Destroy(child.gameObject);
-
-        // ───────────────── PARTY SPRITES ─────────────────
+        // ── Party sprites ──────────────────────────
         foreach (var member in party)
         {
             var so = PartyManager.Instance.allMembers
                 .Find(m => m.Name == member.Name)?.baseData;
 
-            // Container
             GameObject container = new GameObject($"Party_{member.Name}");
             container.transform.SetParent(partySpritesParent, false);
-
             var cRT = container.AddComponent<RectTransform>();
-            cRT.sizeDelta = new Vector2(140, 190);
+            cRT.sizeDelta = new Vector2(180, 240);
 
             var cLayout = container.AddComponent<VerticalLayoutGroup>();
             cLayout.childAlignment = TextAnchor.LowerCenter;
@@ -93,70 +93,58 @@ public class CombatSpriteManager : MonoBehaviour
             // Status text
             GameObject statusObj = new GameObject("Status");
             statusObj.transform.SetParent(container.transform, false);
-
             var statusRT = statusObj.AddComponent<RectTransform>();
-            statusRT.sizeDelta = new Vector2(126, 24);
-
+            statusRT.sizeDelta = new Vector2(170, 24);
             var statusTMP = statusObj.AddComponent<TextMeshProUGUI>();
-            statusTMP.fontSize = 14;
+            statusTMP.fontSize = 11;
             statusTMP.alignment = TextAlignmentOptions.Center;
-            statusTMP.color = Color.white;
+            statusTMP.color = Color.yellow;
             statusTMP.text = "";
-
+            statusTMP.raycastTarget = false;
+            SetFont(statusTMP);
             statusTextMap[member.Name] = statusTMP;
 
             // Sprite
             GameObject spriteObj = Instantiate(combatSpritePrefab, container.transform);
             spriteObj.name = member.Name;
-
             var img = spriteObj.GetComponent<Image>();
-
             if (so != null && so.portrait != null)
                 img.sprite = so.portrait;
-
             var sRT = spriteObj.GetComponent<RectTransform>();
-            sRT.sizeDelta = new Vector2(120, 120);
+            sRT.sizeDelta = new Vector2(160, 160);
 
             spriteMap[member.Name] = img;
             rectMap[member.Name] = sRT;
         }
 
-        // ───────────────── ENEMY SPRITES ─────────────────
+        // ── Enemy sprites ──────────────────────────
         for (int i = 0; i < enemies.Count; i++)
         {
             var enemy = enemies[i];
             enemyNameOrder.Add(enemy.Name);
 
             EnemyStatsSO so = (i < EncounterManager.CurrentEnemies.Count)
-                ? EncounterManager.CurrentEnemies[i]
-                : null;
+                ? EncounterManager.CurrentEnemies[i] : null;
 
             int capturedIndex = i;
 
-            // Container
             GameObject container = new GameObject($"Enemy_{enemy.Name}");
             container.transform.SetParent(enemySpritesParent, false);
-
             var cRT = container.AddComponent<RectTransform>();
             cRT.sizeDelta = new Vector2(320, 420);
 
-            // Background
             var bg = container.AddComponent<Image>();
             bg.color = normalColor;
-
             enemyContainerBGMap[enemy.Name] = bg;
 
-            // Button
             var btn = container.AddComponent<Button>();
             btn.transition = Selectable.Transition.None;
-
             btn.onClick.AddListener(() =>
             {
                 TurnCombatManager.Instance.SelectEnemy(capturedIndex);
                 HighlightSelectedEnemy(capturedIndex);
             });
 
-            // Layout
             var cLayout = container.AddComponent<VerticalLayoutGroup>();
             cLayout.childAlignment = TextAnchor.UpperCenter;
             cLayout.spacing = 8;
@@ -166,62 +154,52 @@ public class CombatSpriteManager : MonoBehaviour
             cLayout.childForceExpandWidth = true;
             cLayout.padding = new RectOffset(6, 6, 6, 6);
 
-            // ───── HP LABEL CONTAINER ─────
+            // HP label container
             GameObject labelObj = new GameObject("Label");
             labelObj.transform.SetParent(container.transform, false);
-
             var labelRT = labelObj.AddComponent<RectTransform>();
             labelRT.sizeDelta = new Vector2(300, 50);
-
-            // Background image
             var labelBG = labelObj.AddComponent<Image>();
             labelBG.color = new Color(0, 0, 0, 0.65f);
 
-            // ───── TEXT CHILD ─────
+            // HP label text child
             GameObject labelTextObj = new GameObject("Text");
             labelTextObj.transform.SetParent(labelObj.transform, false);
-
             var textRT = labelTextObj.AddComponent<RectTransform>();
             textRT.anchorMin = Vector2.zero;
             textRT.anchorMax = Vector2.one;
             textRT.offsetMin = Vector2.zero;
             textRT.offsetMax = Vector2.zero;
-
             var label = labelTextObj.AddComponent<TextMeshProUGUI>();
             label.fontSize = 22;
             label.alignment = TextAlignmentOptions.Center;
             label.color = Color.white;
             label.raycastTarget = false;
             label.text = $"{enemy.Name}  HP:{enemy.CurrentHP}/{enemy.MaxHP}";
-
+            SetFont(label);
             enemyLabelMap[enemy.Name] = label;
 
-            // ───── STATUS TEXT ─────
+            // Status text
             GameObject statusObj = new GameObject("Status");
             statusObj.transform.SetParent(container.transform, false);
-
             var statusRT = statusObj.AddComponent<RectTransform>();
             statusRT.sizeDelta = new Vector2(300, 35);
-
             var statusTMP = statusObj.AddComponent<TextMeshProUGUI>();
-            statusTMP.fontSize = 18;
+            statusTMP.fontSize = 16;
             statusTMP.alignment = TextAlignmentOptions.Center;
             statusTMP.color = Color.yellow;
             statusTMP.raycastTarget = false;
             statusTMP.text = "";
-
+            SetFont(statusTMP);
             statusTextMap[enemy.Name] = statusTMP;
 
-            // ───── SPRITE ─────
+            // Sprite
             GameObject spriteObj = Instantiate(combatSpritePrefab, container.transform);
             spriteObj.name = enemy.Name;
-
             var spriteImg = spriteObj.GetComponent<Image>();
             spriteImg.raycastTarget = false;
-
             var spriteRT = spriteObj.GetComponent<RectTransform>();
             spriteRT.sizeDelta = new Vector2(300, 300);
-
             if (so != null && so.sprite != null)
                 spriteImg.sprite = so.sprite;
 
@@ -233,7 +211,7 @@ public class CombatSpriteManager : MonoBehaviour
             HighlightSelectedEnemy(0);
     }
 
-    // ───────────────── STATUS TEXT UPDATE ─────────────────
+    // ── Status indicators ──────────────────────────
     public void UpdateStatusIndicators(List<Combatant> allCombatants)
     {
         foreach (var combatant in allCombatants)
@@ -242,13 +220,11 @@ public class CombatSpriteManager : MonoBehaviour
 
             List<string> parts = new();
 
-            // Block / Evade indicator
             if (combatant.IsBlocking)
                 parts.Add("B!");
             else if (combatant.CombatStyle == CombatStyle.Evade && combatant.IsEvading)
                 parts.Add("E!");
 
-            // Stat modifiers
             List<StatModifier> mods = GetModifiers(combatant);
             foreach (var mod in mods)
             {
@@ -265,7 +241,6 @@ public class CombatSpriteManager : MonoBehaviour
                 parts.Add($"{label}({mod.turnsRemaining})");
             }
 
-            // Status effects
             List<ActiveStatusEffect> effects = GetEffects(combatant);
             foreach (var effect in effects)
             {
@@ -294,7 +269,6 @@ public class CombatSpriteManager : MonoBehaviour
             var inst = TurnCombatManager.Instance?.GetEnemyInstance(combatant.Name);
             return inst?.statModifiers ?? new List<StatModifier>();
         }
-
         var member = PartyManager.Instance.activeParty.Find(m => m.Name == combatant.Name);
         return member?.statModifiers ?? new List<StatModifier>();
     }
@@ -306,127 +280,38 @@ public class CombatSpriteManager : MonoBehaviour
             var inst = TurnCombatManager.Instance?.GetEnemyInstance(combatant.Name);
             return inst?.activeEffects ?? new List<ActiveStatusEffect>();
         }
-
         var member = PartyManager.Instance.activeParty.Find(m => m.Name == combatant.Name);
         return member?.activeEffects ?? new List<ActiveStatusEffect>();
     }
 
-    // ───────────────── HP LABELS ─────────────────
+    // ── HP labels ──────────────────────────────────
     public void UpdateEnemyLabels(List<Combatant> enemies)
     {
         foreach (var enemy in enemies)
         {
-            if (!enemyLabelMap.ContainsKey(enemy.Name))
-                continue;
-
+            if (!enemyLabelMap.ContainsKey(enemy.Name)) continue;
             enemyLabelMap[enemy.Name].text = enemy.IsAlive
                 ? $"{enemy.Name}  HP:{enemy.CurrentHP}/{enemy.MaxHP}"
                 : $"{enemy.Name}  DEFEATED";
         }
     }
 
-    // ───────────────── HIGHLIGHT ─────────────────
+    // ── Highlight ──────────────────────────────────
     public void HighlightSelectedEnemy(int index)
     {
         for (int i = 0; i < enemyNameOrder.Count; i++)
         {
             string name = enemyNameOrder[i];
-
-            if (!enemyContainerBGMap.ContainsKey(name))
-                continue;
-
-            bool isDefeated =
-                spriteMap.ContainsKey(name) &&
+            if (!enemyContainerBGMap.ContainsKey(name)) continue;
+            bool isDefeated = spriteMap.ContainsKey(name) &&
                 spriteMap[name].color.r < 0.5f &&
                 spriteMap[name].color.g < 0.5f;
-
-            enemyContainerBGMap[name].color =
-                isDefeated ? defeatedColor :
-                i == index ? selectedColor :
-                normalColor;
+            enemyContainerBGMap[name].color = isDefeated ? defeatedColor
+                : i == index ? selectedColor : normalColor;
         }
     }
 
-    // ───────────────── HIT EFFECTS ─────────────────
-    public void PlayHitEffect(string name, int damage = 0)
-    {
-        if (!spriteMap.ContainsKey(name)) return;
-        StartCoroutine(ShakeAndFlash(name));
-        if (damage > 0 && combatCanvas != null)
-            ShowDamageNumber(name, damage);
-    }
-
-    public void PlayDefeatedEffect(string name)
-    {
-        if (!spriteMap.ContainsKey(name))
-            return;
-
-        StartCoroutine(GreyOut(name));
-
-        if (enemyContainerBGMap.ContainsKey(name))
-            enemyContainerBGMap[name].color = defeatedColor;
-    }
-
-    public void PlayPartyDefeatedEffect(string name)
-    {
-        if (!spriteMap.ContainsKey(name))
-            return;
-
-        StartCoroutine(GreyOut(name));
-    }
-
-    IEnumerator ShakeAndFlash(string name)
-    {
-        if (!rectMap.ContainsKey(name) || !spriteMap.ContainsKey(name))
-            yield break;
-
-        var rt = rectMap[name];
-        var img = spriteMap[name];
-
-        Vector2 orig = rt.anchoredPosition;
-
-        img.color = Color.red;
-
-        float t = 0f;
-
-        while (t < 0.3f)
-        {
-            rt.anchoredPosition = orig + new Vector2(
-                Random.Range(-8f, 8f),
-                Random.Range(-8f, 8f));
-
-            t += Time.deltaTime;
-            yield return null;
-        }
-
-        rt.anchoredPosition = orig;
-        img.color = Color.white;
-    }
-
-    IEnumerator GreyOut(string name)
-    {
-        if (!spriteMap.ContainsKey(name))
-            yield break;
-
-        var img = spriteMap[name];
-
-        float t = 0f;
-
-        Color start = img.color;
-        Color grey = new Color(0.3f, 0.3f, 0.3f, 0.5f);
-
-        while (t < 0.5f)
-        {
-            t += Time.deltaTime;
-
-            img.color = Color.Lerp(start, grey, t / 0.5f);
-
-            yield return null;
-        }
-
-        img.color = grey;
-    }
-
+    // ── Damage numbers ─────────────────────────────
     public void ShowDamageNumber(string targetName, int damage, bool isHeal = false)
     {
         if (combatCanvas == null) return;
@@ -439,25 +324,21 @@ public class CombatSpriteManager : MonoBehaviour
 
         var tmp = dmgObj.AddComponent<TextMeshProUGUI>();
         tmp.text = isHeal ? $"+{damage}" : $"-{damage}";
-        tmp.fontSize = 36;
+        tmp.fontSize = 38;
         tmp.fontStyle = FontStyles.Bold;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = isHeal ? Color.green : Color.red;
         tmp.raycastTarget = false;
+        SetFont(tmp);
 
         var dmgRT = dmgObj.GetComponent<RectTransform>();
         dmgRT.sizeDelta = new Vector2(150, 60);
 
-        // Get top of the sprite rect in screen space
         Vector3[] corners = new Vector3[4];
         rt.GetWorldCorners(corners);
-        // corners[1] = top left, corners[2] = top right
         Vector3 topCenter = (corners[1] + corners[2]) / 2f;
-
-        // Add upward offset so it appears above the sprite
-        topCenter.y += 100f;
+        topCenter.y += 40f;
         topCenter.x += Random.Range(-30f, 30f);
-
         dmgRT.position = topCenter;
 
         Vector2 floatDir = new Vector2(
@@ -482,13 +363,8 @@ public class CombatSpriteManager : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = elapsed / duration;
 
-            // Float upward in random direction
-            rt.position = startPos + new Vector3(
-                floatDir.x * t,
-                floatDir.y * t,
-                0);
+            rt.position = startPos + new Vector3(floatDir.x * t, floatDir.y * t, 0);
 
-            // Flash red/white
             nextFlash -= Time.deltaTime;
             if (nextFlash <= 0f)
             {
@@ -497,11 +373,10 @@ public class CombatSpriteManager : MonoBehaviour
                     isRed ? 1f : 1f,
                     isRed ? 0f : 1f,
                     isRed ? 0f : 1f,
-                    1f - (t * t)); // fade out as it floats
+                    1f - (t * t));
                 nextFlash = flashInterval;
             }
 
-            // Scale up then down
             float scale = t < 0.2f
                 ? Mathf.Lerp(0.5f, 1.3f, t / 0.2f)
                 : Mathf.Lerp(1.3f, 0.8f, (t - 0.2f) / 0.8f);
@@ -511,5 +386,112 @@ public class CombatSpriteManager : MonoBehaviour
         }
 
         Destroy(obj);
+    }
+
+    // ── Status popup (B! E!) ───────────────────────
+    public void ShowStatusTextAboveSprite(string name, string text)
+    {
+        if (!rectMap.ContainsKey(name) || combatCanvas == null) return;
+
+        var rt = rectMap[name];
+
+        GameObject obj = new GameObject("StatusPopup");
+        obj.transform.SetParent(combatCanvas.transform, false);
+
+        var tmp = obj.AddComponent<TextMeshProUGUI>();
+        tmp.text = text;
+        tmp.fontSize = 30;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = text == "B!" ? Color.cyan : Color.yellow;
+        tmp.raycastTarget = false;
+        SetFont(tmp);
+
+        var popRT = obj.GetComponent<RectTransform>();
+        popRT.sizeDelta = new Vector2(100, 50);
+
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        Vector3 topCenter = (corners[1] + corners[2]) / 2f;
+        topCenter.y += 40f;
+        popRT.position = topCenter;
+
+        StartCoroutine(AnimateStatusPopup(obj, tmp, popRT));
+    }
+
+    IEnumerator AnimateStatusPopup(GameObject obj, TextMeshProUGUI tmp, RectTransform rt)
+    {
+        Vector3 startPos = rt.position;
+        float duration = 1.0f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            rt.position = startPos + new Vector3(0, 50f * t, 0);
+            tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, 1f - t);
+            yield return null;
+        }
+
+        Destroy(obj);
+    }
+
+    // ── Hit effects ────────────────────────────────
+    public void PlayHitEffect(string name, int damage = 0)
+    {
+        if (!spriteMap.ContainsKey(name)) return;
+        StartCoroutine(ShakeAndFlash(name));
+        if (damage > 0 && combatCanvas != null)
+            ShowDamageNumber(name, damage);
+    }
+
+    public void PlayDefeatedEffect(string name)
+    {
+        if (!spriteMap.ContainsKey(name)) return;
+        StartCoroutine(GreyOut(name));
+        if (enemyContainerBGMap.ContainsKey(name))
+            enemyContainerBGMap[name].color = defeatedColor;
+    }
+
+    public void PlayPartyDefeatedEffect(string name)
+    {
+        if (!spriteMap.ContainsKey(name)) return;
+        StartCoroutine(GreyOut(name));
+    }
+
+    IEnumerator ShakeAndFlash(string name)
+    {
+        if (!rectMap.ContainsKey(name) || !spriteMap.ContainsKey(name)) yield break;
+        var rt = rectMap[name];
+        var img = spriteMap[name];
+        Vector2 orig = rt.anchoredPosition;
+        img.color = Color.red;
+        float t = 0f;
+        while (t < 0.3f)
+        {
+            rt.anchoredPosition = orig + new Vector2(
+                Random.Range(-8f, 8f), Random.Range(-8f, 8f));
+            t += Time.deltaTime;
+            yield return null;
+        }
+        rt.anchoredPosition = orig;
+        img.color = Color.white;
+    }
+
+    IEnumerator GreyOut(string name)
+    {
+        if (!spriteMap.ContainsKey(name)) yield break;
+        var img = spriteMap[name];
+        float t = 0f;
+        Color start = img.color;
+        Color grey = new Color(0.3f, 0.3f, 0.3f, 0.5f);
+        while (t < 0.5f)
+        {
+            t += Time.deltaTime;
+            img.color = Color.Lerp(start, grey, t / 0.5f);
+            yield return null;
+        }
+        img.color = grey;
     }
 }

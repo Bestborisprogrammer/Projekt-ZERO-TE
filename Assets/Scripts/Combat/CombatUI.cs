@@ -58,6 +58,9 @@ public class CombatUI : MonoBehaviour
     public GameObject victoryPanel;
     public TextMeshProUGUI victoryXPText;
 
+    [Header("Font")]
+    public TMP_FontAsset combatFont;
+
     [Header("Scene")]
     public string overworldScene = "OverworldScene";
 
@@ -101,7 +104,26 @@ public class CombatUI : MonoBehaviour
         skillNextButton.onClick.AddListener(SpellPageNext);
         itemPrevButton.onClick.AddListener(ItemPagePrev);
         itemNextButton.onClick.AddListener(ItemPageNext);
+
+        ApplyFontToStatic();
     }
+
+    void ApplyFontToStatic()
+    {
+        if (combatFont == null) return;
+        ApplyFont(turnText);
+        ApplyFont(combatLogText);
+        ApplyFont(victoryXPText);
+        ApplyFont(skillPageText);
+        ApplyFont(itemPageText);
+    }
+
+    void ApplyFont(TextMeshProUGUI tmp)
+    {
+        if (combatFont != null && tmp != null)
+            tmp.font = combatFont;
+    }
+
     void Update()
     {
         if (waitingForInput)
@@ -113,28 +135,14 @@ public class CombatUI : MonoBehaviour
             return;
         }
 
-        // Keybinds only when player buttons are active and no action taken
         if (actionTaken) return;
         if (!basicAttackButton.interactable) return;
 
-        // E – Basic Attack
-        if (Input.GetKeyDown(KeyCode.E))
-            OnBasicAttack();
-
-        // R – Skills/Mana
-        if (Input.GetKeyDown(KeyCode.R))
-            ToggleSkillPanel();
-
-        // F – Block/Evade
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            if (blockButton.interactable)
-                blockButton.onClick.Invoke();
-        }
-
-        // I – Items
-        if (Input.GetKeyDown(KeyCode.I))
-            ToggleItemPanel();
+        if (Input.GetKeyDown(KeyCode.E)) OnBasicAttack();
+        if (Input.GetKeyDown(KeyCode.R)) ToggleSkillPanel();
+        if (Input.GetKeyDown(KeyCode.F) && blockButton.interactable)
+            blockButton.onClick.Invoke();
+        if (Input.GetKeyDown(KeyCode.I)) ToggleItemPanel();
     }
 
     public void ResetActionTaken() => actionTaken = false;
@@ -171,7 +179,6 @@ public class CombatUI : MonoBehaviour
         {
             var (message, callback) = logQueue.Dequeue();
 
-            // Space character = blank pause that auto-advances then fires callback
             if (message == " ")
             {
                 combatLogText.text = "";
@@ -179,7 +186,6 @@ public class CombatUI : MonoBehaviour
                 continue;
             }
 
-            // Truly empty = just fire callback no display
             if (string.IsNullOrEmpty(message))
             {
                 callback?.Invoke();
@@ -282,6 +288,7 @@ public class CombatUI : MonoBehaviour
 
             tmp.text = $"{spell.spellName}  |  MP: {spell.manaCost}\n{spell.description}";
             tmp.color = canAfford ? Color.white : Color.grey;
+            ApplyFont(tmp);
 
             var button = btn.GetComponent<Button>();
             button.interactable = canAfford;
@@ -356,6 +363,7 @@ public class CombatUI : MonoBehaviour
 
             string targetTag = item.itemData.itemTarget == ItemTarget.Enemy ? "[ENEMY]" : "[ALLY]";
             tmp.text = $"{item.itemData.itemName} x{item.quantity} {targetTag}\n{effectInfo}";
+            ApplyFont(tmp);
 
             var button = btn.GetComponent<Button>();
             var capturedItem = item;
@@ -405,6 +413,7 @@ public class CombatUI : MonoBehaviour
                 preview = $"+{item.itemData.statModifier} {item.itemData.statType}";
 
             tmp.text = $"{member.Name}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
+            ApplyFont(tmp);
 
             var capturedMember = member;
             btn.GetComponent<Button>()?.onClick.AddListener(() =>
@@ -442,6 +451,7 @@ public class CombatUI : MonoBehaviour
                 preview = $"+{spell.statModifier} {spell.statType} ({spell.modifierDuration} turns)";
 
             tmp.text = $"{member.Name}\nHP: {member.currentHP}/{member.MaxHP}\n{preview}";
+            ApplyFont(tmp);
 
             var capturedMember = member;
             btn.GetComponent<Button>()?.onClick.AddListener(() =>
@@ -467,8 +477,12 @@ public class CombatUI : MonoBehaviour
             int before = member.currentHP;
             member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + totalHeal);
             int actual = member.currentHP - before;
+
+            var combatant = TurnCombatManager.Instance.party.Find(p => p.Name == member.Name);
+            combatant?.Refresh();
+
+            CombatSpriteManager.Instance?.ShowDamageNumber(member.Name, actual, true);
             logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! Recovered {actual} HP!";
-            Debug.Log($"[HEAL COMBAT] {member.Name}: +{actual} HP → {member.currentHP}/{member.MaxHP}");
         }
         else if (pendingItem.itemData.itemType == ItemType.Buff)
         {
@@ -476,6 +490,10 @@ public class CombatUI : MonoBehaviour
                 pendingItem.itemData.statType,
                 pendingItem.itemData.statModifier,
                 pendingItem.itemData.modifierDuration));
+
+            var combatant = TurnCombatManager.Instance.party.Find(p => p.Name == member.Name);
+            combatant?.Refresh();
+
             logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! " +
                 $"{pendingItem.itemData.statType} +{pendingItem.itemData.statModifier} " +
                 $"for {pendingItem.itemData.modifierDuration} turns!";
@@ -485,14 +503,7 @@ public class CombatUI : MonoBehaviour
         pendingItem = null;
         memberSelectPopup.SetActive(false);
 
-        // Force update HP display
-        var partyList = TurnCombatManager.Instance.party;
-        var enemyList = TurnCombatManager.Instance.enemies;
-
-        // Refresh combatant HP from instance
-        foreach (var c in partyList) c.Refresh();
-
-        UpdateAllHP(partyList, enemyList);
+        UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
         TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
 
         ShowCombatLog(logMsg, () =>
@@ -524,7 +535,6 @@ public class CombatUI : MonoBehaviour
                 target.Refresh();
                 logMsg += $" {item.itemData.statType} {(mod > 0 ? "+" : "")}{mod} " +
                     $"for {item.itemData.modifierDuration} turns!";
-                Debug.Log($"[DEBUFF] {target.Name}: {item.itemData.statType} {mod} for {item.itemData.modifierDuration} turns");
             }
         }
 
@@ -591,13 +601,16 @@ public class CombatUI : MonoBehaviour
 
     void SetupHPEntry(GameObject entry, Combatant member)
     {
-        // Search recursively through all children
         var nameText = FindDeep<TextMeshProUGUI>(entry, "NameText");
         var portrait = FindDeep<Image>(entry, "Portrait");
         var hpBar = FindDeep<Image>(entry, "HPBar");
         var hpText = FindDeep<TextMeshProUGUI>(entry, "HPText");
         var mpBar = FindDeep<Image>(entry, "MPBar");
         var mpText = FindDeep<TextMeshProUGUI>(entry, "MPText");
+
+        ApplyFont(nameText);
+        ApplyFont(hpText);
+        ApplyFont(mpText);
 
         if (nameText != null)
         {
@@ -623,7 +636,6 @@ public class CombatUI : MonoBehaviour
             hpBar.color = hpFill > 0.5f ? Color.red :
                           hpFill > 0.25f ? new Color(1f, 0.5f, 0f) :
                           new Color(0.8f, 0f, 0f);
-            Debug.Log($"[HP BAR] {member.Name}: {member.CurrentHP}/{member.MaxHP} fill:{hpFill}");
         }
 
         if (hpText != null)
@@ -635,7 +647,6 @@ public class CombatUI : MonoBehaviour
             int maxMP = memberData?.MaxMana ?? 1;
             float mpFill = maxMP > 0 ? (float)member.GetCurrentMana() / maxMP : 0f;
             mpBar.fillAmount = Mathf.Clamp01(mpFill);
-            Debug.Log($"[MP BAR] {member.Name}: {member.GetCurrentMana()}/{maxMP} fill:{mpFill}");
         }
 
         if (mpText != null)
@@ -699,9 +710,14 @@ public class CombatUI : MonoBehaviour
             EncounterManager.ActiveCutscene = null;
         }
 
-        // Recruit is handled purely via PendingRecruitCompletion flag
-        // No reference needed here
-        Debug.Log($"[RECRUIT] ShowVictory - PendingCompletion: {EncounterManager.PendingRecruitCompletion}");
+        if (EncounterManager.PendingRecruitCompletion == false &&
+            EncounterManager.ActiveRecruitCutscene != null)
+        {
+            EncounterManager.PendingRecruitCompletion = true;
+            EncounterManager.PendingRecruitMemberName =
+                EncounterManager.ActiveRecruitCutscene.newMember.characterName;
+            EncounterManager.ActiveRecruitCutscene = null;
+        }
 
         victoryPanel.SetActive(true);
         victoryPanel.transform.SetAsLastSibling();
