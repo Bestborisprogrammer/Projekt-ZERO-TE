@@ -74,18 +74,24 @@ public class PartyStatusUI : MonoBehaviour
             : "None";
 
         memberInfoText.text =
-            $"════════════════\n" +
-            $"{member.Name}  |  Lv. {member.level}\n" +
-            $"════════════════\n" +
-            $"HP:  {member.currentHP} / {member.MaxHP}\n" +
-            $"MP:  {member.currentMana} / {member.MaxMana}\n" +
-            $"ATK: {member.Attack}\n" +
-            $"DEF: {member.Defense}\n" +
-            $"SPD: {member.Speed}\n" +
-            $"Affinity: {affinities}\n" +
+            $"═════════════════════\n" +
+            $"{member.Name} | Lv. {member.level}\n" +
+            $"═════════════════════\n" +
+            $"HP:  {member.currentHP} / {member.MaxHP}\n\n" +
+
+            $"MP:  {member.currentMana} / {member.MaxMana}\n\n" +
+
+            $"ATK: {member.Attack}\n\n" +
+
+            $"DEF: {member.Defense}\n\n" +
+
+            $"SPD: {member.Speed}\n\n" +
+
+            $"Affinity: {affinities}\n\n" +
+
             $"XP:  {member.currentXP} / {member.xpToNextLevel}  ({xpPercent:F1}%)";
 
-        pageText.text = $"{index + 1} / {PartyManager.Instance.activeParty.Count}";
+        pageText.text = $"{index + 1}/{PartyManager.Instance.activeParty.Count}";
 
         bool multipleMembers = PartyManager.Instance.activeParty.Count > 1;
         prevButton.gameObject.SetActive(multipleMembers);
