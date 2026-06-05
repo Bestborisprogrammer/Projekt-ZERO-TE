@@ -27,6 +27,8 @@ MonoBehaviour:
   speedGrowth: 1
   manaGrowth: 5
   baseXPToNextLevel: 100
+  critRate: 0.4
+  critDamage: 1.3
   affinities: 01000000
   spells:
   - {fileID: 11400000, guid: bd5ce6a98b0049b438742aec25b46335, type: 2}

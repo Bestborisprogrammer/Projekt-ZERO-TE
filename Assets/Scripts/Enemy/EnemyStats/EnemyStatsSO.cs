@@ -19,18 +19,29 @@ public class GearDrop
 public class EnemyStatsSO : ScriptableObject
 {
     [Header("Identity")]
-    public string enemyName = "Slime";
+    public string enemyName = "Enemy";
     public Sprite sprite;
 
-    [Header("Level")]
-    public int level = 1;
-
     [Header("Stats")]
-    public int maxHP = 40;
-    public int attack = 6;
-    public int defense = 2;
-    public int speed = 4;
-    public int maxMana = 10;
+    public int level = 1;
+    public int maxHP = 50;
+    public int attack = 8;
+    public int defense = 3;
+    public int speed = 5;
+    public int maxMana = 20;
+
+    [Header("Crit")]
+    public float critRate = 0.05f;
+    public float critDamage = 1.5f;
+
+    [Header("Affinities")]
+    public List<SpellAffinity> affinities = new();
+
+    [Header("Combat Style")]
+    public CombatStyle combatStyle = CombatStyle.Block;
+
+    [Header("Spells")]
+    public List<EnemyManaAttackSO> spells = new();
 
     [Header("Rewards")]
     public int xpReward = 30;
@@ -39,13 +50,4 @@ public class EnemyStatsSO : ScriptableObject
     [Header("Drops")]
     public List<ItemDrop> itemDrops = new();
     public List<GearDrop> gearDrops = new();
-
-    [Header("Affinities")]
-    public List<SpellAffinity> affinities = new();
-
-    [Header("Spells")]
-    public List<EnemyManaAttackSO> spells = new();
-
-    [Header("Combat Style")]
-    public CombatStyle combatStyle = CombatStyle.Block;
 }

@@ -86,6 +86,9 @@ public class CharacterInstance
         }
     }
 
+    public float CritRate => baseData.critRate;
+    public float CritDamage => baseData.critDamage;
+
     public string Name => baseData.characterName;
     public bool IsAlive => currentHP > 0;
     public CombatStyle CombatStyle => baseData.combatStyle;
@@ -110,15 +113,12 @@ public class CharacterInstance
     public void HealHP(int flatAmount, float percentAmount)
     {
         int heal = flatAmount + Mathf.RoundToInt(MaxHP * percentAmount);
-        heal = Mathf.Max(0, heal);
-        currentHP = Mathf.Min(MaxHP, currentHP + heal);
-        Debug.Log($"{Name} healed for {heal} HP! ({currentHP}/{MaxHP})");
+        currentHP = Mathf.Min(MaxHP, currentHP + Mathf.Max(0, heal));
     }
 
     public void ApplyStatModifier(StatType type, int modifier, int duration)
     {
         statModifiers.Add(new StatModifier(type, modifier, duration));
-        Debug.Log($"{Name} stat modifier: {type} {modifier:+#;-#} for {duration} turns");
     }
 
     public List<string> TickStatModifiers()
@@ -162,7 +162,7 @@ public class CharacterInstance
             LevelUp();
     }
 
-    private void LevelUp()
+    void LevelUp()
     {
         currentXP -= xpToNextLevel;
         level++;

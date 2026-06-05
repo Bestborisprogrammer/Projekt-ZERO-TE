@@ -4,7 +4,6 @@ using UnityEngine.SceneManagement;
 public class MenuButton : MonoBehaviour
 {
     public string menuScene = "MenuScene";
-    private Vector3 savedPosition;
 
     void Update()
     {
@@ -18,8 +17,13 @@ public class MenuButton : MonoBehaviour
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
-            PlayerPrefs.SetString("PlayerReturnPos",
-                $"{player.transform.position.x},{player.transform.position.y},{player.transform.position.z}");
+        {
+            Vector3 pos = player.transform.position;
+            PlayerPrefs.SetFloat("PlayerReturnX", pos.x);
+            PlayerPrefs.SetFloat("PlayerReturnY", pos.y);
+            PlayerPrefs.SetFloat("PlayerReturnZ", pos.z);
+            PlayerPrefs.Save();
+        }
         SceneManager.LoadScene(menuScene);
     }
 

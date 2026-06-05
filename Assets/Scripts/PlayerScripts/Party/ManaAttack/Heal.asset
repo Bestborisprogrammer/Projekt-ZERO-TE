@@ -19,7 +19,7 @@ MonoBehaviour:
   manaCost: 5
   levelRequirement: 1
   flatDamage: 20
-  flatHeal: 10
+  flatHeal: 15
   percentHeal: 0
   statType: 0
   statModifier: 0

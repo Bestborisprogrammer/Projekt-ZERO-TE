@@ -22,6 +22,8 @@ public class Combatant
     public CombatStyle CombatStyle { get; private set; }
     public float BlockReduction { get; private set; }
     public float EvadeChance { get; private set; }
+    public float CritRate { get; private set; }
+    public float CritDamage { get; private set; }
     public List<SpellAffinity> Affinities { get; private set; }
 
     private CharacterInstance characterRef;
@@ -52,11 +54,6 @@ public class Combatant
 
     public void TakeDamage(int damage)
     {
-        if (IsBlocking)
-        {
-            int reduced = Mathf.RoundToInt(damage * (1f - BlockReduction));
-            damage = reduced;
-        }
         if (IsEnemy) enemyRef.TakeDamage(damage);
         else characterRef.TakeDamage(damage);
         Refresh();
@@ -88,28 +85,21 @@ public class Combatant
 
     public bool HasStatusEffect(StatusEffectType type)
     {
-        List<ActiveStatusEffect> effects = IsEnemy
-            ? enemyRef.activeEffects
-            : characterRef.activeEffects;
+        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
         return effects.Exists(e => e.type == type && e.turnsRemaining > 0);
     }
 
     public void RemoveStatusEffect(StatusEffectType type)
     {
-        List<ActiveStatusEffect> effects = IsEnemy
-            ? enemyRef.activeEffects
-            : characterRef.activeEffects;
+        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
         effects.RemoveAll(e => e.type == type);
         Refresh();
     }
 
-    // Returns logs AND dot damage amounts for damage numbers
     public List<(string log, int damage, bool isDot)> ProcessStatusEffectsDetailed()
     {
         List<(string, int, bool)> results = new();
-        List<ActiveStatusEffect> effects = IsEnemy
-            ? enemyRef.activeEffects
-            : characterRef.activeEffects;
+        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
 
         for (int i = effects.Count - 1; i >= 0; i--)
         {
@@ -139,7 +129,7 @@ public class Combatant
                     effects.RemoveAt(i);
                 }
                 else
-                    results.Add(($"{Name} is Wet! Speed reduced. ({effect.turnsRemaining} turns remaining)", 0, false));
+                    results.Add(($"{Name} is Wet! ({effect.turnsRemaining} turns remaining)", 0, false));
             }
             else if (effect.type == StatusEffectType.Dark)
             {
@@ -169,18 +159,14 @@ public class Combatant
         return results;
     }
 
-    // Keep old method for compatibility
     public List<string> ProcessStatusEffects()
     {
-        var detailed = ProcessStatusEffectsDetailed();
-        return detailed.ConvertAll(d => d.log);
+        return ProcessStatusEffectsDetailed().ConvertAll(d => d.log);
     }
 
     public bool ConsumeFreezeIfActive()
     {
-        List<ActiveStatusEffect> effects = IsEnemy
-            ? enemyRef.activeEffects
-            : characterRef.activeEffects;
+        List<ActiveStatusEffect> effects = IsEnemy ? enemyRef.activeEffects : characterRef.activeEffects;
         var freeze = effects.Find(e => e.type == StatusEffectType.Freeze);
         if (freeze == null) return false;
         freeze.turnsRemaining--;
@@ -208,6 +194,8 @@ public class Combatant
             CombatStyle = enemyRef.CombatStyle;
             BlockReduction = enemyRef.BlockReduction;
             EvadeChance = enemyRef.EvadeChance;
+            CritRate = enemyRef.CritRate;
+            CritDamage = enemyRef.CritDamage;
             Affinities = enemyRef.baseData.affinities;
         }
         else
@@ -227,6 +215,8 @@ public class Combatant
             CombatStyle = characterRef.CombatStyle;
             BlockReduction = characterRef.BlockReduction;
             EvadeChance = characterRef.EvadeChance;
+            CritRate = characterRef.CritRate;
+            CritDamage = characterRef.CritDamage;
             Affinities = characterRef.baseData.affinities;
         }
     }

@@ -66,6 +66,7 @@ public class MenuManager : MonoBehaviour
 
     public void ReturnToOverworld()
     {
+        // Position is restored by PlayerMovement2D or a dedicated restorer
         SceneManager.LoadScene(overworldScene);
     }
 }

@@ -20,11 +20,12 @@ MonoBehaviour:
   defense: 2
   speed: 4
   maxMana: 10
+  critRate: 0.05
+  critDamage: 1.5
+  affinities: 
+  combatStyle: 1
+  spells: []
   xpReward: 30
   goldReward: 10
   itemDrops: []
   gearDrops: []
-  affinities: 
-  spells:
-  - {fileID: 11400000, guid: 142405572d170d8458d836788f895c74, type: 2}
-  combatStyle: 1

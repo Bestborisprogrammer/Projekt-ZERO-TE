@@ -8,8 +8,8 @@ public class CharacterStatsSO : ScriptableObject
 {
     [Header("Identity")]
     public string characterName = "Hero";
-    public Sprite portrait;      // full body
-    public Sprite headPortrait;  // head/face only
+    public Sprite portrait;
+    public Sprite headPortrait;
 
     [Header("Starting Level")]
     public int startingLevel = 1;
@@ -30,6 +30,10 @@ public class CharacterStatsSO : ScriptableObject
 
     [Header("XP")]
     public int baseXPToNextLevel = 100;
+
+    [Header("Crit")]
+    public float critRate = 0.1f;
+    public float critDamage = 1.75f;
 
     [Header("Affinities")]
     public List<SpellAffinity> affinities = new();

@@ -23,6 +23,14 @@ public class EnemyInstance
     public string Name => baseData.enemyName;
     public int Level => baseData.level;
     public int MaxHP => baseData.maxHP;
+    public int MaxMana => baseData.maxMana;
+    public int XPReward => baseData.xpReward;
+    public bool IsAlive => currentHP > 0;
+    public CombatStyle CombatStyle => baseData.combatStyle;
+    public float BlockReduction => Mathf.Min(0.9f, 0.30f + (Defense * 0.002f));
+    public float EvadeChance => Mathf.Min(0.9f, 0.20f + (Speed * 0.002f));
+    public float CritRate => baseData.critRate;
+    public float CritDamage => baseData.critDamage;
 
     public int Attack
     {
@@ -60,13 +68,6 @@ public class EnemyInstance
         }
     }
 
-    public int MaxMana => baseData.maxMana;
-    public int XPReward => baseData.xpReward;
-    public bool IsAlive => currentHP > 0;
-    public CombatStyle CombatStyle => baseData.combatStyle;
-    public float BlockReduction => Mathf.Min(0.9f, 0.30f + (Defense * 0.002f));
-    public float EvadeChance => Mathf.Min(0.9f, 0.20f + (Speed * 0.002f));
-
     public void Initialize()
     {
         currentHP = MaxHP;
@@ -81,7 +82,6 @@ public class EnemyInstance
     public void ApplyStatModifier(StatType type, int modifier, int duration)
     {
         statModifiers.Add(new StatModifier(type, modifier, duration));
-        Debug.Log($"{Name} stat modifier: {type} {modifier:+#;-#} for {duration} turns");
     }
 
     public List<string> TickStatModifiers()

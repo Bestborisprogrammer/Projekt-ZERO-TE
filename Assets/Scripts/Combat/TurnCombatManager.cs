@@ -255,7 +255,8 @@ public class TurnCombatManager : MonoBehaviour
         UpdateStatusIndicators();
     }
 
-    bool ResolveAttack(Combatant attacker, Combatant target, int damage, string attackName)
+    bool ResolveAttack(Combatant attacker, Combatant target,
+        int damage, string attackName, bool canCrit = false)
     {
         if (target.CombatStyle == CombatStyle.Evade && target.TryEvade())
         {
@@ -263,19 +264,25 @@ public class TurnCombatManager : MonoBehaviour
             return false;
         }
 
+        bool isCrit = canCrit && Random.value < attacker.CritRate;
+        if (isCrit)
+            damage = Mathf.RoundToInt(damage * attacker.CritDamage);
+
+        string critTag = isCrit ? " CRITICAL HIT!" : "";
+
         if (target.CombatStyle == CombatStyle.Block && target.IsBlocking)
         {
             int reduced = Mathf.RoundToInt(damage * (1f - target.BlockReduction));
             target.TakeDamage(reduced);
-            CombatSpriteManager.Instance?.PlayHitEffect(target.Name, reduced);
-            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage! " +
+            CombatSpriteManager.Instance?.PlayHitEffect(target.Name, reduced, isCrit);
+            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage!{critTag} " +
                 $"(B! reduced to {reduced})");
         }
         else
         {
             target.TakeDamage(damage);
-            CombatSpriteManager.Instance?.PlayHitEffect(target.Name, damage);
-            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage!");
+            CombatSpriteManager.Instance?.PlayHitEffect(target.Name, damage, isCrit);
+            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage!{critTag}");
         }
 
         return true;
@@ -291,7 +298,7 @@ public class TurnCombatManager : MonoBehaviour
 
         Combatant target = enemies[selectedEnemyIndex];
         int damage = Mathf.Max(1, attacker.Attack - target.Defense);
-        bool hit = ResolveAttack(attacker, target, damage, "basic attack");
+        bool hit = ResolveAttack(attacker, target, damage, "basic attack", true);
 
         combatUI.UpdateAllHP(party, enemies);
         combatUI.BuildEnemyTargetButtons(enemies);
@@ -527,7 +534,7 @@ public class TurnCombatManager : MonoBehaviour
         else
         {
             int damage = Mathf.Max(1, attacker.Attack - target.Defense);
-            ResolveAttack(attacker, target, damage, "basic attack");
+            ResolveAttack(attacker, target, damage, "basic attack", true);
         }
 
         combatUI.UpdateAllHP(party, enemies);
