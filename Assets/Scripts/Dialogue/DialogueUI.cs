@@ -31,8 +31,7 @@ public class DialogueUI : MonoBehaviour
         if (!dialogueBox.activeSelf) return;
 
         if (Input.anyKeyDown &&
-            !Input.GetMouseButtonDown(0) &&
-            !Input.GetMouseButtonDown(1))
+            !Input.GetMouseButtonDown(1)) // allow left click, block right click only
         {
             if (isTyping)
                 skipRequested = true;

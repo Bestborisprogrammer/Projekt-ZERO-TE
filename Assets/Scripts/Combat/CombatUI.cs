@@ -789,6 +789,9 @@ public class CombatUI : MonoBehaviour
     IEnumerator ReturnAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
+
+        EncounterManager.CurrentEnemies.Clear();
+
         SceneManager.LoadScene(overworldScene);
     }
 }

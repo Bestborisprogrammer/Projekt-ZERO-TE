@@ -16,14 +16,9 @@ public class CutsceneManager : MonoBehaviour
     private bool battleDone = false;
     private Coroutine chargeCoroutine;
 
-
-
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
-
-        if (monsterGameObject != null)
-            monsterGameObject.SetActive(false);
 
         if (fogEffect != null)
             fogEffect.SetActive(false);
@@ -32,7 +27,13 @@ public class CutsceneManager : MonoBehaviour
     public void StartMonsterSequence()
     {
         Debug.Log("[CUTSCENE] StartMonsterSequence called");
+        SetPlayerFrozen(true);
         StartCoroutine(MonsterSequence());
+    }
+
+    public void OnDialogueComplete()
+    {
+        StartMonsterSequence();
     }
 
     IEnumerator MonsterSequence()
@@ -40,17 +41,8 @@ public class CutsceneManager : MonoBehaviour
         if (fogEffect != null)
             fogEffect.SetActive(true);
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.5f);
 
-        if (monsterGameObject != null)
-        {
-            monsterGameObject.SetActive(true);
-            Debug.Log("[CUTSCENE] Monster spawned");
-        }
-
-        // Second dialogue trigger handles monster dialogue
-        // Just start charging after spawn delay
-        yield return new WaitForSeconds(0f);
         chargeCoroutine = StartCoroutine(MonsterCharge());
     }
 
@@ -64,7 +56,8 @@ public class CutsceneManager : MonoBehaviour
         {
             if (monsterGameObject == null || player == null) yield break;
 
-            Vector2 dir = ((Vector2)player.position - (Vector2)monsterGameObject.transform.position).normalized;
+            Vector2 dir = ((Vector2)player.position -
+                (Vector2)monsterGameObject.transform.position).normalized;
 
             if (rb != null)
                 rb.linearVelocity = dir * monsterMoveSpeed;
@@ -106,5 +99,19 @@ public class CutsceneManager : MonoBehaviour
 
         if (monsterGameObject != null)
             Destroy(monsterGameObject);
+
+        SetPlayerFrozen(false);
+    }
+
+    void SetPlayerFrozen(bool frozen)
+    {
+        var playerObj = GameObject.FindGameObjectWithTag("Player");
+        if (playerObj == null) return;
+
+        var movement = playerObj.GetComponent<PlayerMovement2D>();
+        if (movement != null) movement.enabled = !frozen;
+
+        var rb = playerObj.GetComponent<Rigidbody2D>();
+        if (rb != null && frozen) rb.linearVelocity = Vector2.zero;
     }
 }
