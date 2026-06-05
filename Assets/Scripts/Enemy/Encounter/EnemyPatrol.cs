@@ -1,59 +1,64 @@
 using UnityEngine;
+using System.Collections;
 
 public class EnemyPatrol : MonoBehaviour
 {
     [Header("Patrol Settings")]
-    public float patrolRadius = 3f;       // Größe der Zone
-    public float moveSpeed = 2f;
-    public float waitTime = 1.5f;         // Pause zwischen Bewegungen
+    public float moveSpeed = 1.5f;
+    public float waitTime = 1f;
+    public float patrolRadius = 3f;
 
-    private Vector2 startPosition;
-    private Vector2 targetPosition;
-    private float waitTimer;
+    private Vector2 startPos;
+    private Vector2 targetPos;
     private bool isWaiting = false;
+    private bool isFrozen = false;
+    private Rigidbody2D rb;
 
     void Start()
     {
-        startPosition = transform.position;
-        PickNewTarget();
+        rb = GetComponent<Rigidbody2D>();
+        startPos = transform.position;
+        targetPos = GetRandomPoint();
     }
 
     void Update()
     {
-        if (isWaiting)
-        {
-            waitTimer -= Time.deltaTime;
-            if (waitTimer <= 0f)
-            {
-                isWaiting = false;
-                PickNewTarget();
-            }
-            return;
-        }
+        if (isFrozen) return;
+        if (isWaiting) return;
 
-        // Bewege Richtung Ziel
-        transform.position = Vector2.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+        Vector2 dir = (targetPos - (Vector2)transform.position).normalized;
+        float dist = Vector2.Distance(transform.position, targetPos);
 
-        // Ziel erreicht?
-        if ((Vector2)transform.position == targetPosition)
+        if (dist < 0.1f)
+            StartCoroutine(Wait());
+        else
         {
-            isWaiting = true;
-            waitTimer = waitTime;
+            if (rb != null)
+                rb.linearVelocity = dir * moveSpeed;
+            else
+                transform.position = Vector2.MoveTowards(
+                    transform.position, targetPos, moveSpeed * Time.deltaTime);
         }
     }
 
-    void PickNewTarget()
+    IEnumerator Wait()
     {
-        // Zufälliger Punkt in der Zone
+        isWaiting = true;
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+        yield return new WaitForSeconds(waitTime);
+        targetPos = GetRandomPoint();
+        isWaiting = false;
+    }
+
+    Vector2 GetRandomPoint()
+    {
         Vector2 randomOffset = Random.insideUnitCircle * patrolRadius;
-        targetPosition = startPosition + randomOffset;
+        return startPos + randomOffset;
     }
 
-    // Zeigt die Zone im Unity Editor als Kreis
-    void OnDrawGizmosSelected()
+    public void Freeze()
     {
-        Gizmos.color = Color.yellow;
-        Vector2 center = Application.isPlaying ? startPosition : (Vector2)transform.position;
-        Gizmos.DrawWireSphere(center, patrolRadius);
+        isFrozen = true;
+        if (rb != null) rb.linearVelocity = Vector2.zero;
     }
 }

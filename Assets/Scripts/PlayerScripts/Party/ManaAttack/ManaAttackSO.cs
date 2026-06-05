@@ -39,4 +39,7 @@ public class ManaAttackSO : ScriptableObject
 
     [Header("Dark Specific")]
     [Range(0f, 1f)] public float defenseReduction = 0.25f;
+
+    [Header("AOE")]
+    public bool isAOE = false; // hits all enemies
 }

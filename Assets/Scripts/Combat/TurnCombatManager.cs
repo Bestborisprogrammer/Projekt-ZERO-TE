@@ -377,7 +377,14 @@ public class TurnCombatManager : MonoBehaviour
             return;
         }
 
-        // Damage spell
+        // AOE damage
+        if (spell.isAOE)
+        {
+            ExecuteAOESpell(spell, attacker);
+            return;
+        }
+
+        // Single target damage
         while (selectedEnemyIndex < enemies.Count && !enemies[selectedEnemyIndex].IsAlive)
             selectedEnemyIndex++;
         if (selectedEnemyIndex >= enemies.Count) return;
@@ -413,6 +420,80 @@ public class TurnCombatManager : MonoBehaviour
             combatUI.ShowCombatLog($"{target.Name} was defeated!");
             selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
             combatUI.BuildEnemyTargetButtons(enemies);
+            combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+        }
+
+        combatUI.ShowCombatLog(" ", () => NextTurn());
+    }
+
+    void ExecuteAOESpell(ManaAttackSO spell, Combatant attacker)
+    {
+        var aliveEnemies = enemies.Where(e => e.IsAlive).ToList();
+        if (aliveEnemies.Count == 0) return;
+
+        float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
+            spell.affinity != SpellAffinity.None ? 1.5f : 1f;
+
+        combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}! Hits all enemies!");
+
+        bool anyDefeated = false;
+
+        foreach (var target in aliveEnemies)
+        {
+            float mult = affinityMult;
+            string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref mult);
+
+            int damage = Mathf.Max(1, Mathf.RoundToInt((spell.flatDamage - target.Defense) * mult));
+
+            if (!string.IsNullOrEmpty(comboMsg))
+                combatUI.ShowCombatLog(comboMsg);
+
+            // AOE can't crit
+            if (target.CombatStyle == CombatStyle.Evade && target.TryEvade())
+            {
+                combatUI.ShowCombatLog($"{target.Name} evaded!");
+                continue;
+            }
+
+            if (target.CombatStyle == CombatStyle.Block && target.IsBlocking)
+            {
+                int reduced = Mathf.RoundToInt(damage * (1f - target.BlockReduction));
+                target.TakeDamage(reduced);
+                CombatSpriteManager.Instance?.PlayHitEffect(target.Name, reduced);
+                combatUI.ShowCombatLog($"{target.Name} takes {reduced} damage! (B!)");
+            }
+            else
+            {
+                target.TakeDamage(damage);
+                CombatSpriteManager.Instance?.PlayHitEffect(target.Name, damage);
+                combatUI.ShowCombatLog($"{target.Name} takes {damage} damage!");
+            }
+
+            // Apply status to each target
+            ApplySpellEffects(spell, attacker, target, damage);
+
+            if (!target.IsAlive)
+            {
+                CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
+                combatUI.ShowCombatLog($"{target.Name} was defeated!");
+                anyDefeated = true;
+            }
+        }
+
+        combatUI.UpdateAllHP(party, enemies);
+        combatUI.BuildEnemyTargetButtons(enemies);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
+
+        if (enemies.All(e => !e.IsAlive))
+        {
+            combatUI.ShowCombatLog(" ", () => HandleVictory());
+            return;
+        }
+
+        if (anyDefeated)
+        {
+            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
             combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         }
 

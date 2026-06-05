@@ -21,11 +21,18 @@ public class EnemyEncounter : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
 
-        // Freeze player immediately
+        // Freeze player
         var movement = other.GetComponent<PlayerMovement2D>();
         if (movement != null) movement.enabled = false;
-        var rb = other.GetComponent<Rigidbody2D>();
-        if (rb != null) rb.linearVelocity = Vector2.zero;
+        var playerRB = other.GetComponent<Rigidbody2D>();
+        if (playerRB != null) playerRB.linearVelocity = Vector2.zero;
+
+        // Freeze this enemy
+        var patrol = GetComponent<EnemyPatrol>();
+        if (patrol != null) patrol.Freeze();
+
+        var enemyRB = GetComponent<Rigidbody2D>();
+        if (enemyRB != null) enemyRB.linearVelocity = Vector2.zero;
 
         PlayerPrefs.SetInt(uniqueID, 1);
         PlayerPrefs.Save();
