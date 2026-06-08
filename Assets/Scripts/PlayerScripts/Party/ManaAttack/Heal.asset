@@ -16,10 +16,10 @@ MonoBehaviour:
   description: A basic heal
   affinity: 0
   spellType: 1
-  manaCost: 5
+  manaCost: 3
   levelRequirement: 1
   flatDamage: 20
-  flatHeal: 15
+  flatHeal: 20
   percentHeal: 0
   statType: 0
   statModifier: 0
@@ -29,3 +29,4 @@ MonoBehaviour:
   statusDuration: 2
   dotPercent: 0.05
   defenseReduction: 0.25
+  isAOE: 0
