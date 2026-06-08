@@ -16,22 +16,21 @@ MonoBehaviour:
   portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
   headPortrait: {fileID: -8149888002822582395, guid: 530e0ed278e99284fa54da1e61ccbdd0, type: 3}
   startingLevel: 1
-  maxHP: 100
-  attack: 10
-  defense: 5
-  speed: 8
-  maxMana: 50
-  hpGrowth: 15
+  maxHP: 50
+  attack: 8
+  defense: 4
+  speed: 4
+  maxMana: 30
+  hpGrowth: 12
   attackGrowth: 3
   defenseGrowth: 2
   speedGrowth: 1
-  manaGrowth: 5
+  manaGrowth: 6
   baseXPToNextLevel: 100
-  critRate: 0.15
+  critRate: 0.05
   critDamage: 1.75
-  affinities: 0200000003000000
+  affinities: 02000000
   spells:
   - {fileID: 11400000, guid: ac80df4eb998cc440b14aa48c374c4c8, type: 2}
-  - {fileID: 11400000, guid: 15a456db98950c04c84877a0820fea5d, type: 2}
   - {fileID: 11400000, guid: 213af501dc308bb468259791fe486a15, type: 2}
   combatStyle: 0

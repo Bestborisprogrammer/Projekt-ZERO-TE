@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 349a4d0a74bff2e4fa15891083cd5fb8, type: 3}
   m_Name: TutoEnemy
   m_EditorClassIdentifier: 
-  enemyName: ???
+  enemyName: The Raper
   sprite: {fileID: 8605205185410670490, guid: 6017e18dd2d32164098c590f999b9bb2, type: 3}
   level: 1
   maxHP: 30
-  attack: 8
+  attack: 9
   defense: 2
   speed: 4
-  maxMana: 10
+  maxMana: 14
   critRate: 0.05
   critDamage: 1.5
   affinities: 

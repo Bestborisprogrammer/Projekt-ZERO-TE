@@ -16,8 +16,8 @@ MonoBehaviour:
   sprite: {fileID: 8605205185410670490, guid: 6017e18dd2d32164098c590f999b9bb2, type: 3}
   level: 1
   maxHP: 15
-  attack: 6
-  defense: 2
+  attack: 11
+  defense: 3
   speed: 4
   maxMana: 10
   critRate: 0.05
@@ -25,7 +25,7 @@ MonoBehaviour:
   affinities: 
   combatStyle: 1
   spells: []
-  xpReward: 30
-  goldReward: 10
+  xpReward: 15
+  goldReward: 15
   itemDrops: []
   gearDrops: []
