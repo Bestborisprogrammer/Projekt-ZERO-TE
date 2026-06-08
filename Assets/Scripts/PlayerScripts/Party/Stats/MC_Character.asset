@@ -17,10 +17,10 @@ MonoBehaviour:
   headPortrait: {fileID: -8149888002822582395, guid: 530e0ed278e99284fa54da1e61ccbdd0, type: 3}
   startingLevel: 1
   maxHP: 50
-  attack: 8
+  attack: 9
   defense: 4
   speed: 4
-  maxMana: 30
+  maxMana: 40
   hpGrowth: 12
   attackGrowth: 3
   defenseGrowth: 2

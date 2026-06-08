@@ -16,16 +16,16 @@ MonoBehaviour:
   description: A basic ice attack
   affinity: 2
   spellType: 0
-  manaCost: 6
+  manaCost: 4
   levelRequirement: 1
-  flatDamage: 8
+  flatDamage: 9
   flatHeal: 0
   percentHeal: 0
   statType: 0
   statModifier: 0
   modifierDuration: 3
   statusEffect: 4
-  statusChance: 0.15
+  statusChance: 0.18
   statusDuration: 2
   dotPercent: 0.05
   defenseReduction: 0.25

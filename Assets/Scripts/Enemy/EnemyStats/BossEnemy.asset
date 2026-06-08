@@ -15,11 +15,11 @@ MonoBehaviour:
   enemyName: Tree
   sprite: {fileID: -2423643006674520593, guid: 42749d0e38b787046932ab363a35cdf3, type: 3}
   level: 1
-  maxHP: 100
-  attack: 24
-  defense: 2
+  maxHP: 80
+  attack: 17
+  defense: 3
   speed: 2
-  maxMana: 10
+  maxMana: 25
   critRate: 0.05
   critDamage: 1.5
   affinities: 

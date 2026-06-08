@@ -16,10 +16,10 @@ MonoBehaviour:
   description: A basic iron helmet.
   icon: {fileID: 0}
   slot: 1
-  buyPrice: 100
-  sellPrice: 50
-  bonusHP: 20
+  buyPrice: 70
+  sellPrice: 40
+  bonusHP: 5
   bonusATK: 0
-  bonusDEF: 20
-  bonusSPD: 1
-  bonusMP: 2
+  bonusDEF: 3
+  bonusSPD: 0
+  bonusMP: 3

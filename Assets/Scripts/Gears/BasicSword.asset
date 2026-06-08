@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: BasicSword
   m_EditorClassIdentifier: 
   gearName: Iron Sword
-  description: A basic sword.
+  description: A basic sword
   icon: {fileID: 0}
   slot: 0
-  buyPrice: 10
-  sellPrice: 50
-  bonusHP: 30
-  bonusATK: 10
-  bonusDEF: 10
-  bonusSPD: 3
-  bonusMP: 20
+  buyPrice: 25
+  sellPrice: 15
+  bonusHP: 4
+  bonusATK: 4
+  bonusDEF: 1
+  bonusSPD: 1
+  bonusMP: 3
