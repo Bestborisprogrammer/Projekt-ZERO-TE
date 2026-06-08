@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: MC_Character
   m_EditorClassIdentifier: 
   characterName: Edward
-  portrait: {fileID: -6687761519573639174, guid: 724fcb20cbd57c44b8cff300226ce81d, type: 3}
-  headPortrait: {fileID: -8149888002822582395, guid: 530e0ed278e99284fa54da1e61ccbdd0, type: 3}
+  portrait: {fileID: -4554178406567263050, guid: 3e8ff09a33b515d4ca838b91906fd102, type: 3}
+  headPortrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
   startingLevel: 1
   maxHP: 50
   attack: 8

@@ -2,52 +2,75 @@ using UnityEngine;
 
 public class PlayerMovement2D : MonoBehaviour
 {
-    public float moveSpeed = 5f;
+    [Header("Movement")]
+    public float moveSpeed = 4f;
 
-    [Header("Sprites")]
-    public Sprite spriteIdle;
-    public Sprite spriteLeft;
-    public Sprite spriteRight;
-    public Sprite spriteUp;
-    public Sprite spriteDown;
+    [Header("Animator")]
+    public Animator animator;
 
     private Rigidbody2D rb;
-    private Vector2 movement;
-    private SpriteRenderer sr;
+    private Vector2 moveInput;
+    private Vector2 lastMoveDir = Vector2.down;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        sr = GetComponent<SpriteRenderer>();
+        if (animator == null)
+            animator = GetComponent<Animator>();
     }
 
-    void Start()
+    void OnEnable()
     {
-        // Restore position after combat
-        if (EncounterManager.PlayerReturnPosition != Vector3.zero)
-            transform.position = EncounterManager.PlayerReturnPosition;
+        // Reset to idle when re-enabled after freeze
+        if (animator != null)
+        {
+            animator.SetBool("IsMoving", false);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", -1); // face down by default
+        }
+    }
+
+    void OnDisable()
+    {
+        // Force idle when frozen
+        if (animator != null)
+        {
+            animator.SetBool("IsMoving", false);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", -1);
+        }
+
+        // Stop all movement
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
     }
 
     void Update()
     {
-        movement.x = Input.GetAxisRaw("Horizontal");
-        movement.y = Input.GetAxisRaw("Vertical");
-        movement = movement.normalized;
-        UpdateSprite();
+        float x = Input.GetAxisRaw("Horizontal");
+        float y = Input.GetAxisRaw("Vertical");
+        moveInput = new Vector2(x, y).normalized;
+
+        if (moveInput != Vector2.zero)
+            lastMoveDir = moveInput;
+
+        UpdateAnimator();
     }
 
     void FixedUpdate()
     {
-        rb.linearVelocity = movement * moveSpeed;
+        rb.linearVelocity = moveInput * moveSpeed;
     }
 
-    void UpdateSprite()
+    void UpdateAnimator()
     {
-        if (movement == Vector2.zero)
-            sr.sprite = spriteIdle;
-        else if (Mathf.Abs(movement.x) > Mathf.Abs(movement.y))
-            sr.sprite = movement.x > 0 ? spriteRight : spriteLeft;
-        else
-            sr.sprite = movement.y > 0 ? spriteUp : spriteDown;
+        if (animator == null) return;
+
+        bool isMoving = moveInput != Vector2.zero;
+        animator.SetBool("IsMoving", isMoving);
+
+        Vector2 dir = isMoving ? moveInput : lastMoveDir;
+        animator.SetFloat("MoveX", dir.x);
+        animator.SetFloat("MoveY", dir.y);
     }
 }
