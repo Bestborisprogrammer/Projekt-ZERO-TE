@@ -25,7 +25,7 @@ MonoBehaviour:
   affinities: 
   combatStyle: 0
   spells: []
-  xpReward: 20
+  xpReward: 25
   goldReward: 15
   itemDrops: []
   gearDrops: []

@@ -15,9 +15,9 @@ MonoBehaviour:
   enemyName: Tree
   sprite: {fileID: -2423643006674520593, guid: 42749d0e38b787046932ab363a35cdf3, type: 3}
   level: 1
-  maxHP: 80
-  attack: 17
-  defense: 3
+  maxHP: 50
+  attack: 15
+  defense: 5
   speed: 2
   maxMana: 25
   critRate: 0.05
@@ -26,7 +26,7 @@ MonoBehaviour:
   combatStyle: 0
   spells:
   - {fileID: 11400000, guid: 142405572d170d8458d836788f895c74, type: 2}
-  xpReward: 50
+  xpReward: 75
   goldReward: 50
   itemDrops: []
   gearDrops: []

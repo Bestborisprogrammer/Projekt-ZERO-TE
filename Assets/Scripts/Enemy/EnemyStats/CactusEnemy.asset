@@ -15,9 +15,9 @@ MonoBehaviour:
   enemyName: Cactus
   sprite: {fileID: 5152555899641412373, guid: fc337432774722a48af9eae364867bc7, type: 3}
   level: 1
-  maxHP: 35
-  attack: 12
-  defense: 3
+  maxHP: 25
+  attack: 9
+  defense: 4
   speed: 1
   maxMana: 15
   critRate: 0.05

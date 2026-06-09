@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3bee238300ae2840a687b12e52e57e2, type: 3}
   m_Name: LogThrow
   m_EditorClassIdentifier: 
-  spellName: Log throw.
-  description: A devastating log throw.
+  spellName: Log throw
+  description: A devastating log throw
   affinity: 0
   manaCost: 10
-  flatDamage: 35
+  flatDamage: 25
   statusEffect: 0
   statusChance: 0
   statusDuration: 2
