@@ -17,8 +17,8 @@ MonoBehaviour:
   level: 1
   maxHP: 50
   attack: 15
-  defense: 5
-  speed: 2
+  defense: 4
+  speed: 1
   maxMana: 25
   critRate: 0.05
   critDamage: 1.5
