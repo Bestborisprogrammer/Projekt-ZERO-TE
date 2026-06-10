@@ -13,9 +13,11 @@ public class EncounterManager : MonoBehaviour
     public static CutsceneManager ActiveCutscene { get; set; }
     public static RecruitCutsceneManager ActiveRecruitCutscene { get; set; }
 
-    // Persist recruit flag across scene loads
     public static bool PendingRecruitCompletion { get; set; } = false;
     public static string PendingRecruitMemberName { get; set; } = "";
+
+    // Flag that persists into CombatScene
+    public static bool IsRecruitBattle { get; set; } = false;
 
     void Awake()
     {

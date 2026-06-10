@@ -70,7 +70,17 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.SetupCombatSprites(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         UpdateStatusIndicators();
-        StartTurn();
+
+        // Only play recruit dialogue if this IS the recruit battle
+        if (EncounterManager.ActiveRecruitCutscene != null && combatUI.recruitBattleDialogue != null)
+        {
+            combatUI.SetPlayerButtonsActive(false);
+            combatUI.PlayRecruitBattleDialogue(() => StartTurn());
+        }
+        else
+        {
+            StartTurn();
+        }
     }
 
     public void UpdateStatusIndicatorsPublic() => UpdateStatusIndicators();

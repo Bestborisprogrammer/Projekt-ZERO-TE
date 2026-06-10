@@ -2,52 +2,125 @@ using UnityEngine;
 
 public class PlayerMovement2D : MonoBehaviour
 {
-    public float moveSpeed = 5f;
+    [Header("Movement")]
+    public float moveSpeed = 4f;
 
-    [Header("Sprites")]
-    public Sprite spriteIdle;
-    public Sprite spriteLeft;
-    public Sprite spriteRight;
-    public Sprite spriteUp;
-    public Sprite spriteDown;
+    [Header("Animator")]
+    public Animator animator;
 
     private Rigidbody2D rb;
-    private Vector2 movement;
-    private SpriteRenderer sr;
+    private Vector2 moveInput;
+    private Vector2 lastMoveDir = Vector2.down;
+
+    // Track last dominant direction to force transition
+    private enum FacingDir { Down, Up, Left, Right }
+    private FacingDir currentDir = FacingDir.Down;
+    private FacingDir lastDir = FacingDir.Down;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        sr = GetComponent<SpriteRenderer>();
+        if (animator == null)
+            animator = GetComponent<Animator>();
     }
 
-    void Start()
+    void OnEnable()
     {
-        // Restore position after combat
-        if (EncounterManager.PlayerReturnPosition != Vector3.zero)
-            transform.position = EncounterManager.PlayerReturnPosition;
+        if (animator != null)
+        {
+            animator.SetBool("IsMoving", false);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", -1);
+        }
+    }
+
+    void OnDisable()
+    {
+        if (animator != null)
+        {
+            animator.SetBool("IsMoving", false);
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", -1);
+        }
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
     }
 
     void Update()
     {
-        movement.x = Input.GetAxisRaw("Horizontal");
-        movement.y = Input.GetAxisRaw("Vertical");
-        movement = movement.normalized;
-        UpdateSprite();
+        float x = Input.GetAxisRaw("Horizontal");
+        float y = Input.GetAxisRaw("Vertical");
+        moveInput = new Vector2(x, y).normalized;
+
+        if (moveInput != Vector2.zero)
+            lastMoveDir = moveInput;
+
+        UpdateAnimator();
     }
 
     void FixedUpdate()
     {
-        rb.linearVelocity = movement * moveSpeed;
+        rb.linearVelocity = moveInput * moveSpeed;
     }
 
-    void UpdateSprite()
+    void UpdateAnimator()
     {
-        if (movement == Vector2.zero)
-            sr.sprite = spriteIdle;
-        else if (Mathf.Abs(movement.x) > Mathf.Abs(movement.y))
-            sr.sprite = movement.x > 0 ? spriteRight : spriteLeft;
+        if (animator == null) return;
+
+        bool isMoving = moveInput != Vector2.zero;
+        animator.SetBool("IsMoving", isMoving);
+
+        // Determine dominant direction
+        Vector2 dir = isMoving ? moveInput : lastMoveDir;
+
+        // Pick dominant axis – horizontal wins if equal
+        float absX = Mathf.Abs(dir.x);
+        float absY = Mathf.Abs(dir.y);
+
+        if (absX >= absY)
+        {
+            // Horizontal dominant
+            if (dir.x < 0)
+            {
+                currentDir = FacingDir.Left;
+                animator.SetFloat("MoveX", -1);
+                animator.SetFloat("MoveY", 0);
+            }
+            else
+            {
+                currentDir = FacingDir.Right;
+                animator.SetFloat("MoveX", 1);
+                animator.SetFloat("MoveY", 0);
+            }
+        }
         else
-            sr.sprite = movement.y > 0 ? spriteUp : spriteDown;
+        {
+            // Vertical dominant
+            if (dir.y < 0)
+            {
+                currentDir = FacingDir.Down;
+                animator.SetFloat("MoveX", 0);
+                animator.SetFloat("MoveY", -1);
+            }
+            else
+            {
+                currentDir = FacingDir.Up;
+                animator.SetFloat("MoveX", 0);
+                animator.SetFloat("MoveY", 1);
+            }
+        }
+
+        // Force animator to re-evaluate when direction changes
+        if (currentDir != lastDir)
+        {
+            lastDir = currentDir;
+            // Briefly reset IsMoving to force transition re-check
+            if (isMoving)
+            {
+                animator.SetBool("IsMoving", false);
+                animator.Update(0f);
+                animator.SetBool("IsMoving", true);
+            }
+        }
     }
 }
