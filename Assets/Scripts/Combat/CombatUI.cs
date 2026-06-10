@@ -82,6 +82,21 @@ public class CombatUI : MonoBehaviour
     private bool waitingForInput = false;
     private bool actionTaken = false;
 
+    [Header("Dialogue")]
+    public DialogueUI dialogueUI;
+    public DialogueSO recruitBattleDialogue;
+
+    // Call this from TurnCombatManager before first turn if recruit battle
+    public void PlayRecruitBattleDialogue(System.Action onComplete)
+    {
+        if (dialogueUI == null || recruitBattleDialogue == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+        dialogueUI.StartDialogue(recruitBattleDialogue, onComplete);
+    }
+
     void Start()
     {
         victoryPanel.SetActive(false);
@@ -789,9 +804,8 @@ public class CombatUI : MonoBehaviour
     IEnumerator ReturnAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-
         EncounterManager.CurrentEnemies.Clear();
-
+        // Don't clear PlayerReturnPosition here – PlayerPositionRestorer reads it
         SceneManager.LoadScene(overworldScene);
     }
 }

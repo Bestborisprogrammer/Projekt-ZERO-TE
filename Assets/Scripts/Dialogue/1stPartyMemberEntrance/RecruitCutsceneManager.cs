@@ -30,6 +30,22 @@ public class RecruitCutsceneManager : MonoBehaviour
     private bool cutsceneStarted = false;
     private CharacterInstance recruitedInstance;
 
+    [Header("Recruit Battle Dialogue")]
+    public DialogueUI dialogueUI;
+    public DialogueSO recruitBattleDialogue;
+
+    public void PlayRecruitBattleDialogue(System.Action onComplete)
+    {
+        if (dialogueUI == null || recruitBattleDialogue == null)
+        {
+            Debug.LogWarning("[COMBAT] dialogueUI or recruitBattleDialogue not assigned!");
+            onComplete?.Invoke();
+            return;
+        }
+        Debug.Log("[COMBAT] Starting recruit battle dialogue");
+        dialogueUI.StartDialogue(recruitBattleDialogue, onComplete);
+    }
+
     void Start()
     {
         Debug.Log($"[RECRUIT] Start() PendingCompletion:{EncounterManager.PendingRecruitCompletion} Name:{EncounterManager.PendingRecruitMemberName} MyMember:{newMember?.characterName}");
@@ -92,6 +108,13 @@ public class RecruitCutsceneManager : MonoBehaviour
         Debug.Log($"[RECRUIT] Set PendingCompletion=true for {newMember.characterName}");
 
         // Don't set ActiveRecruitCutscene since it gets destroyed
+        EncounterManager.Instance.StartEncounter(new List<EnemyStatsSO> { enemyToFight });
+
+        // Set BEFORE encounter so TurnCombatManager can check it
+        EncounterManager.ActiveRecruitCutscene = this;
+        EncounterManager.PendingRecruitCompletion = true;
+        EncounterManager.PendingRecruitMemberName = newMember.characterName;
+
         EncounterManager.Instance.StartEncounter(new List<EnemyStatsSO> { enemyToFight });
     }
 
