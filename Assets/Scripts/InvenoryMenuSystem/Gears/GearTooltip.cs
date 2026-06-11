@@ -64,7 +64,8 @@ public class GearTooltip : MonoBehaviour
             $"{(gear.bonusATK != 0 ? $"ATK +{gear.bonusATK}\n" : "")}" +
             $"{(gear.bonusDEF != 0 ? $"DEF +{gear.bonusDEF}\n" : "")}" +
             $"{(gear.bonusSPD != 0 ? $"SPD +{gear.bonusSPD}\n" : "")}" +
-            $"{(gear.bonusMP != 0 ? $"MP  +{gear.bonusMP}\n" : "")}";
+            $"{(gear.bonusMP != 0 ? $"MP  +{gear.bonusMP}\n" : "")}" +
+            $"{(gear.bonusMAG != 0 ? $"MAG +{gear.bonusMAG}\n" : "")}";
 
         if (member != null)
         {
@@ -78,11 +79,13 @@ public class GearTooltip : MonoBehaviour
                 int defD = gear.bonusDEF - equipped.bonusDEF;
                 int spdD = gear.bonusSPD - equipped.bonusSPD;
                 int mpD = gear.bonusMP - equipped.bonusMP;
+                int magD = gear.bonusMAG - equipped.bonusMAG;
                 if (hpD != 0) text += $"HP  {hpD:+#;-#}\n";
                 if (atkD != 0) text += $"ATK {atkD:+#;-#}\n";
                 if (defD != 0) text += $"DEF {defD:+#;-#}\n";
                 if (spdD != 0) text += $"SPD {spdD:+#;-#}\n";
                 if (mpD != 0) text += $"MP  {mpD:+#;-#}\n";
+                if (magD != 0) text += $"MAG {magD:+#;-#}\n";
             }
             else
                 text += "Slot is empty\n";

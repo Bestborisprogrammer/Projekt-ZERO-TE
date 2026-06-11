@@ -87,6 +87,8 @@ public class PartyStatusUI : MonoBehaviour
 
             $"SPD: {member.Speed}\n\n" +
 
+            $"MAG: {member.Magic}\n\n" +
+
             $"Affinity: {affinities}\n\n" +
 
             $"XP:  {member.currentXP} / {member.xpToNextLevel}  ({xpPercent:F1}%)";
