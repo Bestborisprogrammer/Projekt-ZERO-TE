@@ -808,15 +808,13 @@ public class CombatUI : MonoBehaviour
         string text = $"Victory!\n+{xp} XP  +{gold} Gold\n";
         if (drops.itemsDropped.Count > 0)
         {
-            text += "\nItems obtained:\n";
-            foreach (var item in drops.itemsDropped)
-                text += $"- {item.itemName}\n";
+            text += "\nItems:\n";
+            foreach (var item in drops.itemsDropped) text += $"- {item.itemName}\n";
         }
         if (drops.gearDropped.Count > 0)
         {
-            text += "\nGear obtained:\n";
-            foreach (var gear in drops.gearDropped)
-                text += $"- {gear.gearName}\n";
+            text += "\nGear:\n";
+            foreach (var gear in drops.gearDropped) text += $"- {gear.gearName}\n";
         }
 
         victoryXPText.text = text;
@@ -825,9 +823,9 @@ public class CombatUI : MonoBehaviour
 
     public void ShowGameOver()
     {
-        // If forced loss battle signal completion
-        if (EncounterManager.IsForcedLossBattle == false)
-            EncounterManager.ForcedLossBattleDone = true;
+        // Signal forced loss complete
+        EncounterManager.ForcedLossBattleDone = true;
+        Debug.Log("[GAMEOVER] ForcedLossBattleDone set to true");
 
         foreach (var member in PartyManager.Instance.activeParty)
             member.currentHP = 1;
@@ -842,7 +840,6 @@ public class CombatUI : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
         EncounterManager.CurrentEnemies.Clear();
-        // Don't clear PlayerReturnPosition here – PlayerPositionRestorer reads it
         SceneManager.LoadScene(overworldScene);
     }
 }

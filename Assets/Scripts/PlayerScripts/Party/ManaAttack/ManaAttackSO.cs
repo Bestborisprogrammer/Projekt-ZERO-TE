@@ -19,14 +19,19 @@ public class ManaAttackSO : ScriptableObject
     public int manaCost = 10;
     public int levelRequirement = 1;
 
-    [Header("Damage (Damage type only)")]
+    [Header("Damage")]
     public int flatDamage = 20;
+    public bool isAOE = false;
 
-    [Header("Heal (Heal type only)")]
+    [Header("Self Damage (Resonance Skills)")]
+    public bool dealsSelfDamage = false;
+    public float selfDamagePercent = 0.15f; // % of caster max HP
+
+    [Header("Heal")]
     public int flatHeal = 0;
     public float percentHeal = 0f;
 
-    [Header("Buff / Debuff (Buff or Debuff type only)")]
+    [Header("Buff / Debuff")]
     public StatType statType;
     public int statModifier = 0;
     public int modifierDuration = 3;
@@ -39,7 +44,4 @@ public class ManaAttackSO : ScriptableObject
 
     [Header("Dark Specific")]
     [Range(0f, 1f)] public float defenseReduction = 0.25f;
-
-    [Header("AOE")]
-    public bool isAOE = false; // hits all enemies
 }
