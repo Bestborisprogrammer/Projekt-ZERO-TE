@@ -106,6 +106,30 @@ public class CombatUI : MonoBehaviour
         });
     }
 
+    [Header("Resonance")]
+    public UnityEngine.UI.Image resonanceIndicator;
+    public TMPro.TextMeshProUGUI resonanceLabel;
+    private bool resonanceMode = false;
+
+    public void PlayResonanceBattleIntro(System.Action onComplete)
+    {
+        if (dialogueUI != null && combatUI_resonanceDialogue != null)
+            dialogueUI.StartDialogue(combatUI_resonanceDialogue, onComplete);
+        else
+            onComplete?.Invoke();
+    }
+
+    // Separate field for resonance combat dialogue
+    public DialogueSO combatUI_resonanceDialogue;
+
+    public void SetResonanceMode(bool active)
+    {
+        resonanceMode = active;
+        if (resonanceIndicator != null)
+            resonanceIndicator.gameObject.SetActive(active);
+        if (resonanceLabel != null)
+            resonanceLabel.gameObject.SetActive(active);
+    }
     void Start()
     {
         victoryPanel.SetActive(false);
@@ -801,12 +825,16 @@ public class CombatUI : MonoBehaviour
 
     public void ShowGameOver()
     {
+        // If forced loss battle signal completion
+        if (EncounterManager.IsForcedLossBattle == false)
+            EncounterManager.ForcedLossBattleDone = true;
+
         foreach (var member in PartyManager.Instance.activeParty)
             member.currentHP = 1;
 
         victoryPanel.SetActive(true);
         victoryPanel.transform.SetAsLastSibling();
-        victoryXPText.text = "Your party has been defeated...";
+        victoryXPText.text = "...";
         StartCoroutine(ReturnAfterDelay(3f));
     }
 

@@ -15,6 +15,10 @@ public class EncounterManager : MonoBehaviour
     public static bool PendingRecruitCompletion { get; set; } = false;
     public static string PendingRecruitMemberName { get; set; } = "";
     public static bool IsRecruitBattle { get; set; } = false;
+    public static bool IsResonanceBattle { get; set; } = false;
+    public static bool ResonanceBattleDone { get; set; } = false;
+    public static bool IsForcedLossBattle { get; set; } = false;
+    public static bool ForcedLossBattleDone { get; set; } = false;
 
     void Awake()
     {

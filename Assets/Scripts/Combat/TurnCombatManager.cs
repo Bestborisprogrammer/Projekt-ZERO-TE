@@ -87,6 +87,69 @@ public class TurnCombatManager : MonoBehaviour
         {
             StartTurn();
         }
+        // After existing setup at bottom of SetupCombat:
+        if (EncounterManager.IsResonanceBattle)
+        {
+            Debug.Log("[COMBAT] RESONANCE BATTLE");
+            EncounterManager.IsResonanceBattle = false;
+            combatUI.SetPlayerButtonsActive(false);
+            combatUI.PlayResonanceBattleIntro(() => StartResonanceTurns());
+        }
+        else if (EncounterManager.IsForcedLossBattle)
+        {
+            Debug.Log("[COMBAT] FORCED LOSS DUEL");
+            EncounterManager.IsForcedLossBattle = false;
+            StartTurn();
+        }
+        else if (EncounterManager.IsRecruitBattle)
+        {
+            Debug.Log("[COMBAT] RECRUIT BATTLE");
+            EncounterManager.IsRecruitBattle = false;
+            combatUI.SetPlayerButtonsActive(false);
+            combatUI.PlayRecruitBattleDialogue(() => StartTurn());
+        }
+        else
+        {
+            StartTurn();
+        }
+    }
+
+    void StartResonanceTurns()
+    {
+        // Edward always goes first and repeatedly in resonance
+        // Find Edward in party
+        var edward = party.Find(p => !p.IsEnemy);
+        if (edward == null) { StartTurn(); return; }
+
+        // Set index to Edward
+        currentTurnIndex = turnOrder.IndexOf(edward);
+        if (currentTurnIndex < 0) currentTurnIndex = 0;
+
+        combatUI.UpdateTurnText($"⚡ {edward.Name} [RESONANCE]");
+        combatUI.UpdateAllHP(party, enemies);
+
+        // Show resonance skills instead of normal ones
+        var resonanceSpells = ResonanceManager.Instance?.resonanceSkills;
+        combatUI.ShowSpellButtons(resonanceSpells, edward.GetCurrentMana());
+        combatUI.SetPlayerButtonsActive(true, edward.CombatStyle);
+        combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+
+        // Override next turn to come back to Edward if enemies alive
+        combatUI.SetResonanceMode(true);
+    }
+
+    // Called after each resonance action
+    public void ResonanceNextTurn()
+    {
+        if (enemies.All(e => !e.IsAlive))
+        {
+            combatUI.SetResonanceMode(false);
+            HandleVictory();
+            return;
+        }
+
+        // Edward goes again immediately
+        StartResonanceTurns();
     }
 
     public void UpdateStatusIndicatorsPublic() => UpdateStatusIndicators();
@@ -748,6 +811,15 @@ public class TurnCombatManager : MonoBehaviour
         int totalXP = enemies.Sum(e => e.XPReward);
         int totalGold = 0;
         DropResult drops = new DropResult();
+
+        if (EncounterManager.ResonanceBattleDone == false &&
+    ResonanceManager.IsResonating)
+        {
+            EncounterManager.ResonanceBattleDone = true;
+        }
+
+        // Notify meter
+        ResonanceManager.Instance?.OnBattleComplete();
 
         foreach (var enemy in enemies)
         {

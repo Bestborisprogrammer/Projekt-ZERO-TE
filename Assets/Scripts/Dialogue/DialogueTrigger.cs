@@ -21,6 +21,9 @@ public class DialogueTrigger : MonoBehaviour
     public CutsceneManager linkedCutsceneManager;
     public RecruitCutsceneManager linkedRecruitCutscene;
 
+    [Header("Resonance Cutscene (optional)")]
+    public ResonanceCutsceneManager linkedResonanceCutscene;
+
     private bool triggered = false;
     private bool playerNearby = false;
     private string saveKey;
@@ -90,5 +93,7 @@ public class DialogueTrigger : MonoBehaviour
             else
                 triggered = false;
         });
+
+        linkedResonanceCutscene?.StartResonanceCutscene();
     }
 }

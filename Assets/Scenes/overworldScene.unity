@@ -150,6 +150,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 268218729}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &22910754
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 22910756}
+  - component: {fileID: 22910755}
+  m_Layer: 0
+  m_Name: ResonanceCutsceneManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &22910755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 22910754}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 417fea4b452a9d849af428428366ce67, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  resonanceDialogue: {fileID: 11400000, guid: c4bc3e5cc9a5e3b46b9bb9c225864f49, type: 2}
+  postBattleDialogue: {fileID: 11400000, guid: 267ec766639e1f843bab3ac0e6dd3118, type: 2}
+  afterDuelDialogue: {fileID: 11400000, guid: 662543e17c5d5404fb507cadc2d8ff3a, type: 2}
+  knockoutDialogue: {fileID: 11400000, guid: 1d2ff0f881416aa409f54fd9923e7c5c, type: 2}
+  resonanceEnemy: {fileID: 11400000, guid: 7c90c3ccb5cb64a4594a2a0d5d1fde19, type: 2}
+  hiroseStats: {fileID: 11400000, guid: 400d6b9354f7d4d4bbef493626fd23e3, type: 2}
+  hiroseAsDuelEnemy: {fileID: 11400000, guid: 7ad9e398ca06b094b887a53f16fdcba8, type: 2}
+  wakeUpLocation: {fileID: 794002998}
+  triggerObject: {fileID: 870480803}
+--- !u!4 &22910756
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 22910754}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 538.55994, y: -104.32834, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &39032941
 GameObject:
   m_ObjectHideFlags: 0
@@ -735,6 +788,7 @@ MonoBehaviour:
       m_Calls: []
   linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 194251018}
+  linkedResonanceCutscene: {fileID: 0}
 --- !u!4 &206825350
 Transform:
   m_ObjectHideFlags: 0
@@ -6763,7 +6817,7 @@ Transform:
   m_GameObject: {fileID: 547836945}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -137.3, y: -54.5, z: 0}
+  m_LocalPosition: {x: 532.2, y: -146.5, z: 0}
   m_LocalScale: {x: 13.725821, y: 7.412025, z: 20.566107}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7802,6 +7856,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53571bac5c5b93745b2bf7ab4d6becd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &794002997
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 794002998}
+  m_Layer: 0
+  m_Name: ResonanceAfterTP
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &794002998
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 794002997}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 525.6, y: -146.8, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &796269833
 GameObject:
   m_ObjectHideFlags: 0
@@ -7854,6 +7939,7 @@ MonoBehaviour:
         m_CallState: 2
   linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
+  linkedResonanceCutscene: {fileID: 0}
 --- !u!61 &796269835
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -8347,6 +8433,108 @@ Transform:
   m_Children: []
   m_Father: {fileID: 268218729}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &870480803
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 870480805}
+  - component: {fileID: 870480804}
+  - component: {fileID: 870480806}
+  m_Layer: 0
+  m_Name: ScriptedResonanceTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!61 &870480804
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 870480803}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: -8.268524, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 81.480286, y: 1}
+  m_EdgeRadius: 0
+--- !u!4 &870480805
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 870480803}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 538.55994, y: -104.32834, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &870480806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 870480803}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ede7ae8b3943e64c995949756c5434a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogue: {fileID: 11400000, guid: 267ec766639e1f843bab3ac0e6dd3118, type: 2}
+  triggerType: 0
+  oneTimeOnly: 1
+  promptText: {fileID: 0}
+  promptMessage: E - Talk
+  onDialogueComplete:
+    m_PersistentCalls:
+      m_Calls: []
+  linkedCutsceneManager: {fileID: 0}
+  linkedRecruitCutscene: {fileID: 0}
+  linkedResonanceCutscene: {fileID: 22910755}
 --- !u!1 &876995518
 GameObject:
   m_ObjectHideFlags: 0
@@ -9068,6 +9256,55 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.18, y: 0.31}
   m_EdgeRadius: 0
+--- !u!1 &1034495121
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1034495123}
+  - component: {fileID: 1034495122}
+  m_Layer: 0
+  m_Name: ResonanceManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1034495122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034495121}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff55cb2de52ff4540b26459ca6b2af9e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  battlesRequiredToFill: 5
+  currentMeter: 0
+  resonanceSkills:
+  - {fileID: 11400000, guid: d8c8c812c6084c143afe45de81bcd31c, type: 2}
+  resonanceCanvas: {fileID: 1234272648}
+--- !u!4 &1034495123
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1034495121}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 538.55994, y: -104.32834, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1039132502
 GameObject:
   m_ObjectHideFlags: 0
@@ -9964,6 +10201,7 @@ MonoBehaviour:
       m_Calls: []
   linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
+  linkedResonanceCutscene: {fileID: 0}
 --- !u!61 &1254511040
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -10676,6 +10914,7 @@ MonoBehaviour:
       m_Calls: []
   linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
+  linkedResonanceCutscene: {fileID: 0}
 --- !u!61 &1340682419
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -10777,6 +11016,7 @@ MonoBehaviour:
       m_Calls: []
   linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
+  linkedResonanceCutscene: {fileID: 0}
 --- !u!61 &1353838447
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -12060,6 +12300,7 @@ MonoBehaviour:
       m_Calls: []
   linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
+  linkedResonanceCutscene: {fileID: 0}
 --- !u!61 &1652719580
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -20639,6 +20880,7 @@ MonoBehaviour:
         m_CallState: 2
   linkedCutsceneManager: {fileID: 0}
   linkedRecruitCutscene: {fileID: 0}
+  linkedResonanceCutscene: {fileID: 0}
 --- !u!1 &1928049946
 GameObject:
   m_ObjectHideFlags: 0
@@ -21036,6 +21278,53 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 268218729}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2010959574
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2010959576}
+  - component: {fileID: 2010959575}
+  m_Layer: 0
+  m_Name: ResonanceMeter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2010959575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2010959574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec14c6f92252bc441ab35ea9668b6ab2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  meterFill: {fileID: 0}
+  meterText: {fileID: 0}
+  meterContainer: {fileID: 0}
+--- !u!4 &2010959576
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2010959574}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 555.26746, y: -95.14699, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2048175683
 GameObject:
@@ -22220,3 +22509,8 @@ SceneRoots:
   - {fileID: 1874362576}
   - {fileID: 1353838448}
   - {fileID: 1340682420}
+  - {fileID: 1034495123}
+  - {fileID: 22910756}
+  - {fileID: 870480805}
+  - {fileID: 794002998}
+  - {fileID: 2010959576}
