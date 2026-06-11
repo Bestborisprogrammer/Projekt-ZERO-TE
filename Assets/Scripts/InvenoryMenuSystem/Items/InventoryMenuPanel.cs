@@ -141,6 +141,12 @@ public class InventoryMenuPanel : MonoBehaviour
                 $"for {pendingItem.modifierDuration} turns");
             Debug.Log($"[MENU] statMods after: {member.statModifiers.Count}");
         }
+        else if (pendingItem.itemType == ItemType.ManaRestore)
+        {
+            int restore = pendingItem.flatHeal;
+            member.currentMana = Mathf.Min(member.MaxMana, member.currentMana + restore);
+            Debug.Log($"[MENU] Mana restored: {restore} → {member.currentMana}/{member.MaxMana}");
+        }
 
         InventoryManager.Instance.RemoveItem(pendingItem);
         pendingItem = null;

@@ -20,6 +20,7 @@ public class CharacterStatsSO : ScriptableObject
     public int defense = 5;
     public int speed = 8;
     public int maxMana = 30;
+    public int magic = 10;
 
     [Header("Stat Growth per Level")]
     public int hpGrowth = 15;
@@ -27,6 +28,7 @@ public class CharacterStatsSO : ScriptableObject
     public int defenseGrowth = 2;
     public int speedGrowth = 1;
     public int manaGrowth = 5;
+    public int magicGrowth = 2;
 
     [Header("XP")]
     public int baseXPToNextLevel = 100;

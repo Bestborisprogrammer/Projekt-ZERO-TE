@@ -4,14 +4,14 @@ public class PlayerPositionRestorer : MonoBehaviour
 {
     void Start()
     {
-        // Check combat return position first
+        // Combat return takes priority
         if (EncounterManager.PlayerReturnPosition != Vector3.zero)
         {
             transform.position = EncounterManager.PlayerReturnPosition;
             Debug.Log($"[POS] Restored from combat: {transform.position}");
-            // Don't clear it here – EncounterManager handles that
+            // Clear so it never restores again
+            EncounterManager.PlayerReturnPosition = Vector3.zero;
         }
-        // Then check menu return position
         else if (PlayerPrefs.HasKey("PlayerReturnX"))
         {
             float x = PlayerPrefs.GetFloat("PlayerReturnX");

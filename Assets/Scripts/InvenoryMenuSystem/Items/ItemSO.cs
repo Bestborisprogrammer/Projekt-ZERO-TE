@@ -1,8 +1,8 @@
 using UnityEngine;
 
-public enum ItemType { Heal, Buff, Debuff }
+public enum ItemType { Heal, Buff, Debuff, ManaRestore }
 public enum ItemTarget { Ally, Enemy }
-public enum StatType { HP, ATK, DEF, SPD, MP }
+public enum StatType { HP, ATK, DEF, SPD, MP, MAG }
 
 [CreateAssetMenu(fileName = "NewItem", menuName = "Zero-Te/Item")]
 public class ItemSO : ScriptableObject

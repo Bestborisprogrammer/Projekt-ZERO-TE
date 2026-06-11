@@ -20,18 +20,16 @@ public class EnemyInstance
     public bool isBurning => activeEffects.Exists(e => e.type == StatusEffectType.Burn && e.turnsRemaining > 0);
     public bool isParalyzed => activeEffects.Exists(e => e.type == StatusEffectType.Paralyze && e.turnsRemaining > 0);
 
-    public string Name => baseData.enemyName;
-    public int Level => baseData.level;
-    public int MaxHP => baseData.maxHP;
-    public int MaxMana => baseData.maxMana;
-    public int XPReward => baseData.xpReward;
-    public bool IsAlive => currentHP > 0;
-    public CombatStyle CombatStyle => baseData.combatStyle;
+    public string Name => baseData?.enemyName ?? "Unknown";
+    public int Level => baseData?.level ?? 1;
+    public int MaxHP => baseData?.maxHP ?? 50;
+    public int MaxMana => baseData?.maxMana ?? 20;
+    public int XPReward => baseData?.xpReward ?? 0;
+    public CombatStyle CombatStyle => baseData?.combatStyle ?? CombatStyle.Block;
     public float BlockReduction => Mathf.Min(0.9f, 0.30f + (Defense * 0.002f));
     public float EvadeChance => Mathf.Min(0.9f, 0.20f + (Speed * 0.002f));
-    public float CritRate => baseData.critRate;
-    public float CritDamage => baseData.critDamage;
-
+    public float CritRate => baseData?.critRate ?? 0.05f;
+    public float CritDamage => baseData?.critDamage ?? 1.5f;
     public int Attack
     {
         get

@@ -16,6 +16,22 @@ public class CharacterGear
 
     public CharacterGear(string name) { characterName = name; }
 
+    public int TotalBonusMAG
+    {
+        get
+        {
+            int total = 0;
+            if (weapon != null) total += weapon.bonusMAG;
+            if (helmet != null) total += helmet.bonusMAG;
+            if (torso != null) total += torso.bonusMAG;
+            if (legs != null) total += legs.bonusMAG;
+            if (feet != null) total += feet.bonusMAG;
+            if (ring1 != null) total += ring1.bonusMAG;
+            if (ring2 != null) total += ring2.bonusMAG;
+            return total;
+        }
+    }
+
     public GearSO GetSlot(GearSlot slot, bool isRing2 = false)
     {
         return slot switch

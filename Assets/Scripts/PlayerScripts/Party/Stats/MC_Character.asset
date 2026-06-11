@@ -21,11 +21,13 @@ MonoBehaviour:
   defense: 4
   speed: 4
   maxMana: 40
+  magic: 10
   hpGrowth: 12
   attackGrowth: 3
   defenseGrowth: 2
   speedGrowth: 1
   manaGrowth: 6
+  magicGrowth: 2
   baseXPToNextLevel: 100
   critRate: 0.05
   critDamage: 1.75

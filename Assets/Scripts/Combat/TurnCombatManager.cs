@@ -63,7 +63,7 @@ public class TurnCombatManager : MonoBehaviour
         selectedEnemyIndex = 0;
 
         Debug.Log("=== COMBAT STARTED ===");
-        Debug.Log("Turn order: " + string.Join(" -> ", turnOrder.Select(c => c.Name)));
+        Debug.Log($"[COMBAT] IsRecruitBattle: {EncounterManager.IsRecruitBattle}");
 
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.UpdateAllHP(party, enemies);
@@ -71,11 +71,17 @@ public class TurnCombatManager : MonoBehaviour
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         UpdateStatusIndicators();
 
-        // Only play recruit dialogue if this IS the recruit battle
-        if (EncounterManager.ActiveRecruitCutscene != null && combatUI.recruitBattleDialogue != null)
+        // Check recruit battle flag
+        if (EncounterManager.IsRecruitBattle)
         {
+            Debug.Log("[COMBAT] This is a recruit battle – playing dialogue");
+            EncounterManager.IsRecruitBattle = false;
             combatUI.SetPlayerButtonsActive(false);
-            combatUI.PlayRecruitBattleDialogue(() => StartTurn());
+            combatUI.PlayRecruitBattleDialogue(() =>
+            {
+                Debug.Log("[COMBAT] Recruit dialogue done – starting turn");
+                StartTurn();
+            });
         }
         else
         {
@@ -128,7 +134,6 @@ public class TurnCombatManager : MonoBehaviour
     {
         if (!current.IsEnemy)
         {
-            // Reset and re-setup to ensure block/evade sprite is correct
             combatUI.SetPlayerButtonsActive(false);
             combatUI.SetPlayerButtonsActive(true, current.CombatStyle);
         }
@@ -285,8 +290,7 @@ public class TurnCombatManager : MonoBehaviour
             int reduced = Mathf.RoundToInt(damage * (1f - target.BlockReduction));
             target.TakeDamage(reduced);
             CombatSpriteManager.Instance?.PlayHitEffect(target.Name, reduced, isCrit);
-            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage!{critTag} " +
-                $"(B! reduced to {reduced})");
+            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage} damage!{critTag} (B! reduced to {reduced})");
         }
         else
         {
@@ -387,7 +391,6 @@ public class TurnCombatManager : MonoBehaviour
             return;
         }
 
-        // AOE damage
         if (spell.isAOE)
         {
             ExecuteAOESpell(spell, attacker);
@@ -400,11 +403,15 @@ public class TurnCombatManager : MonoBehaviour
         if (selectedEnemyIndex >= enemies.Count) return;
 
         Combatant target = enemies[selectedEnemyIndex];
+
+        // Scale damage with attacker's magic stat (ATK for now, can add MAG stat later)
         float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
             spell.affinity != SpellAffinity.None ? 1.5f : 1f;
         string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref affinityMult);
 
-        int damage = Mathf.Max(1, Mathf.RoundToInt((spell.flatDamage - target.Defense) * affinityMult));
+        // Spell damage scales with attacker ATK
+        int scaledDamage = Mathf.RoundToInt(spell.flatDamage * (1f + attacker.Magic * 0.015f));
+        int damage = Mathf.Max(1, Mathf.RoundToInt((scaledDamage - target.Defense) * affinityMult));
         string affinityNote = affinityMult > 1f ? $" (x{affinityMult:F1}!)" : "";
 
         combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}!{affinityNote}");
@@ -430,80 +437,6 @@ public class TurnCombatManager : MonoBehaviour
             combatUI.ShowCombatLog($"{target.Name} was defeated!");
             selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
             combatUI.BuildEnemyTargetButtons(enemies);
-            combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
-        }
-
-        combatUI.ShowCombatLog(" ", () => NextTurn());
-    }
-
-    void ExecuteAOESpell(ManaAttackSO spell, Combatant attacker)
-    {
-        var aliveEnemies = enemies.Where(e => e.IsAlive).ToList();
-        if (aliveEnemies.Count == 0) return;
-
-        float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
-            spell.affinity != SpellAffinity.None ? 1.5f : 1f;
-
-        combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}! Hits all enemies!");
-
-        bool anyDefeated = false;
-
-        foreach (var target in aliveEnemies)
-        {
-            float mult = affinityMult;
-            string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref mult);
-
-            int damage = Mathf.Max(1, Mathf.RoundToInt((spell.flatDamage - target.Defense) * mult));
-
-            if (!string.IsNullOrEmpty(comboMsg))
-                combatUI.ShowCombatLog(comboMsg);
-
-            // AOE can't crit
-            if (target.CombatStyle == CombatStyle.Evade && target.TryEvade())
-            {
-                combatUI.ShowCombatLog($"{target.Name} evaded!");
-                continue;
-            }
-
-            if (target.CombatStyle == CombatStyle.Block && target.IsBlocking)
-            {
-                int reduced = Mathf.RoundToInt(damage * (1f - target.BlockReduction));
-                target.TakeDamage(reduced);
-                CombatSpriteManager.Instance?.PlayHitEffect(target.Name, reduced);
-                combatUI.ShowCombatLog($"{target.Name} takes {reduced} damage! (B!)");
-            }
-            else
-            {
-                target.TakeDamage(damage);
-                CombatSpriteManager.Instance?.PlayHitEffect(target.Name, damage);
-                combatUI.ShowCombatLog($"{target.Name} takes {damage} damage!");
-            }
-
-            // Apply status to each target
-            ApplySpellEffects(spell, attacker, target, damage);
-
-            if (!target.IsAlive)
-            {
-                CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
-                combatUI.ShowCombatLog($"{target.Name} was defeated!");
-                anyDefeated = true;
-            }
-        }
-
-        combatUI.UpdateAllHP(party, enemies);
-        combatUI.BuildEnemyTargetButtons(enemies);
-        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
-        UpdateStatusIndicators();
-
-        if (enemies.All(e => !e.IsAlive))
-        {
-            combatUI.ShowCombatLog(" ", () => HandleVictory());
-            return;
-        }
-
-        if (anyDefeated)
-        {
-            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
             combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
         }
 
@@ -571,6 +504,79 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         UpdateStatusIndicators();
+        combatUI.ShowCombatLog(" ", () => NextTurn());
+    }
+
+    void ExecuteAOESpell(ManaAttackSO spell, Combatant attacker)
+    {
+        var aliveEnemies = enemies.Where(e => e.IsAlive).ToList();
+        if (aliveEnemies.Count == 0) return;
+
+        float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
+            spell.affinity != SpellAffinity.None ? 1.5f : 1f;
+
+        combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}! Hits all enemies!");
+
+        bool anyDefeated = false;
+
+        foreach (var target in aliveEnemies)
+        {
+            float mult = affinityMult;
+            string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref mult);
+
+            int scaledDamage = Mathf.RoundToInt(spell.flatDamage * (1f + attacker.Magic * 0.015f));
+            int damage = Mathf.Max(1, Mathf.RoundToInt((scaledDamage - target.Defense) * mult));
+
+            if (!string.IsNullOrEmpty(comboMsg))
+                combatUI.ShowCombatLog(comboMsg);
+
+            if (target.CombatStyle == CombatStyle.Evade && target.TryEvade())
+            {
+                combatUI.ShowCombatLog($"{target.Name} evaded!");
+                continue;
+            }
+
+            if (target.CombatStyle == CombatStyle.Block && target.IsBlocking)
+            {
+                int reduced = Mathf.RoundToInt(damage * (1f - target.BlockReduction));
+                target.TakeDamage(reduced);
+                CombatSpriteManager.Instance?.PlayHitEffect(target.Name, reduced);
+                combatUI.ShowCombatLog($"{target.Name} takes {reduced} damage! (B!)");
+            }
+            else
+            {
+                target.TakeDamage(damage);
+                CombatSpriteManager.Instance?.PlayHitEffect(target.Name, damage);
+                combatUI.ShowCombatLog($"{target.Name} takes {damage} damage!");
+            }
+
+            ApplySpellEffects(spell, attacker, target, damage);
+
+            if (!target.IsAlive)
+            {
+                CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
+                combatUI.ShowCombatLog($"{target.Name} was defeated!");
+                anyDefeated = true;
+            }
+        }
+
+        combatUI.UpdateAllHP(party, enemies);
+        combatUI.BuildEnemyTargetButtons(enemies);
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        UpdateStatusIndicators();
+
+        if (enemies.All(e => !e.IsAlive))
+        {
+            combatUI.ShowCombatLog(" ", () => HandleVictory());
+            return;
+        }
+
+        if (anyDefeated)
+        {
+            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+            combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+        }
+
         combatUI.ShowCombatLog(" ", () => NextTurn());
     }
 

@@ -26,6 +26,8 @@ public class Combatant
     public float CritDamage { get; private set; }
     public List<SpellAffinity> Affinities { get; private set; }
 
+    public int Magic { get; private set; }
+
     private CharacterInstance characterRef;
     private EnemyInstance enemyRef;
 
@@ -35,10 +37,26 @@ public class Combatant
         IsEnemy = false;
         XPReward = 0;
         Refresh();
+        // In IsEnemy branch – enemies don't have magic for now
+        Magic = 0;
+
+        // In else branch
+        Magic = characterRef.Magic;
     }
 
     public Combatant(EnemyInstance e)
     {
+        if (e == null)
+        {
+            Debug.LogError("[COMBATANT] EnemyInstance is null!");
+            return;
+        }
+        if (e.baseData == null)
+        {
+            Debug.LogError("[COMBATANT] EnemyInstance.baseData is NULL! Did you assign the EnemyStatsSO?");
+            return;
+        }
+
         enemyRef = e;
         IsEnemy = true;
         XPReward = e.XPReward;

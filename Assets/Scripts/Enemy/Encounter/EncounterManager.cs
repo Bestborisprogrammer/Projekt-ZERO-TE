@@ -12,11 +12,8 @@ public class EncounterManager : MonoBehaviour
     public static Vector3 PlayerReturnPosition { get; set; }
     public static CutsceneManager ActiveCutscene { get; set; }
     public static RecruitCutsceneManager ActiveRecruitCutscene { get; set; }
-
     public static bool PendingRecruitCompletion { get; set; } = false;
     public static string PendingRecruitMemberName { get; set; } = "";
-
-    // Flag that persists into CombatScene
     public static bool IsRecruitBattle { get; set; } = false;
 
     void Awake()

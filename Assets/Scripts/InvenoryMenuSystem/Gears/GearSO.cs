@@ -6,14 +6,10 @@ public enum GearSlot { Weapon, Helmet, Torso, Legs, Feet, Ring }
 public class GearSO : ScriptableObject
 {
     [Header("Identity")]
-    public string gearName = "Iron Sword";
-    public string description = "A basic sword.";
+    public string gearName = "Gear";
+    public string description = "";
+    public GearSlot slot;
     public Sprite icon;
-    public GearSlot slot = GearSlot.Weapon;
-
-    [Header("Shop")]
-    public int buyPrice = 100;
-    public int sellPrice = 50;
 
     [Header("Stat Bonuses")]
     public int bonusHP = 0;
@@ -21,4 +17,9 @@ public class GearSO : ScriptableObject
     public int bonusDEF = 0;
     public int bonusSPD = 0;
     public int bonusMP = 0;
+    public int bonusMAG = 0;
+
+    [Header("Price")]
+    public int buyPrice = 100;
+    public int sellPrice = 50;
 }

@@ -82,19 +82,28 @@ public class CombatUI : MonoBehaviour
     private bool waitingForInput = false;
     private bool actionTaken = false;
 
-    [Header("Dialogue")]
+    [Header("Recruit Battle Dialogue")]
     public DialogueUI dialogueUI;
     public DialogueSO recruitBattleDialogue;
 
-    // Call this from TurnCombatManager before first turn if recruit battle
     public void PlayRecruitBattleDialogue(System.Action onComplete)
     {
+        Debug.Log($"[COMBATUI] PlayRecruitBattleDialogue called");
+        Debug.Log($"[COMBATUI] dialogueUI={dialogueUI != null} recruitBattleDialogue={recruitBattleDialogue != null}");
+
         if (dialogueUI == null || recruitBattleDialogue == null)
         {
+            Debug.LogWarning("[COMBATUI] Missing dialogueUI or recruitBattleDialogue – skipping dialogue");
             onComplete?.Invoke();
             return;
         }
-        dialogueUI.StartDialogue(recruitBattleDialogue, onComplete);
+
+        Debug.Log("[COMBATUI] Starting dialogue now");
+        dialogueUI.StartDialogue(recruitBattleDialogue, () =>
+        {
+            Debug.Log("[COMBATUI] Dialogue complete");
+            onComplete?.Invoke();
+        });
     }
 
     void Start()
@@ -535,19 +544,19 @@ public class CombatUI : MonoBehaviour
             CombatSpriteManager.Instance?.ShowDamageNumber(member.Name, actual, true);
             logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! Recovered {actual} HP!";
         }
-        else if (pendingItem.itemData.itemType == ItemType.Buff)
+        else if (pendingItem.itemData.itemType == ItemType.ManaRestore)
         {
-            member.statModifiers.Add(new StatModifier(
-                pendingItem.itemData.statType,
-                pendingItem.itemData.statModifier,
-                pendingItem.itemData.modifierDuration));
+            int manaRestore = pendingItem.itemData.flatHeal; // reuse flatHeal field for mana amount
+            int before = member.currentMana;
+            member.currentMana = Mathf.Min(member.MaxMana, member.currentMana + manaRestore);
+            int actual = member.currentMana - before;
 
             var combatant = TurnCombatManager.Instance.party.Find(p => p.Name == member.Name);
             combatant?.Refresh();
 
-            logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! " +
-                $"{pendingItem.itemData.statType} +{pendingItem.itemData.statModifier} " +
-                $"for {pendingItem.itemData.modifierDuration} turns!";
+            // Show blue damage number for mana
+            CombatSpriteManager.Instance?.ShowManaNumber(member.Name, actual);
+            logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! Restored {actual} MP!";
         }
 
         InventoryManager.Instance.RemoveItem(pendingItem.itemData);

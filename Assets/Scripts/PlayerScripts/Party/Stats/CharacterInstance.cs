@@ -25,6 +25,7 @@ public class CharacterInstance
 
     CharacterGear Gear => GearManager.Instance?.GetGearFor(baseData.characterName);
 
+
     public int MaxHP
     {
         get
@@ -86,9 +87,19 @@ public class CharacterInstance
         }
     }
 
+    public int Magic
+    {
+        get
+        {
+            int val = baseData.magic + (level - 1) * baseData.magicGrowth;
+            val += Gear?.TotalBonusMAG ?? 0;
+            val += statModifiers.Where(m => m.statType == StatType.MAG).Sum(m => m.modifier);
+            return Mathf.Max(0, val);
+        }
+    }
+
     public float CritRate => baseData.critRate;
     public float CritDamage => baseData.critDamage;
-
     public string Name => baseData.characterName;
     public bool IsAlive => currentHP > 0;
     public CombatStyle CombatStyle => baseData.combatStyle;
@@ -151,7 +162,8 @@ public class CharacterInstance
         if (UnityEngine.Random.value <= chance)
         {
             activeEffects.RemoveAll(e => e.type == type);
-            activeEffects.Add(new ActiveStatusEffect(type, duration, dotPercent, defenseReduction, speedReduction));
+            activeEffects.Add(new ActiveStatusEffect(
+                type, duration, dotPercent, defenseReduction, speedReduction));
         }
     }
 

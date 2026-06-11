@@ -30,33 +30,19 @@ public class RecruitCutsceneManager : MonoBehaviour
     private bool cutsceneStarted = false;
     private CharacterInstance recruitedInstance;
 
-    [Header("Recruit Battle Dialogue")]
-    public DialogueUI dialogueUI;
-    public DialogueSO recruitBattleDialogue;
-
-    public void PlayRecruitBattleDialogue(System.Action onComplete)
-    {
-        if (dialogueUI == null || recruitBattleDialogue == null)
-        {
-            Debug.LogWarning("[COMBAT] dialogueUI or recruitBattleDialogue not assigned!");
-            onComplete?.Invoke();
-            return;
-        }
-        Debug.Log("[COMBAT] Starting recruit battle dialogue");
-        dialogueUI.StartDialogue(recruitBattleDialogue, onComplete);
-    }
-
     void Start()
     {
-        Debug.Log($"[RECRUIT] Start() PendingCompletion:{EncounterManager.PendingRecruitCompletion} Name:{EncounterManager.PendingRecruitMemberName} MyMember:{newMember?.characterName}");
-
         if (joinMessageText != null)
             joinMessageText.gameObject.SetActive(false);
+
+        Debug.Log($"[RECRUIT START] PendingCompletion:{EncounterManager.PendingRecruitCompletion} " +
+            $"PendingName:{EncounterManager.PendingRecruitMemberName} " +
+            $"MyMember:{newMember?.characterName}");
 
         if (EncounterManager.PendingRecruitCompletion &&
             EncounterManager.PendingRecruitMemberName == newMember.characterName)
         {
-            Debug.Log("[RECRUIT] Match found! Running PostBattle");
+            Debug.Log("[RECRUIT] Match! Running PostBattle");
             EncounterManager.PendingRecruitCompletion = false;
             EncounterManager.PendingRecruitMemberName = "";
 
@@ -102,18 +88,14 @@ public class RecruitCutsceneManager : MonoBehaviour
             && PartyManager.Instance.activeParty.Count < 4)
             PartyManager.Instance.activeParty.Add(recruitedInstance);
 
-        // Set flag BEFORE encounter starts so it persists through scene load
+        // Set ALL flags before encounter starts
+        EncounterManager.IsRecruitBattle = true;
         EncounterManager.PendingRecruitCompletion = true;
         EncounterManager.PendingRecruitMemberName = newMember.characterName;
-        Debug.Log($"[RECRUIT] Set PendingCompletion=true for {newMember.characterName}");
 
-        // Don't set ActiveRecruitCutscene since it gets destroyed
-        EncounterManager.Instance.StartEncounter(new List<EnemyStatsSO> { enemyToFight });
-
-        // Set BEFORE encounter so TurnCombatManager can check it
-        EncounterManager.ActiveRecruitCutscene = this;
-        EncounterManager.PendingRecruitCompletion = true;
-        EncounterManager.PendingRecruitMemberName = newMember.characterName;
+        Debug.Log($"[RECRUIT] Flags set: IsRecruitBattle={EncounterManager.IsRecruitBattle} " +
+            $"PendingCompletion={EncounterManager.PendingRecruitCompletion} " +
+            $"PendingName={EncounterManager.PendingRecruitMemberName}");
 
         EncounterManager.Instance.StartEncounter(new List<EnemyStatsSO> { enemyToFight });
     }
@@ -150,6 +132,10 @@ public class RecruitCutsceneManager : MonoBehaviour
         }
 
         Debug.Log($"[RECRUIT] {newMember.characterName} permanently joined!");
+
+        if (npcGameObject != null && npcTalkDialogue != null)
+            SetupNPCTalk();
+
         SetPlayerFrozen(false);
     }
 

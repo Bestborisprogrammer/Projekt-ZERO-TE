@@ -475,4 +475,37 @@ public class CombatSpriteManager : MonoBehaviour
         }
         img.color = grey;
     }
+
+    public void ShowManaNumber(string targetName, int amount)
+    {
+        if (combatCanvas == null) return;
+        if (!rectMap.ContainsKey(targetName)) return;
+
+        var rt = rectMap[targetName];
+
+        GameObject dmgObj = new GameObject("ManaNumber");
+        dmgObj.transform.SetParent(combatCanvas.transform, false);
+
+        var tmp = dmgObj.AddComponent<TextMeshProUGUI>();
+        tmp.text = $"+{amount} MP";
+        tmp.fontSize = 32;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = new Color(0.3f, 0.5f, 1f);
+        tmp.raycastTarget = false;
+        SetFont(tmp);
+
+        var dmgRT = dmgObj.GetComponent<RectTransform>();
+        dmgRT.sizeDelta = new Vector2(150, 60);
+
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        Vector3 topCenter = (corners[1] + corners[2]) / 2f;
+        topCenter.y += 40f;
+        topCenter.x += Random.Range(-20f, 20f);
+        dmgRT.position = topCenter;
+
+        Vector2 floatDir = new Vector2(Random.Range(-30f, 30f), Random.Range(80f, 120f));
+        StartCoroutine(AnimateDamageNumber(dmgObj, tmp, dmgRT, floatDir, true, false));
+    }
 }
