@@ -15,8 +15,8 @@ MonoBehaviour:
   spellName: Log throw
   description: A devastating log throw
   affinity: 0
-  manaCost: 10
-  flatDamage: 13
+  manaCost: 20
+  flatDamage: 20
   statusEffect: 0
   statusChance: 0
   statusDuration: 2

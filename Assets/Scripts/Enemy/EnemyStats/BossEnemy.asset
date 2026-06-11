@@ -19,7 +19,7 @@ MonoBehaviour:
   attack: 15
   defense: 4
   speed: 1
-  maxMana: 25
+  maxMana: 20
   critRate: 0.05
   critDamage: 1.5
   affinities: 
