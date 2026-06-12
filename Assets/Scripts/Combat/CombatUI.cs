@@ -106,10 +106,6 @@ public class CombatUI : MonoBehaviour
         });
     }
 
-    [Header("Resonance")]
-    public UnityEngine.UI.Image resonanceIndicator;
-    public TMPro.TextMeshProUGUI resonanceLabel;
-    private bool resonanceMode = false;
 
     public void PlayResonanceBattleIntro(System.Action onComplete)
     {
@@ -122,14 +118,7 @@ public class CombatUI : MonoBehaviour
     // Separate field for resonance combat dialogue
     public DialogueSO combatUI_resonanceDialogue;
 
-    public void SetResonanceMode(bool active)
-    {
-        resonanceMode = active;
-        if (resonanceIndicator != null)
-            resonanceIndicator.gameObject.SetActive(active);
-        if (resonanceLabel != null)
-            resonanceLabel.gameObject.SetActive(active);
-    }
+
     void Start()
     {
         victoryPanel.SetActive(false);
@@ -833,10 +822,9 @@ public class CombatUI : MonoBehaviour
 
     public void ShowGameOver()
     {
-        Debug.Log($"[COMBATUI] ShowGameOver. IsForcedLossBattle was set – signaling duel return");
-
-        // Forced loss duel – signal post duel sequence
+        Debug.Log("[GAMEOVER] ShowGameOver called – signaling duel return");
         ResonanceCutsceneManager.WaitingForDuelReturn = true;
+        ResonanceManager.Instance?.HideResonanceTint();
 
         foreach (var member in PartyManager.Instance.activeParty)
             member.currentHP = 1;

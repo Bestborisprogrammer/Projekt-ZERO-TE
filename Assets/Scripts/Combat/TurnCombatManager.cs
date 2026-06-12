@@ -67,7 +67,7 @@ public class TurnCombatManager : MonoBehaviour
         Debug.Log("=== COMBAT STARTED ===");
         Debug.Log($"[SETUP] IsResonanceBattle={EncounterManager.IsResonanceBattle}");
         Debug.Log($"[SETUP] IsForcedLossBattle={EncounterManager.IsForcedLossBattle}");
-        Debug.Log($"[SETUP] IsRecruitBattle={EncounterManager.IsRecruitBattle}");
+        Debug.Log($"[SETUP] IsResonating={ResonanceManager.IsResonating}");
 
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.UpdateAllHP(party, enemies);
@@ -77,20 +77,25 @@ public class TurnCombatManager : MonoBehaviour
 
         if (EncounterManager.IsResonanceBattle)
         {
-            Debug.Log("[COMBAT] RESONANCE BATTLE starting");
+            Debug.Log("[COMBAT] Resonance battle");
             EncounterManager.IsResonanceBattle = false;
             resonanceMode = true;
+            // Show tint (already shown by cutscene manager but make sure)
+            ResonanceManager.Instance?.ShowResonanceTint();
             StartResonanceTurn();
         }
         else if (EncounterManager.IsForcedLossBattle)
         {
-            Debug.Log("[COMBAT] FORCED LOSS DUEL starting");
+            Debug.Log("[COMBAT] Forced loss duel – resonance stays active");
             EncounterManager.IsForcedLossBattle = false;
-            StartTurn();
+            // Still resonating for duel
+            resonanceMode = true;
+            ResonanceManager.Instance?.ShowResonanceTint();
+            StartResonanceTurn();
         }
         else if (EncounterManager.IsRecruitBattle)
         {
-            Debug.Log("[COMBAT] RECRUIT BATTLE starting");
+            Debug.Log("[COMBAT] Recruit battle");
             EncounterManager.IsRecruitBattle = false;
             combatUI.SetPlayerButtonsActive(false);
             combatUI.PlayRecruitBattleDialogue(() => StartTurn());
@@ -622,7 +627,6 @@ public class TurnCombatManager : MonoBehaviour
         {
             float mult = affinityMult;
             string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref mult);
-
             int scaledDamage = Mathf.RoundToInt(spell.flatDamage * (1f + attacker.Magic * 0.015f));
             int damage = Mathf.Max(1, Mathf.RoundToInt((scaledDamage - target.Defense) * mult));
 
@@ -645,7 +649,9 @@ public class TurnCombatManager : MonoBehaviour
                 combatUI.ShowCombatLog($"{target.Name} takes {damage}!");
             }
 
-            ApplySpellEffects(spell, attacker, target, damage);
+            // Apply status effects per target but NOT self damage here
+            // Only apply light heal and status effects, skip self damage in ApplySpellEffects for AOE
+            ApplySpellEffectsNoSelfDamage(spell, attacker, target, damage);
 
             if (!target.IsAlive)
             {
@@ -655,7 +661,7 @@ public class TurnCombatManager : MonoBehaviour
             }
         }
 
-        // AOE self damage
+        // Self damage ONCE after hitting all targets
         if (spell.dealsSelfDamage)
         {
             var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
@@ -666,6 +672,7 @@ public class TurnCombatManager : MonoBehaviour
                 attacker.Refresh();
                 CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
                 combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
+                Debug.Log($"[AOE RECOIL] Once: {selfDmg}");
             }
         }
 
@@ -691,6 +698,40 @@ public class TurnCombatManager : MonoBehaviour
             if (resonanceMode) ResonanceNextTurn();
             else NextTurn();
         });
+    }
+
+    // Same as ApplySpellEffects but skips self damage (used by AOE)
+    void ApplySpellEffectsNoSelfDamage(ManaAttackSO spell, Combatant attacker,
+        Combatant target, int damage)
+    {
+        if (spell.affinity == SpellAffinity.Light)
+        {
+            int healAmount = Mathf.RoundToInt(damage * 0.3f);
+            var charRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
+            if (charRef != null)
+            {
+                charRef.currentHP = Mathf.Min(charRef.MaxHP, charRef.currentHP + healAmount);
+                attacker.Refresh();
+                CombatSpriteManager.Instance?.ShowDamageNumber(attacker.Name, healAmount, true);
+                combatUI.ShowCombatLog($"{attacker.Name} absorbs {healAmount} HP!");
+                combatUI.UpdateAllHP(party, enemies);
+            }
+        }
+
+        bool wasJustThawed = spell.affinity == SpellAffinity.Fire && !target.IsFrozen;
+        if (!wasJustThawed && spell.statusEffect != StatusEffectType.None)
+        {
+            int speedReduction = spell.affinity == SpellAffinity.Water ? 3 : 0;
+            target.ApplyStatusEffect(spell.statusEffect, spell.statusChance,
+                spell.statusDuration, spell.dotPercent, spell.defenseReduction, speedReduction);
+            bool wasApplied = target.HasStatusEffect(spell.statusEffect);
+            if (wasApplied)
+                combatUI.ShowCombatLog($"{target.Name} afflicted with {spell.statusEffect}!");
+            else
+                combatUI.ShowCombatLog($"Effect missed on {target.Name}!");
+        }
+
+        UpdateStatusIndicators();
     }
 
     void EnemyTurn()
@@ -860,20 +901,29 @@ public class TurnCombatManager : MonoBehaviour
     {
         resonanceMode = false;
         ResonanceManager.Instance?.OnBattleComplete();
+        ResonanceManager.Instance?.HideResonanceTint();
 
-        // Forced loss – enemies can't win, so manually trigger game over
-        if (EncounterManager.IsForcedLossBattle)
+        // Recruit cutscene
+        if (EncounterManager.ActiveRecruitCutscene != null)
         {
-            Debug.Log("[COMBAT] Forced loss battle – showing game over");
-            EncounterManager.IsForcedLossBattle = false;
-            combatUI.ShowGameOver();
-            combatActive = false;
-            return;
+            EncounterManager.PendingRecruitCompletion = true;
+            EncounterManager.PendingRecruitMemberName =
+                EncounterManager.ActiveRecruitCutscene.newMember.characterName;
+            EncounterManager.ActiveRecruitCutscene = null;
         }
 
-        // Resonance battle complete
+        if (EncounterManager.ActiveCutscene != null)
+        {
+            EncounterManager.ActiveCutscene.OnBattleComplete();
+            EncounterManager.ActiveCutscene = null;
+        }
+
+        // Resonance battle won
         if (ResonanceManager.IsResonating)
+        {
+            Debug.Log("[VICTORY] Resonance battle won – setting WaitingForResonanceBattleReturn");
             ResonanceCutsceneManager.WaitingForResonanceBattleReturn = true;
+        }
 
         int totalXP = enemies.Sum(e => e.XPReward);
         int totalGold = 0;

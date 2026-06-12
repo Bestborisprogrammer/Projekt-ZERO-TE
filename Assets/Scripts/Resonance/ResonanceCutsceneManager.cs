@@ -6,9 +6,9 @@ public class ResonanceCutsceneManager : MonoBehaviour
 {
     [Header("Dialogues")]
     public DialogueSO resonanceDialogue;
-    public DialogueSO postBattleDialogue;
-    public DialogueSO knockoutDialogue;
-    public DialogueSO afterDuelDialogue;
+    public DialogueSO postBattleDialogue;    // Hirose worried, plays after resonance battle
+    public DialogueSO knockoutDialogue;      // Hirose knocks Edward out, plays before duel
+    public DialogueSO afterDuelDialogue;     // Edward wakes up in hut
 
     [Header("Resonance Battle Enemy")]
     public EnemyStatsSO resonanceEnemy;
@@ -26,42 +26,35 @@ public class ResonanceCutsceneManager : MonoBehaviour
     private bool started = false;
     private string saveKey;
 
-    // Static flags that persist across scenes
     public static bool WaitingForResonanceBattleReturn { get; set; } = false;
     public static bool WaitingForDuelReturn { get; set; } = false;
+    private static CharacterInstance hiroseStoredInstance = null;
 
     void Start()
     {
         saveKey = $"resonance_cs_{gameObject.name}";
 
-        Debug.Log($"[RESONANCE CS START] WaitingForResonanceBattleReturn={WaitingForResonanceBattleReturn}" +
-            $" WaitingForDuelReturn={WaitingForDuelReturn}");
+        Debug.Log($"[RESONANCE CS] Start. WaitingForResonance={WaitingForResonanceBattleReturn} WaitingForDuel={WaitingForDuelReturn}");
 
-        // Force hide overlay on scene load
         ResonanceManager.Instance?.ForceHideOverlay();
 
         if (PlayerPrefs.GetInt(saveKey, 0) == 1)
-        {
             if (triggerObject != null)
                 triggerObject.SetActive(false);
-        }
 
-        // Check if returning from resonance battle
         if (WaitingForResonanceBattleReturn)
         {
             WaitingForResonanceBattleReturn = false;
-            Debug.Log("[RESONANCE CS] Returned from resonance battle – starting post sequence");
+            Debug.Log("[RESONANCE CS] Returned from resonance battle");
             StartCoroutine(PostResonanceBattleSequence());
             return;
         }
 
-        // Check if returning from duel
         if (WaitingForDuelReturn)
         {
             WaitingForDuelReturn = false;
-            Debug.Log("[RESONANCE CS] Returned from duel – starting blackout sequence");
+            Debug.Log("[RESONANCE CS] Returned from duel");
             StartCoroutine(PostDuelSequence());
-            return;
         }
     }
 
@@ -71,7 +64,7 @@ public class ResonanceCutsceneManager : MonoBehaviour
         if (PlayerPrefs.GetInt(saveKey, 0) == 1) return;
         started = true;
 
-        Debug.Log("[RESONANCE CS] Starting initial sequence");
+        Debug.Log("[RESONANCE CS] Starting");
         PlayerPrefs.SetInt(saveKey, 1);
         PlayerPrefs.Save();
 
@@ -86,44 +79,41 @@ public class ResonanceCutsceneManager : MonoBehaviour
         SetPlayerFrozen(true);
         yield return new WaitForSeconds(0.3f);
 
-        Debug.Log("[RESONANCE CS] Starting violent flash");
         bool flashDone = false;
         StartCoroutine(ResonanceManager.Instance.TriggerResonanceFlash(() => flashDone = true));
         yield return new WaitUntil(() => flashDone);
 
         yield return new WaitForSeconds(0.3f);
 
-        // Resonance dialogue
         if (resonanceDialogue != null)
         {
-            Debug.Log("[RESONANCE CS] Playing resonance dialogue");
             bool done = false;
             DialogueUI.Instance.StartDialogue(resonanceDialogue, () => done = true);
             yield return new WaitUntil(() => done);
         }
 
-        // Activate resonance
         ResonanceManager.Instance.ActivateResonance(scripted: true);
         yield return new WaitForSeconds(0.3f);
 
-        // Set flag BEFORE starting encounter so it persists
-        WaitingForResonanceBattleReturn = true;
-        Debug.Log($"[RESONANCE CS] WaitingForResonanceBattleReturn={WaitingForResonanceBattleReturn}");
+        // Show purple tint for resonance battle
+        ResonanceManager.Instance.ShowResonanceTint();
 
+        WaitingForResonanceBattleReturn = true;
         EncounterManager.IsResonanceBattle = true;
+        Debug.Log("[RESONANCE CS] Starting resonance battle");
         EncounterManager.Instance.StartEncounter(
             new List<EnemyStatsSO> { resonanceEnemy });
     }
 
     IEnumerator PostResonanceBattleSequence()
     {
-        Debug.Log("[RESONANCE CS] PostResonanceBattle started");
+        Debug.Log("[RESONANCE CS] PostResonanceBattle");
         yield return new WaitForSeconds(0.8f);
         yield return new WaitUntil(() => DialogueUI.Instance != null);
 
         SetPlayerFrozen(true);
 
-        // Post battle dialogue
+        // Hirose worried dialogue
         if (postBattleDialogue != null)
         {
             Debug.Log("[RESONANCE CS] Playing post battle dialogue");
@@ -132,7 +122,24 @@ public class ResonanceCutsceneManager : MonoBehaviour
             yield return new WaitUntil(() => done);
         }
 
-        // Knockout dialogue
+        yield return new WaitForSeconds(0.5f);
+
+        // Remove Hirose from party for duel
+        if (hiroseStats != null)
+        {
+            hiroseStoredInstance = PartyManager.Instance.activeParty
+                .Find(m => m.baseData == hiroseStats);
+            if (hiroseStoredInstance != null)
+            {
+                PartyManager.Instance.activeParty.Remove(hiroseStoredInstance);
+                Debug.Log("[RESONANCE CS] Hirose removed for duel");
+            }
+        }
+
+        // Keep resonating for the duel
+        // IsResonating stays true
+
+        // Knockout dialogue plays right before duel
         if (knockoutDialogue != null)
         {
             Debug.Log("[RESONANCE CS] Playing knockout dialogue");
@@ -143,46 +150,29 @@ public class ResonanceCutsceneManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
-        // Remove Hirose from active party for duel
-        CharacterInstance hiroseInstance = null;
-        if (hiroseStats != null)
-        {
-            hiroseInstance = PartyManager.Instance.activeParty
-                .Find(m => m.baseData == hiroseStats);
-            if (hiroseInstance != null)
-            {
-                PartyManager.Instance.activeParty.Remove(hiroseInstance);
-                Debug.Log("[RESONANCE CS] Hirose removed for duel");
-            }
-            else
-                Debug.LogWarning("[RESONANCE CS] Could not find Hirose in active party!");
-        }
+        // Show tint for duel too (still resonating)
+        ResonanceManager.Instance.ShowResonanceTint();
 
-        // Store Hirose for after duel
-        HiroseTemporarilyRemoved = hiroseInstance;
-
-        // Set flag before starting duel
         WaitingForDuelReturn = true;
-        Debug.Log($"[RESONANCE CS] WaitingForDuelReturn={WaitingForDuelReturn}");
-
         EncounterManager.IsForcedLossBattle = true;
+        Debug.Log("[RESONANCE CS] Starting duel");
         EncounterManager.Instance.StartEncounter(
             new List<EnemyStatsSO> { hiroseAsDuelEnemy });
     }
 
-    // Store hirose across scene loads
-    private static CharacterInstance HiroseTemporarilyRemoved = null;
-
     IEnumerator PostDuelSequence()
     {
-        Debug.Log("[RESONANCE CS] PostDuel sequence started");
+        Debug.Log("[RESONANCE CS] PostDuel");
+
+        // Make sure tint is hidden
+        ResonanceManager.Instance?.ForceHideOverlay();
+
         yield return new WaitForSeconds(0.5f);
         yield return new WaitUntil(() => ResonanceManager.Instance != null);
 
         SetPlayerFrozen(true);
 
-        // Black out
-        Debug.Log("[RESONANCE CS] Starting blackout");
+        // Black out – Edward knocked unconscious
         bool blackOutDone = false;
         StartCoroutine(ResonanceManager.Instance.BlackOut(() => blackOutDone = true));
         yield return new WaitUntil(() => blackOutDone);
@@ -190,16 +180,16 @@ public class ResonanceCutsceneManager : MonoBehaviour
         // Deactivate resonance
         ResonanceManager.Instance.DeactivateResonance();
 
-        // Re-add Hirose
-        if (HiroseTemporarilyRemoved != null)
+        // Re-add Hirose permanently
+        if (hiroseStoredInstance != null)
         {
-            if (!PartyManager.Instance.activeParty.Contains(HiroseTemporarilyRemoved))
-                PartyManager.Instance.activeParty.Add(HiroseTemporarilyRemoved);
-            Debug.Log("[RESONANCE CS] Hirose re-added to party");
-            HiroseTemporarilyRemoved = null;
+            if (!PartyManager.Instance.activeParty.Contains(hiroseStoredInstance))
+                PartyManager.Instance.activeParty.Add(hiroseStoredInstance);
+            Debug.Log("[RESONANCE CS] Hirose re-added");
+            hiroseStoredInstance = null;
         }
 
-        // Teleport player to wake up location
+        // Teleport
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player != null && wakeUpLocation != null)
         {
@@ -208,12 +198,10 @@ public class ResonanceCutsceneManager : MonoBehaviour
             Debug.Log($"[RESONANCE CS] Player teleported to {wakeUpLocation.position}");
         }
 
-        // Unlock resonance meter
+        // Unlock meter
         ResonanceManager.MeterUnlocked = true;
-        Debug.Log("[RESONANCE CS] Resonance meter unlocked");
 
         // Fade in
-        Debug.Log("[RESONANCE CS] Starting fade in");
         bool fadeInDone = false;
         StartCoroutine(ResonanceManager.Instance.FadeIn(() => fadeInDone = true));
         yield return new WaitUntil(() => fadeInDone);
@@ -231,7 +219,7 @@ public class ResonanceCutsceneManager : MonoBehaviour
         }
 
         SetPlayerFrozen(false);
-        Debug.Log("[RESONANCE CS] Full sequence complete!");
+        Debug.Log("[RESONANCE CS] Complete!");
     }
 
     void SetPlayerFrozen(bool frozen)

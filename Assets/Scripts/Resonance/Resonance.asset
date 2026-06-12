@@ -16,7 +16,7 @@ MonoBehaviour:
   description: A basic fire attack.
   affinity: 1
   spellType: 0
-  manaCost: 10
+  manaCost: 1
   levelRequirement: 1
   flatDamage: 20
   isAOE: 1

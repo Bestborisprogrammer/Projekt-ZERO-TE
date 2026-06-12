@@ -17,14 +17,14 @@ public class ResonanceManager : MonoBehaviour
     public static bool IsResonating { get; private set; } = false;
     public static bool ScriptedResonanceActive { get; private set; } = false;
 
-    // Pending flags – persist across scene loads like recruit system
-    public static bool PendingPostResonanceBattle { get; set; } = false;
-    public static bool PendingPostDuel { get; set; } = false;
-
     [Header("Resonance Skills")]
     public List<ManaAttackSO> resonanceSkills = new();
 
     private Image resonanceOverlay;
+
+    // Pending flags
+    public static bool WaitingForResonanceBattleReturn { get; set; } = false;
+    public static bool WaitingForDuelReturn { get; set; } = false;
 
     public System.Action onMeterFull;
     public System.Action onResonanceStart;
@@ -43,12 +43,10 @@ public class ResonanceManager : MonoBehaviour
     void Start()
     {
         CreateOverlay();
-        Debug.Log($"[RESONANCE MGR] Start. PendingPostResonance={PendingPostResonanceBattle} PendingPostDuel={PendingPostDuel}");
     }
 
     void CreateOverlay()
     {
-        // Create own canvas separate from everything
         GameObject canvasObj = new GameObject("ResonanceCanvas");
         canvasObj.transform.SetParent(transform);
         DontDestroyOnLoad(canvasObj);
@@ -57,7 +55,6 @@ public class ResonanceManager : MonoBehaviour
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 997;
         canvasObj.AddComponent<CanvasScaler>();
-        canvasObj.AddComponent<GraphicRaycaster>();
 
         GameObject imgObj = new GameObject("ResonanceOverlay");
         imgObj.transform.SetParent(canvasObj.transform, false);
@@ -70,8 +67,6 @@ public class ResonanceManager : MonoBehaviour
         rt.anchorMax = Vector2.one;
         rt.offsetMin = Vector2.zero;
         rt.offsetMax = Vector2.zero;
-
-        // Start fully transparent and inactive
         resonanceOverlay.gameObject.SetActive(false);
     }
 
@@ -79,61 +74,85 @@ public class ResonanceManager : MonoBehaviour
     {
         if (!MeterUnlocked) return;
         if (IsResonating) return;
-
         battlesFought++;
         currentMeter = Mathf.Min(100f,
             (battlesFought / (float)battlesRequiredToFill) * 100f);
-        Debug.Log($"[RESONANCE METER] {currentMeter:F0}% ({battlesFought}/{battlesRequiredToFill})");
+        Debug.Log($"[RESONANCE METER] {currentMeter:F0}%");
+        if (currentMeter >= 100f) onMeterFull?.Invoke();
+    }
 
-        if (currentMeter >= 100f)
-        {
-            Debug.Log("[RESONANCE METER] FULL!");
-            onMeterFull?.Invoke();
-        }
+    // Shows a dim purple tint during resonance battle
+    public void ShowResonanceTint()
+    {
+        if (resonanceOverlay == null) return;
+        resonanceOverlay.gameObject.SetActive(true);
+        resonanceOverlay.color = new Color(0.4f, 0f, 0.8f, 0.18f);
+        Debug.Log("[RESONANCE] Tint shown");
+    }
+
+    public void HideResonanceTint()
+    {
+        if (resonanceOverlay == null) return;
+        resonanceOverlay.color = new Color(0, 0, 0, 0);
+        resonanceOverlay.gameObject.SetActive(false);
+        Debug.Log("[RESONANCE] Tint hidden");
     }
 
     public IEnumerator TriggerResonanceFlash(System.Action onComplete = null)
     {
         resonanceOverlay.gameObject.SetActive(true);
-        Debug.Log("[RESONANCE] Starting violent flash");
+        Debug.Log("[RESONANCE] Flash starting");
 
-        // Rapid violent flashes
-        for (int i = 0; i < 10; i++)
+        // Each flash: bright white-purple ? black
+        // Uses screen-tearing style rapid alternation
+        Color purple = new Color(0.7f, 0f, 1f, 1f);
+        Color white = new Color(1f, 0.8f, 1f, 1f);
+        Color black = new Color(0f, 0f, 0f, 1f);
+        Color off = new Color(0f, 0f, 0f, 0f);
+
+        // Phase 1: Stutter flashes
+        int[] frameTimes = { 3, 2, 2, 1, 2, 1, 1, 2, 1, 1 };
+        foreach (int f in frameTimes)
         {
-            float intensity = Mathf.Lerp(0.4f, 1f, i / 10f);
-            resonanceOverlay.color = new Color(0.6f, 0f, 1f, intensity);
-            yield return new WaitForSeconds(0.035f);
-            resonanceOverlay.color = new Color(0.2f, 0f, 0.5f, 0.05f);
-            yield return new WaitForSeconds(0.025f);
-        }
-
-        // Blinding bursts
-        for (int i = 0; i < 6; i++)
-        {
-            resonanceOverlay.color = new Color(0.9f, 0.1f, 1f, 0.98f);
-            yield return new WaitForSeconds(0.05f);
-            resonanceOverlay.color = new Color(0.1f, 0f, 0.3f, 0.1f);
-            yield return new WaitForSeconds(0.035f);
-        }
-
-        // Final sustain then fade
-        resonanceOverlay.color = new Color(0.7f, 0f, 1f, 0.95f);
-        yield return new WaitForSeconds(0.2f);
-
-        float elapsed = 0f;
-        while (elapsed < 0.5f)
-        {
-            elapsed += Time.deltaTime;
-            float a = Mathf.Lerp(0.95f, 0f, elapsed / 0.5f);
-            resonanceOverlay.color = new Color(0.5f, 0f, 1f, a);
+            resonanceOverlay.color = purple;
+            for (int i = 0; i < f; i++) yield return null;
+            resonanceOverlay.color = off;
+            yield return null;
             yield return null;
         }
 
-        // Make sure it's fully off after flash
-        resonanceOverlay.color = new Color(0f, 0f, 0f, 0f);
-        resonanceOverlay.gameObject.SetActive(false);
+        yield return new WaitForSeconds(0.1f);
 
-        Debug.Log("[RESONANCE] Flash complete");
+        // Phase 2: Heavy slams
+        for (int i = 0; i < 4; i++)
+        {
+            resonanceOverlay.color = white;
+            yield return new WaitForSeconds(0.06f);
+            resonanceOverlay.color = black;
+            yield return new WaitForSeconds(0.04f);
+            resonanceOverlay.color = purple;
+            yield return new WaitForSeconds(0.05f);
+            resonanceOverlay.color = off;
+            yield return new WaitForSeconds(0.03f);
+        }
+
+        // Phase 3: Final blinding white hold
+        resonanceOverlay.color = white;
+        yield return new WaitForSeconds(0.25f);
+
+        // Fade from white to off
+        float elapsed = 0f;
+        while (elapsed < 0.4f)
+        {
+            elapsed += Time.deltaTime;
+            float a = Mathf.Lerp(1f, 0f, elapsed / 0.4f);
+            resonanceOverlay.color = new Color(0.8f, 0.3f, 1f, a);
+            yield return null;
+        }
+
+        resonanceOverlay.color = off;
+        resonanceOverlay.gameObject.SetActive(false);
+        Debug.Log("[RESONANCE] Flash done");
         onComplete?.Invoke();
     }
 
@@ -141,7 +160,6 @@ public class ResonanceManager : MonoBehaviour
     {
         IsResonating = true;
         ScriptedResonanceActive = scripted;
-        if (!scripted) { battlesFought = 0; currentMeter = 0f; }
         Debug.Log($"[RESONANCE] Activated scripted:{scripted}");
         onResonanceStart?.Invoke();
     }
@@ -150,13 +168,8 @@ public class ResonanceManager : MonoBehaviour
     {
         IsResonating = false;
         ScriptedResonanceActive = false;
-        // Make absolutely sure overlay is gone
-        if (resonanceOverlay != null)
-        {
-            resonanceOverlay.color = new Color(0, 0, 0, 0);
-            resonanceOverlay.gameObject.SetActive(false);
-        }
-        Debug.Log("[RESONANCE] Deactivated + overlay cleared");
+        HideResonanceTint();
+        Debug.Log("[RESONANCE] Deactivated");
         onResonanceEnd?.Invoke();
     }
 
@@ -164,7 +177,6 @@ public class ResonanceManager : MonoBehaviour
     {
         resonanceOverlay.gameObject.SetActive(true);
         resonanceOverlay.color = new Color(0f, 0f, 0f, 0f);
-
         float elapsed = 0f;
         while (elapsed < 1.5f)
         {
@@ -175,7 +187,6 @@ public class ResonanceManager : MonoBehaviour
         }
         resonanceOverlay.color = Color.black;
         yield return new WaitForSeconds(0.5f);
-        Debug.Log("[RESONANCE] BlackOut complete");
         onComplete?.Invoke();
     }
 
@@ -183,7 +194,6 @@ public class ResonanceManager : MonoBehaviour
     {
         resonanceOverlay.gameObject.SetActive(true);
         resonanceOverlay.color = Color.black;
-
         float elapsed = 0f;
         while (elapsed < 1f)
         {
@@ -192,20 +202,15 @@ public class ResonanceManager : MonoBehaviour
                 Mathf.Lerp(1f, 0f, elapsed / 1f));
             yield return null;
         }
-
         resonanceOverlay.color = new Color(0, 0, 0, 0);
         resonanceOverlay.gameObject.SetActive(false);
-        Debug.Log("[RESONANCE] FadeIn complete");
         onComplete?.Invoke();
     }
 
-    // Force clear overlay – call on scene load just in case
     public void ForceHideOverlay()
     {
-        if (resonanceOverlay != null)
-        {
-            resonanceOverlay.color = new Color(0, 0, 0, 0);
-            resonanceOverlay.gameObject.SetActive(false);
-        }
+        if (resonanceOverlay == null) return;
+        resonanceOverlay.color = new Color(0, 0, 0, 0);
+        resonanceOverlay.gameObject.SetActive(false);
     }
 }
