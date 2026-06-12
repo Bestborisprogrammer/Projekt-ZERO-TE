@@ -329,12 +329,20 @@ public class TurnCombatManager : MonoBehaviour
             if (casterRef != null)
             {
                 int selfDmg = Mathf.Max(1, Mathf.RoundToInt(attacker.MaxHP * spell.selfDamagePercent));
-                casterRef.currentHP = Mathf.Max(1, casterRef.currentHP - selfDmg);
+                // Allow death from self damage
+                casterRef.currentHP = Mathf.Max(0, casterRef.currentHP - selfDmg);
                 attacker.Refresh();
                 CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
                 combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil damage!");
                 combatUI.UpdateAllHP(party, enemies);
-                Debug.Log($"[RESONANCE SELF DMG] {attacker.Name} takes {selfDmg} recoil");
+                Debug.Log($"[RECOIL] {attacker.Name} HP: {casterRef.currentHP}/{casterRef.MaxHP}");
+
+                // Check if caster died from recoil
+                if (!casterRef.IsAlive)
+                {
+                    CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
+                    combatUI.ShowCombatLog($"{attacker.Name} fell from recoil!");
+                }
             }
         }
 

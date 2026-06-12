@@ -113,10 +113,9 @@ public class ResonanceCutsceneManager : MonoBehaviour
 
         SetPlayerFrozen(true);
 
-        // Hirose worried dialogue
+        // Hirose worried
         if (postBattleDialogue != null)
         {
-            Debug.Log("[RESONANCE CS] Playing post battle dialogue");
             bool done = false;
             DialogueUI.Instance.StartDialogue(postBattleDialogue, () => done = true);
             yield return new WaitUntil(() => done);
@@ -124,7 +123,7 @@ public class ResonanceCutsceneManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
 
-        // Remove Hirose from party for duel
+        // Remove Hirose for duel
         if (hiroseStats != null)
         {
             hiroseStoredInstance = PartyManager.Instance.activeParty
@@ -136,21 +135,7 @@ public class ResonanceCutsceneManager : MonoBehaviour
             }
         }
 
-        // Keep resonating for the duel
-        // IsResonating stays true
-
-        // Knockout dialogue plays right before duel
-        if (knockoutDialogue != null)
-        {
-            Debug.Log("[RESONANCE CS] Playing knockout dialogue");
-            bool done = false;
-            DialogueUI.Instance.StartDialogue(knockoutDialogue, () => done = true);
-            yield return new WaitUntil(() => done);
-        }
-
-        yield return new WaitForSeconds(0.3f);
-
-        // Show tint for duel too (still resonating)
+        // Keep resonating
         ResonanceManager.Instance.ShowResonanceTint();
 
         WaitingForDuelReturn = true;
@@ -163,8 +148,6 @@ public class ResonanceCutsceneManager : MonoBehaviour
     IEnumerator PostDuelSequence()
     {
         Debug.Log("[RESONANCE CS] PostDuel");
-
-        // Make sure tint is hidden
         ResonanceManager.Instance?.ForceHideOverlay();
 
         yield return new WaitForSeconds(0.5f);
@@ -172,21 +155,30 @@ public class ResonanceCutsceneManager : MonoBehaviour
 
         SetPlayerFrozen(true);
 
-        // Black out – Edward knocked unconscious
+        // Knockout dialogue plays HERE – after Edward loses
+        if (knockoutDialogue != null)
+        {
+            Debug.Log("[RESONANCE CS] Playing knockout dialogue");
+            bool done = false;
+            yield return new WaitUntil(() => DialogueUI.Instance != null);
+            DialogueUI.Instance.StartDialogue(knockoutDialogue, () => done = true);
+            yield return new WaitUntil(() => done);
+        }
+
+        // Black out
         bool blackOutDone = false;
         StartCoroutine(ResonanceManager.Instance.BlackOut(() => blackOutDone = true));
         yield return new WaitUntil(() => blackOutDone);
 
-        // Deactivate resonance
         ResonanceManager.Instance.DeactivateResonance();
 
-        // Re-add Hirose permanently
+        // Re-add Hirose
         if (hiroseStoredInstance != null)
         {
             if (!PartyManager.Instance.activeParty.Contains(hiroseStoredInstance))
                 PartyManager.Instance.activeParty.Add(hiroseStoredInstance);
-            Debug.Log("[RESONANCE CS] Hirose re-added");
             hiroseStoredInstance = null;
+            Debug.Log("[RESONANCE CS] Hirose re-added");
         }
 
         // Teleport
@@ -195,13 +187,10 @@ public class ResonanceCutsceneManager : MonoBehaviour
         {
             player.transform.position = wakeUpLocation.position;
             EncounterManager.PlayerReturnPosition = Vector3.zero;
-            Debug.Log($"[RESONANCE CS] Player teleported to {wakeUpLocation.position}");
         }
 
-        // Unlock meter
         ResonanceManager.MeterUnlocked = true;
 
-        // Fade in
         bool fadeInDone = false;
         StartCoroutine(ResonanceManager.Instance.FadeIn(() => fadeInDone = true));
         yield return new WaitUntil(() => fadeInDone);
@@ -212,7 +201,6 @@ public class ResonanceCutsceneManager : MonoBehaviour
         // Wake up dialogue
         if (afterDuelDialogue != null)
         {
-            Debug.Log("[RESONANCE CS] Playing after duel dialogue");
             bool done = false;
             DialogueUI.Instance.StartDialogue(afterDuelDialogue, () => done = true);
             yield return new WaitUntil(() => done);
