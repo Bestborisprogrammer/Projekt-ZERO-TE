@@ -788,6 +788,9 @@ public class CombatUI : MonoBehaviour
 
     public void ShowVictory(int xp, int gold, DropResult drops)
     {
+        Debug.Log($"[COMBATUI] ShowVictory. IsResonating={ResonanceManager.IsResonating} " +
+            $"WaitingForResonanceBattleReturn={ResonanceCutsceneManager.WaitingForResonanceBattleReturn}");
+
         if (EncounterManager.ActiveCutscene != null)
         {
             EncounterManager.ActiveCutscene.OnBattleComplete();
@@ -800,6 +803,13 @@ public class CombatUI : MonoBehaviour
             EncounterManager.PendingRecruitMemberName =
                 EncounterManager.ActiveRecruitCutscene.newMember.characterName;
             EncounterManager.ActiveRecruitCutscene = null;
+        }
+
+        // Resonance battle won – signal post sequence
+        if (ResonanceManager.IsResonating)
+        {
+            Debug.Log("[COMBATUI] Resonance battle won – setting WaitingForResonanceBattleReturn");
+            ResonanceCutsceneManager.WaitingForResonanceBattleReturn = true;
         }
 
         victoryPanel.SetActive(true);
@@ -823,9 +833,10 @@ public class CombatUI : MonoBehaviour
 
     public void ShowGameOver()
     {
-        // Signal forced loss complete
-        EncounterManager.ForcedLossBattleDone = true;
-        Debug.Log("[GAMEOVER] ForcedLossBattleDone set to true");
+        Debug.Log($"[COMBATUI] ShowGameOver. IsForcedLossBattle was set – signaling duel return");
+
+        // Forced loss duel – signal post duel sequence
+        ResonanceCutsceneManager.WaitingForDuelReturn = true;
 
         foreach (var member in PartyManager.Instance.activeParty)
             member.currentHP = 1;

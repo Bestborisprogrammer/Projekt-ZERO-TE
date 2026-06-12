@@ -216,6 +216,14 @@ public class TurnCombatManager : MonoBehaviour
     {
         if (!combatActive) return;
 
+        // Forced loss – game over immediately when it's player turn
+        // (Hirose has already won by this point)
+        if (EncounterManager.IsForcedLossBattle && !current.IsEnemy)
+        {
+            // Check if any enemy is alive – if so Hirose hasn't beaten us yet
+            // Force loss after first enemy turn to give battle feel
+        }
+
         if (current.IsFrozen)
         {
             current.ConsumeFreezeIfActive();
@@ -851,17 +859,21 @@ public class TurnCombatManager : MonoBehaviour
     void HandleVictory()
     {
         resonanceMode = false;
-
-        // Signal resonance cutscene if resonance battle
-        if (ResonanceManager.IsResonating)
-            EncounterManager.ResonanceBattleDone = true;
-
-        // Signal forced loss done
-        if (EncounterManager.IsForcedLossBattle)
-            EncounterManager.ForcedLossBattleDone = true;
-
-        // Update resonance meter
         ResonanceManager.Instance?.OnBattleComplete();
+
+        // Forced loss – enemies can't win, so manually trigger game over
+        if (EncounterManager.IsForcedLossBattle)
+        {
+            Debug.Log("[COMBAT] Forced loss battle – showing game over");
+            EncounterManager.IsForcedLossBattle = false;
+            combatUI.ShowGameOver();
+            combatActive = false;
+            return;
+        }
+
+        // Resonance battle complete
+        if (ResonanceManager.IsResonating)
+            ResonanceCutsceneManager.WaitingForResonanceBattleReturn = true;
 
         int totalXP = enemies.Sum(e => e.XPReward);
         int totalGold = 0;

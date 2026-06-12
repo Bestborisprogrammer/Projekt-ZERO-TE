@@ -179,10 +179,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 417fea4b452a9d849af428428366ce67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resonanceDialogue: {fileID: 11400000, guid: c4bc3e5cc9a5e3b46b9bb9c225864f49, type: 2}
-  postBattleDialogue: {fileID: 11400000, guid: 267ec766639e1f843bab3ac0e6dd3118, type: 2}
-  knockoutDialogue: {fileID: 11400000, guid: 1d2ff0f881416aa409f54fd9923e7c5c, type: 2}
-  afterDuelDialogue: {fileID: 11400000, guid: 662543e17c5d5404fb507cadc2d8ff3a, type: 2}
+  resonanceDialogue: {fileID: 11400000, guid: e4ff694bf6cc1724a83b330f2c48f341, type: 2}
+  postBattleDialogue: {fileID: 11400000, guid: cdd4a70e354c3ac45831bdebec403ee0, type: 2}
+  knockoutDialogue: {fileID: 11400000, guid: 4630bda54bc62924ca295377d08426a2, type: 2}
+  afterDuelDialogue: {fileID: 11400000, guid: 79deacde55146974191ce2039b449997, type: 2}
   resonanceEnemy: {fileID: 11400000, guid: 7c90c3ccb5cb64a4594a2a0d5d1fde19, type: 2}
   hiroseStats: {fileID: 11400000, guid: 400d6b9354f7d4d4bbef493626fd23e3, type: 2}
   hiroseAsDuelEnemy: {fileID: 11400000, guid: 7ad9e398ca06b094b887a53f16fdcba8, type: 2}
@@ -8735,7 +8735,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ede7ae8b3943e64c995949756c5434a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogue: {fileID: 11400000, guid: 267ec766639e1f843bab3ac0e6dd3118, type: 2}
+  dialogue: {fileID: 11400000, guid: 771a498e5f2380d45857d2d44870f586, type: 2}
   triggerType: 0
   oneTimeOnly: 1
   promptText: {fileID: 0}
