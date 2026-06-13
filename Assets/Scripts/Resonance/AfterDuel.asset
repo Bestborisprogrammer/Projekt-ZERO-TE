@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: AfterDuel
   m_EditorClassIdentifier: 
   lines:
-  - speakerName: Hirose
+  - speakerName: Edward
     portrait: {fileID: 0}
-    text: Mate whats wrong with u
+    text: Where am I..
     typingSpeed: 0
     autoAdvance: 0
     autoAdvanceDelay: 0

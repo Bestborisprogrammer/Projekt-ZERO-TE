@@ -6892,7 +6892,7 @@ Transform:
   m_GameObject: {fileID: 547836945}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 531.6, y: -150.8, z: 0}
+  m_LocalPosition: {x: -138.07, y: -54.43, z: 0}
   m_LocalScale: {x: 13.725821, y: 7.412025, z: 20.566107}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9500,6 +9500,7 @@ MonoBehaviour:
   currentMeter: 0
   resonanceSkills:
   - {fileID: 11400000, guid: d8c8c812c6084c143afe45de81bcd31c, type: 2}
+  basicAttackSelfDamagePercent: 0.05
 --- !u!4 &1034495123
 Transform:
   m_ObjectHideFlags: 0

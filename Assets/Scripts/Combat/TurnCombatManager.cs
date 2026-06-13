@@ -323,30 +323,51 @@ public class TurnCombatManager : MonoBehaviour
         }
 
         // Self damage for resonance skills
+        // In ApplySpellEffects replace self damage block:
         if (spell.dealsSelfDamage)
         {
             var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
             if (casterRef != null)
             {
                 int selfDmg = Mathf.Max(1, Mathf.RoundToInt(attacker.MaxHP * spell.selfDamagePercent));
-                // Allow death from self damage
                 casterRef.currentHP = Mathf.Max(0, casterRef.currentHP - selfDmg);
                 attacker.Refresh();
                 CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
-                combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil damage!");
+                combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
                 combatUI.UpdateAllHP(party, enemies);
-                Debug.Log($"[RECOIL] {attacker.Name} HP: {casterRef.currentHP}/{casterRef.MaxHP}");
+                Debug.Log($"[SPELL RECOIL] {attacker.Name} HP:{casterRef.currentHP}/{casterRef.MaxHP}");
 
-                // Check if caster died from recoil
                 if (!casterRef.IsAlive)
                 {
                     CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
-                    combatUI.ShowCombatLog($"{attacker.Name} fell from recoil!");
+                    combatUI.ShowCombatLog($"{attacker.Name} collapsed from the strain!",
+                        () => HandleResonanceDeath());
                 }
             }
         }
 
         UpdateStatusIndicators();
+    }
+    void HandleResonanceDeath()
+    {
+        Debug.Log("[RESONANCE DEATH] Edward died from recoil – triggering forced loss");
+        combatActive = false;
+        resonanceMode = false;
+        ResonanceManager.Instance?.HideResonanceTint();
+
+        // Signal duel return (reuse same post-duel sequence)
+        ResonanceCutsceneManager.WaitingForDuelReturn = true;
+
+        // Restore HP to 1 so he's not dead in overworld
+        foreach (var member in PartyManager.Instance.activeParty)
+            if (!member.IsAlive) member.currentHP = 1;
+
+        combatUI.ShowCombatLog("...", () =>
+        {
+            EncounterManager.CurrentEnemies.Clear();
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                combatUI.overworldScene);
+        });
     }
 
     void ApplyEnemySpellEffects(EnemyManaAttackSO spell, Combatant attacker,
@@ -405,6 +426,32 @@ public class TurnCombatManager : MonoBehaviour
         Combatant target = enemies[selectedEnemyIndex];
         int damage = Mathf.Max(1, attacker.Attack - target.Defense);
         bool hit = ResolveAttack(attacker, target, damage, "basic attack", true);
+
+        // Self damage in resonance from basic attack
+        if (resonanceMode && hit && ResonanceManager.Instance != null)
+        {
+            var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
+            if (casterRef != null)
+            {
+                float pct = ResonanceManager.Instance.basicAttackSelfDamagePercent;
+                int selfDmg = Mathf.Max(1, Mathf.RoundToInt(attacker.MaxHP * pct));
+                casterRef.currentHP = Mathf.Max(0, casterRef.currentHP - selfDmg);
+                attacker.Refresh();
+                CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
+                combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
+                combatUI.UpdateAllHP(party, enemies);
+                Debug.Log($"[BASIC RECOIL] {attacker.Name} HP:{casterRef.currentHP}/{casterRef.MaxHP}");
+
+                // Death from recoil
+                if (!casterRef.IsAlive)
+                {
+                    CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
+                    combatUI.ShowCombatLog($"{attacker.Name} collapsed from the strain!");
+                    HandleResonanceDeath();
+                    return;
+                }
+            }
+        }
 
         combatUI.UpdateAllHP(party, enemies);
         combatUI.BuildEnemyTargetButtons(enemies);
@@ -670,17 +717,26 @@ public class TurnCombatManager : MonoBehaviour
         }
 
         // Self damage ONCE after hitting all targets
+        // After AOE self damage block replace with:
         if (spell.dealsSelfDamage)
         {
             var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
             if (casterRef != null)
             {
                 int selfDmg = Mathf.Max(1, Mathf.RoundToInt(attacker.MaxHP * spell.selfDamagePercent));
-                casterRef.currentHP = Mathf.Max(1, casterRef.currentHP - selfDmg);
+                casterRef.currentHP = Mathf.Max(0, casterRef.currentHP - selfDmg);
                 attacker.Refresh();
                 CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
                 combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
-                Debug.Log($"[AOE RECOIL] Once: {selfDmg}");
+                combatUI.UpdateAllHP(party, enemies);
+
+                if (!casterRef.IsAlive)
+                {
+                    CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
+                    combatUI.ShowCombatLog($"{attacker.Name} collapsed from the strain!",
+                        () => HandleResonanceDeath());
+                    return;
+                }
             }
         }
 

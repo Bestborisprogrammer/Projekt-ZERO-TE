@@ -30,6 +30,9 @@ public class ResonanceManager : MonoBehaviour
     public System.Action onResonanceStart;
     public System.Action onResonanceEnd;
 
+    [Header("Basic Attack Recoil")]
+    public float basicAttackSelfDamagePercent = 0.05f; // 5% max HP
+
     void Awake()
     {
         if (Instance == null)
