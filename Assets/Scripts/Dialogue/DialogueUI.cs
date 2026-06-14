@@ -19,6 +19,8 @@ public class DialogueUI : MonoBehaviour
     private bool waitingForInput = false;
     private System.Action onComplete;
 
+    public bool IsDialogueOpen => dialogueBox.activeSelf;
+
     void Awake()
     {
         if (Instance == null) Instance = this;

@@ -45,7 +45,9 @@ public class ResonanceCutsceneManager : MonoBehaviour
         if (WaitingForResonanceBattleReturn)
         {
             WaitingForResonanceBattleReturn = false;
-            Debug.Log("[RESONANCE CS] Returned from resonance battle");
+            // Keep player frozen immediately on scene load
+            SetPlayerFrozen(true);
+            Debug.Log("[RESONANCE CS] Returned from resonance battle – freezing player");
             StartCoroutine(PostResonanceBattleSequence());
             return;
         }
@@ -53,7 +55,9 @@ public class ResonanceCutsceneManager : MonoBehaviour
         if (WaitingForDuelReturn)
         {
             WaitingForDuelReturn = false;
-            Debug.Log("[RESONANCE CS] Returned from duel");
+            // Keep player frozen immediately on scene load
+            SetPlayerFrozen(true);
+            Debug.Log("[RESONANCE CS] Returned from duel – freezing player");
             StartCoroutine(PostDuelSequence());
         }
     }
