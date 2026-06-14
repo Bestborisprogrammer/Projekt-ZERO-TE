@@ -8,11 +8,13 @@ public class PlayerMovement2D : MonoBehaviour
     [Header("Animator")]
     public Animator animator;
 
+    // Static flag – persists across scene loads
+    public static bool ForceFrozen { get; set; } = false;
+
     private Rigidbody2D rb;
     private Vector2 moveInput;
     private Vector2 lastMoveDir = Vector2.down;
 
-    // Track last dominant direction to force transition
     private enum FacingDir { Down, Up, Left, Right }
     private FacingDir currentDir = FacingDir.Down;
     private FacingDir lastDir = FacingDir.Down;
@@ -24,8 +26,25 @@ public class PlayerMovement2D : MonoBehaviour
             animator = GetComponent<Animator>();
     }
 
+    void Start()
+    {
+        // If a cutscene flagged a force freeze, disable immediately
+        if (ForceFrozen)
+        {
+            enabled = false;
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+            Debug.Log("[PLAYER] ForceFrozen on start – movement disabled");
+        }
+    }
+
     void OnEnable()
     {
+        if (ForceFrozen)
+        {
+            enabled = false;
+            return;
+        }
+
         if (animator != null)
         {
             animator.SetBool("IsMoving", false);
@@ -48,6 +67,12 @@ public class PlayerMovement2D : MonoBehaviour
 
     void Update()
     {
+        if (ForceFrozen)
+        {
+            if (rb != null) rb.linearVelocity = Vector2.zero;
+            return;
+        }
+
         float x = Input.GetAxisRaw("Horizontal");
         float y = Input.GetAxisRaw("Vertical");
         moveInput = new Vector2(x, y).normalized;
@@ -60,6 +85,11 @@ public class PlayerMovement2D : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (ForceFrozen)
+        {
+            rb.linearVelocity = Vector2.zero;
+            return;
+        }
         rb.linearVelocity = moveInput * moveSpeed;
     }
 
@@ -70,51 +100,26 @@ public class PlayerMovement2D : MonoBehaviour
         bool isMoving = moveInput != Vector2.zero;
         animator.SetBool("IsMoving", isMoving);
 
-        // Determine dominant direction
         Vector2 dir = isMoving ? moveInput : lastMoveDir;
-
-        // Pick dominant axis – horizontal wins if equal
         float absX = Mathf.Abs(dir.x);
         float absY = Mathf.Abs(dir.y);
 
         if (absX >= absY)
         {
-            // Horizontal dominant
-            if (dir.x < 0)
-            {
-                currentDir = FacingDir.Left;
-                animator.SetFloat("MoveX", -1);
-                animator.SetFloat("MoveY", 0);
-            }
-            else
-            {
-                currentDir = FacingDir.Right;
-                animator.SetFloat("MoveX", 1);
-                animator.SetFloat("MoveY", 0);
-            }
+            currentDir = dir.x < 0 ? FacingDir.Left : FacingDir.Right;
+            animator.SetFloat("MoveX", dir.x < 0 ? -1 : 1);
+            animator.SetFloat("MoveY", 0);
         }
         else
         {
-            // Vertical dominant
-            if (dir.y < 0)
-            {
-                currentDir = FacingDir.Down;
-                animator.SetFloat("MoveX", 0);
-                animator.SetFloat("MoveY", -1);
-            }
-            else
-            {
-                currentDir = FacingDir.Up;
-                animator.SetFloat("MoveX", 0);
-                animator.SetFloat("MoveY", 1);
-            }
+            currentDir = dir.y < 0 ? FacingDir.Down : FacingDir.Up;
+            animator.SetFloat("MoveX", 0);
+            animator.SetFloat("MoveY", dir.y < 0 ? -1 : 1);
         }
 
-        // Force animator to re-evaluate when direction changes
         if (currentDir != lastDir)
         {
             lastDir = currentDir;
-            // Briefly reset IsMoving to force transition re-check
             if (isMoving)
             {
                 animator.SetBool("IsMoving", false);

@@ -211,16 +211,26 @@ public class ResonanceCutsceneManager : MonoBehaviour
         }
 
         SetPlayerFrozen(false);
-        Debug.Log("[RESONANCE CS] Complete!");
+        // Also clear the static flag
+        PlayerMovement2D.ForceFrozen = false;
+        Debug.Log("[RESONANCE CS] Player unfrozen after full sequence");
     }
 
     void SetPlayerFrozen(bool frozen)
     {
+        // Use static flag so it persists across scene reloads
+        PlayerMovement2D.ForceFrozen = frozen;
+        Debug.Log($"[RESONANCE CS] ForceFrozen={frozen}");
+
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player == null) return;
+
         var movement = player.GetComponent<PlayerMovement2D>();
-        if (movement != null) movement.enabled = !frozen;
+        if (movement != null)
+            movement.enabled = !frozen;
+
         var rb = player.GetComponent<Rigidbody2D>();
-        if (rb != null && frozen) rb.linearVelocity = Vector2.zero;
+        if (rb != null && frozen)
+            rb.linearVelocity = Vector2.zero;
     }
 }
