@@ -14,8 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lines:
   - speakerName: Edward
+    portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
+    text: More fighting..
+    typingSpeed: 0
+    autoAdvance: 0
+    autoAdvanceDelay: 0
+  - speakerName: Hirose
     portrait: {fileID: 0}
-    text: Ohh god what the fuck is happening mannnn
+    text: Hey, chill! Are you trying to hit me??
     typingSpeed: 0
     autoAdvance: 0
     autoAdvanceDelay: 0

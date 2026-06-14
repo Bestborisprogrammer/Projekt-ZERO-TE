@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lines:
   - speakerName: Edward
-    portrait: {fileID: 0}
+    portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
     text: 'Hmm? The sign says ,,Shop" over there, but why would there be a store
       in such a place? Is it even open? Who manages it? '
     typingSpeed: 0
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Edward
-    portrait: {fileID: 0}
+    portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
     text: On the other hand, I might be able to buy something with this gold for
       my adventure incase it is open...
     typingSpeed: 0

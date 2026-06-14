@@ -15,7 +15,7 @@ MonoBehaviour:
   lines:
   - speakerName: Edward
     portrait: {fileID: 0}
-    text: oh god the demons mannnn
+    text: What's happening to me..? I wanna fight more..
     typingSpeed: 0
     autoAdvance: 0
     autoAdvanceDelay: 0

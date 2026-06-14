@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8eec2a7d6085f943b79425f5fa08148, type: 3}
   m_Name: Resonance
   m_EditorClassIdentifier: 
-  spellName: boom
-  description: A basic fire attack.
+  spellName: 1st Resonance attack
+  description: NA
   affinity: 1
   spellType: 0
   manaCost: 1
