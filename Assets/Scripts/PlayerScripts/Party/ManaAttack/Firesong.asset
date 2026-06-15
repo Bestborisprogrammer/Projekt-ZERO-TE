@@ -25,7 +25,7 @@ MonoBehaviour:
   flatHeal: 0
   percentHeal: 0
   statType: 1
-  statModifier: 10
+  statModifier: 4
   modifierDuration: 2
   statusEffect: 0
   statusChance: 0

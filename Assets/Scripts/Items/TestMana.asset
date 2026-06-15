@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: TestMana
   m_EditorClassIdentifier: 
   itemName: Mana-Crystal
-  description: Restores Mana.
+  description: Restores Mana
   icon: {fileID: 0}
   itemType: 3
   itemTarget: 0
-  buyPrice: 50
-  sellPrice: 25
+  buyPrice: 20
+  sellPrice: 10
   flatHeal: 30
   percentHeal: 0
   statType: 1

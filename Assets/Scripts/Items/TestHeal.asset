@@ -13,11 +13,13 @@ MonoBehaviour:
   m_Name: TestHeal
   m_EditorClassIdentifier: 
   itemName: Potion
-  description: Restores HP.
+  description: Restores HP
   icon: {fileID: 0}
   itemType: 0
   itemTarget: 0
-  flatHeal: 50
+  buyPrice: 15
+  sellPrice: 10
+  flatHeal: 40
   percentHeal: 0
   statType: 1
   statModifier: 10

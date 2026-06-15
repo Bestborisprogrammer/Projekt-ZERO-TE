@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: TestBuff
   m_EditorClassIdentifier: 
   itemName: Strong Strength-Potion
-  description: Buffs Attack for 3 turns.
+  description: Buffs Attack for 3 turns
   icon: {fileID: 0}
   itemType: 1
   itemTarget: 0
-  buyPrice: 50
+  buyPrice: 40
   sellPrice: 25
   flatHeal: 50
   percentHeal: 0
   statType: 1
-  statModifier: 100
+  statModifier: 3
   modifierDuration: 3
   statusEffect: 0
   statusChance: 0
