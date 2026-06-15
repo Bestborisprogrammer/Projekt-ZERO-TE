@@ -15,7 +15,14 @@ MonoBehaviour:
   lines:
   - speakerName: Edward
     portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
-    text: How did I win.. I've never fought anyone ever...
+    text: Why would these things attack me? Where even am I?
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
+  - speakerName: Edward
+    portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
+    text: Well, my only way to go now is forward... I can think about what happened
+      later.
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

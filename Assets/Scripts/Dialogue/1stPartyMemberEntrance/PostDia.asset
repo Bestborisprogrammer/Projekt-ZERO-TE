@@ -15,13 +15,24 @@ MonoBehaviour:
   lines:
   - speakerName: Hirose
     portrait: {fileID: 0}
-    text: Thanks for earlier, I have to ask though, what is your plan going forward?
+    text: I appreciate your help for earlier, even if I didn't need it. Can you tell
+      me your name and what your trying to achieve?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Edward
     portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
-    text: Going up to the top of this place, you should come with me.
+    text: My name is Edward Figglebottom. I fell down to this place around 15 minutes
+      ago, my goal is to escape from here. The only place going forward seems to
+      be up the stairs... so I just kept following it. If I want to make it out of
+      here I will need some help.
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
+  - speakerName: Hirose
+    portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
+    text: Those were my exact thoughts too. Since we're both humans and we also coincidentally
+      share the same goal, I guess we can cooperate for the time being.
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

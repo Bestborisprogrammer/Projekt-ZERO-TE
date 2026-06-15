@@ -15,7 +15,7 @@ MonoBehaviour:
   lines:
   - speakerName: Hirose
     portrait: {fileID: 0}
-    text: Wanted to thank you one more time, let's get going now.
+    text: Hmm? Is there anything you want to say?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

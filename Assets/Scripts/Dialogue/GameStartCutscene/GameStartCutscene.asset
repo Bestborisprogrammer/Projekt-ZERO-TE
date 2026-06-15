@@ -19,6 +19,12 @@ MonoBehaviour:
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
+  - speakerName: Edward
+    portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
+    text: Maybe I should pick that up.
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
   - speakerName: ???
     portrait: {fileID: 8605205185410670490, guid: 6017e18dd2d32164098c590f999b9bb2, type: 3}
     text: I'll kill you!

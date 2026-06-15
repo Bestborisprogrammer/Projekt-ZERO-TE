@@ -13,15 +13,16 @@ MonoBehaviour:
   m_Name: PreDia
   m_EditorClassIdentifier: 
   lines:
-  - speakerName: 
+  - speakerName: Narrator
     portrait: {fileID: 0}
-    text: you see a guy and a couple monsters fighting
+    text: '*you see a guy and a couple monsters fighting*'
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Edward
     portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
-    text: I guess I should help him, I really need more people alongside me.
+    text: I guess I should help him, I really need more people to tag along. I probably
+      can't survive out here alone.
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

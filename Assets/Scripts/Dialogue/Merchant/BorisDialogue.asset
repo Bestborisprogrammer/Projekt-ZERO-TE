@@ -15,19 +15,27 @@ MonoBehaviour:
   lines:
   - speakerName: Boris
     portrait: {fileID: 4796411974396303719, guid: e640810668840b540a9a78a05e45a5c3, type: 3}
-    text: Hey! Are you new here?
+    text: Oi Stranger! The name's Boris, I am but a humble trader.  Are you new here
+      by any chance?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Edward
     portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
-    text: Yeah.. What is this place?
+    text: Yeah... I'm Edward, anyways, how did you set up shop all the way out here?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Boris
     portrait: {fileID: 4796411974396303719, guid: e640810668840b540a9a78a05e45a5c3, type: 3}
-    text: It's a dangerous world, you'll have to buy a few supplies to survive!
+    text: Don't worry about the details my friend. Just make sure to buy my wares
+      if you want the slightest chance of survival.
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
+  - speakerName: Edward
+    portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
+    text: Let's see your stuff then.
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
