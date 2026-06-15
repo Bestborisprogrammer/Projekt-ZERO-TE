@@ -18,7 +18,7 @@ MonoBehaviour:
   startingLevel: 2
   maxHP: 65
   attack: 11
-  defense: 6
+  defense: 3
   speed: 6
   maxMana: 50
   magic: 12

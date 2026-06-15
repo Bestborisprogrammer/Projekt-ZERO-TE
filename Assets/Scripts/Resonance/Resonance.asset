@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spellName: 1st Resonance attack
   description: NA
-  affinity: 1
+  affinity: 2
   spellType: 0
   manaCost: 1
   levelRequirement: 1
