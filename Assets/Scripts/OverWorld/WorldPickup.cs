@@ -95,6 +95,7 @@ public class WorldPickup : MonoBehaviour
                     GearManager.Instance.AddGearToInventory(gear);
                     Debug.Log($"Picked up {gear.gearName}!");
                 }
+                AudioManager.Instance?.PlayPickup();
                 break;
         }
 

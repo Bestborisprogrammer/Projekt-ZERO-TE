@@ -15,15 +15,15 @@ MonoBehaviour:
   lines:
   - speakerName: Hirose
     portrait: {fileID: 0}
-    text: I appreciate your help for earlier, even if I didn't need it. Can you tell
-      me your name and what your trying to achieve?
+    text: I appreciate your help for earlier, even if I didn't need it. What are
+      you trying to achieve?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Edward
     portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
-    text: I'm Edward Figglebottom. I fell down to this place around 15 minutes ago,
-      my goal is to escape from here.
+    text: I fell down to this place around 15 minutes ago, my goal is to escape from
+      here.
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

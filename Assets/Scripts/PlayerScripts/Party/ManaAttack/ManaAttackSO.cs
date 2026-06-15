@@ -44,4 +44,7 @@ public class ManaAttackSO : ScriptableObject
 
     [Header("Dark Specific")]
     [Range(0f, 1f)] public float defenseReduction = 0.25f;
+
+    [Header("Sound")]
+    public AudioClip spellSound;
 }

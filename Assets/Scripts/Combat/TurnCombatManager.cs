@@ -426,6 +426,7 @@ public class TurnCombatManager : MonoBehaviour
         Combatant target = enemies[selectedEnemyIndex];
         int damage = Mathf.Max(1, attacker.Attack - target.Defense);
         bool hit = ResolveAttack(attacker, target, damage, "basic attack", true);
+        AudioManager.Instance?.PlayHit();
 
         // Self damage in resonance from basic attack
         if (resonanceMode && hit && ResonanceManager.Instance != null)
@@ -561,6 +562,8 @@ public class TurnCombatManager : MonoBehaviour
 
         combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}!{affinityNote}");
         if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
+        if (spell.spellSound != null)
+            AudioManager.Instance?.PlaySFX(spell.spellSound);
 
         bool hit = ResolveAttack(attacker, target, damage, spell.spellName);
         if (hit) ApplySpellEffects(spell, attacker, target, damage);
@@ -684,6 +687,8 @@ public class TurnCombatManager : MonoBehaviour
             string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref mult);
             int scaledDamage = Mathf.RoundToInt(spell.flatDamage * (1f + attacker.Magic * 0.015f));
             int damage = Mathf.Max(1, Mathf.RoundToInt((scaledDamage - target.Defense) * mult));
+            if (spell.spellSound != null)
+                AudioManager.Instance?.PlaySFX(spell.spellSound);
 
             if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
 

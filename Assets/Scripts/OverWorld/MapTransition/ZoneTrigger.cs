@@ -83,7 +83,8 @@ public class ZoneTrigger : MonoBehaviour
             : destinationPoint != null
                 ? destinationPoint.position
                 : transform.position;
-
+        
+        AudioManager.Instance?.PlayTransition();
         FadeTransition.Instance.FadeToPosition(target, () =>
         {
             Debug.Log($"Teleported to {target}");

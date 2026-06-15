@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class MerchantNPC : MonoBehaviour
 {
@@ -96,21 +97,21 @@ public class MerchantNPC : MonoBehaviour
     void OpenShop()
     {
         shopOpen = true;
-
         if (interactPrompt != null)
             interactPrompt.gameObject.SetActive(false);
-
+        AudioManager.Instance?.PlayShopMusic();
         shopPanel?.OpenShop(merchantName);
     }
 
     public void CloseShop()
     {
-        if (!shopOpen)
-            return;
+        Debug.Log("SHOP PANEL CLOSESHOP CALLED");
 
         shopOpen = false;
 
         shopPanel?.CloseShop();
+
+        AudioManager.Instance?.PlayOverworldMusic();
 
         if (playerInRange && interactPrompt != null)
             interactPrompt.gameObject.SetActive(true);

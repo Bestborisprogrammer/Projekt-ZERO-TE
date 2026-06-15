@@ -32,3 +32,4 @@ MonoBehaviour:
   statusDuration: 2
   dotPercent: 0.05
   defenseReduction: 0.25
+  spellSound: {fileID: 8300000, guid: cafd6706cff9b6c4d9b8510082cba8fb, type: 3}
