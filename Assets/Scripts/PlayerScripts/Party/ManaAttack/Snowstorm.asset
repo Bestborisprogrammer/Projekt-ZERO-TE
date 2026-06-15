@@ -13,12 +13,15 @@ MonoBehaviour:
   m_Name: Snowstorm
   m_EditorClassIdentifier: 
   spellName: Snowstorm
-  description: A basic ice attack
+  description: A basic ice attack targeting one enemy
   affinity: 2
   spellType: 0
   manaCost: 4
   levelRequirement: 1
   flatDamage: 9
+  isAOE: 0
+  dealsSelfDamage: 0
+  selfDamagePercent: 0.15
   flatHeal: 0
   percentHeal: 0
   statType: 0
@@ -29,4 +32,3 @@ MonoBehaviour:
   statusDuration: 2
   dotPercent: 0.05
   defenseReduction: 0.25
-  isAOE: 0
