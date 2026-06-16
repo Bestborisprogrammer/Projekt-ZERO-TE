@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -47,7 +47,7 @@ public class ResonanceCutsceneManager : MonoBehaviour
             WaitingForResonanceBattleReturn = false;
             // Keep player frozen immediately on scene load
             SetPlayerFrozen(true);
-            Debug.Log("[RESONANCE CS] Returned from resonance battle – freezing player");
+            Debug.Log("[RESONANCE CS] Returned from resonance battle â€“ freezing player");
             StartCoroutine(PostResonanceBattleSequence());
             return;
         }
@@ -57,7 +57,7 @@ public class ResonanceCutsceneManager : MonoBehaviour
             WaitingForDuelReturn = false;
             // Keep player frozen immediately on scene load
             SetPlayerFrozen(true);
-            Debug.Log("[RESONANCE CS] Returned from duel – freezing player");
+            Debug.Log("[RESONANCE CS] Returned from duel â€“ freezing player");
             StartCoroutine(PostDuelSequence());
         }
     }
@@ -159,7 +159,7 @@ public class ResonanceCutsceneManager : MonoBehaviour
 
         SetPlayerFrozen(true);
 
-        // Knockout dialogue plays HERE – after Edward loses
+        // Knockout dialogue plays HERE â€“ after Edward loses
         if (knockoutDialogue != null)
         {
             Debug.Log("[RESONANCE CS] Playing knockout dialogue");
