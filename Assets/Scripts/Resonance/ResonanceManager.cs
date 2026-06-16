@@ -20,18 +20,14 @@ public class ResonanceManager : MonoBehaviour
     [Header("Resonance Skills")]
     public List<ManaAttackSO> resonanceSkills = new();
 
-    private Image resonanceOverlay;
+    [Header("Basic Attack Recoil")]
+    public float basicAttackSelfDamagePercent = 0.05f;
 
-    // Pending flags
-    public static bool WaitingForResonanceBattleReturn { get; set; } = false;
-    public static bool WaitingForDuelReturn { get; set; } = false;
+    private Image resonanceOverlay;
 
     public System.Action onMeterFull;
     public System.Action onResonanceStart;
     public System.Action onResonanceEnd;
-
-    [Header("Basic Attack Recoil")]
-    public float basicAttackSelfDamagePercent = 0.05f; // 5% max HP
 
     void Awake()
     {
@@ -84,7 +80,6 @@ public class ResonanceManager : MonoBehaviour
         if (currentMeter >= 100f) onMeterFull?.Invoke();
     }
 
-    // Shows a dim purple tint during resonance battle
     public void ShowResonanceTint()
     {
         if (resonanceOverlay == null) return;
@@ -104,16 +99,11 @@ public class ResonanceManager : MonoBehaviour
     public IEnumerator TriggerResonanceFlash(System.Action onComplete = null)
     {
         resonanceOverlay.gameObject.SetActive(true);
-        Debug.Log("[RESONANCE] Flash starting");
-
-        // Each flash: bright white-purple ? black
-        // Uses screen-tearing style rapid alternation
         Color purple = new Color(0.7f, 0f, 1f, 1f);
         Color white = new Color(1f, 0.8f, 1f, 1f);
         Color black = new Color(0f, 0f, 0f, 1f);
         Color off = new Color(0f, 0f, 0f, 0f);
 
-        // Phase 1: Stutter flashes
         int[] frameTimes = { 3, 2, 2, 1, 2, 1, 1, 2, 1, 1 };
         foreach (int f in frameTimes)
         {
@@ -126,7 +116,6 @@ public class ResonanceManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.1f);
 
-        // Phase 2: Heavy slams
         for (int i = 0; i < 4; i++)
         {
             resonanceOverlay.color = white;
@@ -139,11 +128,9 @@ public class ResonanceManager : MonoBehaviour
             yield return new WaitForSeconds(0.03f);
         }
 
-        // Phase 3: Final blinding white hold
         resonanceOverlay.color = white;
         yield return new WaitForSeconds(0.25f);
 
-        // Fade from white to off
         float elapsed = 0f;
         while (elapsed < 0.4f)
         {
@@ -155,7 +142,6 @@ public class ResonanceManager : MonoBehaviour
 
         resonanceOverlay.color = off;
         resonanceOverlay.gameObject.SetActive(false);
-        Debug.Log("[RESONANCE] Flash done");
         onComplete?.Invoke();
     }
 

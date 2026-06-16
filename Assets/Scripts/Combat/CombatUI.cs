@@ -777,9 +777,6 @@ public class CombatUI : MonoBehaviour
 
     public void ShowVictory(int xp, int gold, DropResult drops)
     {
-        Debug.Log($"[COMBATUI] ShowVictory. IsResonating={ResonanceManager.IsResonating} " +
-            $"WaitingForResonanceBattleReturn={ResonanceCutsceneManager.WaitingForResonanceBattleReturn}");
-
         if (EncounterManager.ActiveCutscene != null)
         {
             EncounterManager.ActiveCutscene.OnBattleComplete();
@@ -792,13 +789,6 @@ public class CombatUI : MonoBehaviour
             EncounterManager.PendingRecruitMemberName =
                 EncounterManager.ActiveRecruitCutscene.newMember.characterName;
             EncounterManager.ActiveRecruitCutscene = null;
-        }
-
-        // Resonance battle won – signal post sequence
-        if (ResonanceManager.IsResonating)
-        {
-            Debug.Log("[COMBATUI] Resonance battle won – setting WaitingForResonanceBattleReturn");
-            ResonanceCutsceneManager.WaitingForResonanceBattleReturn = true;
         }
 
         victoryPanel.SetActive(true);
@@ -820,11 +810,18 @@ public class CombatUI : MonoBehaviour
         StartCoroutine(ReturnAfterDelay(3f));
     }
 
-    public void ShowGameOver()
+    // isForcedDuelLoss must be explicitly passed true ONLY from the scripted
+    // forced-loss duel path. Normal game overs pass false and do NOT touch
+    // any resonance flags.
+    public void ShowGameOver(bool isForcedDuelLoss)
     {
-        Debug.Log("[GAMEOVER] ShowGameOver called – signaling duel return");
-        ResonanceCutsceneManager.WaitingForDuelReturn = true;
-        ResonanceManager.Instance?.HideResonanceTint();
+        Debug.Log($"[GAMEOVER] isForcedDuelLoss={isForcedDuelLoss}");
+
+        if (isForcedDuelLoss)
+        {
+            ResonanceCutsceneManager.WaitingForDuelReturn = true;
+            ResonanceManager.Instance?.HideResonanceTint();
+        }
 
         foreach (var member in PartyManager.Instance.activeParty)
             member.currentHP = 1;

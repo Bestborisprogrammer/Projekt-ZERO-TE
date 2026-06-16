@@ -19,7 +19,7 @@ MonoBehaviour:
   maxHP: 50
   attack: 8
   defense: 4
-  speed: 3
+  speed: 5
   maxMana: 40
   magic: 10
   hpGrowth: 12

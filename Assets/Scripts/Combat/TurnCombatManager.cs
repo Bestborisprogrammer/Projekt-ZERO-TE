@@ -80,7 +80,6 @@ public class TurnCombatManager : MonoBehaviour
             Debug.Log("[COMBAT] Resonance battle");
             EncounterManager.IsResonanceBattle = false;
             resonanceMode = true;
-            // Show tint (already shown by cutscene manager but make sure)
             ResonanceManager.Instance?.ShowResonanceTint();
             StartResonanceTurn();
         }
@@ -88,7 +87,6 @@ public class TurnCombatManager : MonoBehaviour
         {
             Debug.Log("[COMBAT] Forced loss duel – resonance stays active");
             EncounterManager.IsForcedLossBattle = false;
-            // Still resonating for duel
             resonanceMode = true;
             ResonanceManager.Instance?.ShowResonanceTint();
             StartResonanceTurn();
@@ -106,12 +104,10 @@ public class TurnCombatManager : MonoBehaviour
         }
     }
 
-    // ── Resonance Turn System ─────────────────────
     void StartResonanceTurn()
     {
         if (!combatActive) return;
 
-        // Always find Edward (first non-enemy party member)
         var edward = party.FirstOrDefault(p => p.IsAlive);
         if (edward == null) { StartTurn(); return; }
 
@@ -123,7 +119,6 @@ public class TurnCombatManager : MonoBehaviour
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         UpdateStatusIndicators();
 
-        // Show resonance skills
         var resonanceSpells = ResonanceManager.Instance?.resonanceSkills
             ?? new List<ManaAttackSO>();
         combatUI.ShowSpellButtons(resonanceSpells, edward.GetCurrentMana());
@@ -133,7 +128,6 @@ public class TurnCombatManager : MonoBehaviour
         Debug.Log($"[RESONANCE TURN] Edward's turn. Skills available: {resonanceSpells.Count}");
     }
 
-    // Called after resonance action completes
     public void ResonanceNextTurn()
     {
         if (!combatActive) return;
@@ -145,13 +139,8 @@ public class TurnCombatManager : MonoBehaviour
             return;
         }
 
-        // Edward goes again – skip all enemies
-        var edward = party.FirstOrDefault(p => p.IsAlive);
-        if (edward != null)
-        {
-            foreach (var enemy in enemies.Where(e => e.IsAlive))
-                combatUI.ShowCombatLog($"{enemy.Name}'s turn is skipped!");
-        }
+        foreach (var enemy in enemies.Where(e => e.IsAlive))
+            combatUI.ShowCombatLog($"{enemy.Name}'s turn is skipped!");
 
         combatUI.ShowCombatLog(" ", () => StartResonanceTurn());
     }
@@ -221,14 +210,6 @@ public class TurnCombatManager : MonoBehaviour
     {
         if (!combatActive) return;
 
-        // Forced loss – game over immediately when it's player turn
-        // (Hirose has already won by this point)
-        if (EncounterManager.IsForcedLossBattle && !current.IsEnemy)
-        {
-            // Check if any enemy is alive – if so Hirose hasn't beaten us yet
-            // Force loss after first enemy turn to give battle feel
-        }
-
         if (current.IsFrozen)
         {
             current.ConsumeFreezeIfActive();
@@ -292,7 +273,10 @@ public class TurnCombatManager : MonoBehaviour
         return comboMsg;
     }
 
-    void ApplySpellEffects(ManaAttackSO spell, Combatant attacker, Combatant target, int damage)
+    // FIXED: wasJustThawed now only true if target WAS frozen before this hit
+    // (we check this via the combo message instead of guessing from current state)
+    void ApplySpellEffects(ManaAttackSO spell, Combatant attacker, Combatant target,
+        int damage, bool targetWasFrozenBeforeHit = false)
     {
         if (spell.affinity == SpellAffinity.Light)
         {
@@ -308,13 +292,19 @@ public class TurnCombatManager : MonoBehaviour
             }
         }
 
-        bool wasJustThawed = spell.affinity == SpellAffinity.Fire && !target.IsFrozen;
-        if (!wasJustThawed && spell.statusEffect != StatusEffectType.None)
+        // Only skip Burn application if THIS specific hit just thawed a frozen target
+        // (Fire+Freeze combo consumes the hit as a thaw instead of applying Burn)
+        bool skipStatusBecauseJustThawed = spell.affinity == SpellAffinity.Fire && targetWasFrozenBeforeHit;
+
+        if (!skipStatusBecauseJustThawed && spell.statusEffect != StatusEffectType.None)
         {
             int speedReduction = spell.affinity == SpellAffinity.Water ? 3 : 0;
             target.ApplyStatusEffect(spell.statusEffect, spell.statusChance,
                 spell.statusDuration, spell.dotPercent, spell.defenseReduction, speedReduction);
             bool wasApplied = target.HasStatusEffect(spell.statusEffect);
+
+            Debug.Log($"[STATUS APPLY] {spell.spellName} -> {spell.statusEffect} on {target.Name}. " +
+                $"chance={spell.statusChance} applied={wasApplied} skippedDueToThaw={skipStatusBecauseJustThawed}");
 
             if (wasApplied)
                 combatUI.ShowCombatLog($"{target.Name} afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
@@ -322,8 +312,6 @@ public class TurnCombatManager : MonoBehaviour
                 combatUI.ShowCombatLog($"{spell.spellName} effect missed!");
         }
 
-        // Self damage for resonance skills
-        // In ApplySpellEffects replace self damage block:
         if (spell.dealsSelfDamage)
         {
             var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
@@ -347,27 +335,6 @@ public class TurnCombatManager : MonoBehaviour
         }
 
         UpdateStatusIndicators();
-    }
-    void HandleResonanceDeath()
-    {
-        Debug.Log("[RESONANCE DEATH] Edward died from recoil – triggering forced loss");
-        combatActive = false;
-        resonanceMode = false;
-        ResonanceManager.Instance?.HideResonanceTint();
-
-        // Signal duel return (reuse same post-duel sequence)
-        ResonanceCutsceneManager.WaitingForDuelReturn = true;
-
-        // Restore HP to 1 so he's not dead in overworld
-        foreach (var member in PartyManager.Instance.activeParty)
-            if (!member.IsAlive) member.currentHP = 1;
-
-        combatUI.ShowCombatLog("...", () =>
-        {
-            EncounterManager.CurrentEnemies.Clear();
-            UnityEngine.SceneManagement.SceneManager.LoadScene(
-                combatUI.overworldScene);
-        });
     }
 
     void ApplyEnemySpellEffects(EnemyManaAttackSO spell, Combatant attacker,
@@ -396,6 +363,8 @@ public class TurnCombatManager : MonoBehaviour
         bool isCrit = canCrit && Random.value < attacker.CritRate;
         if (isCrit) damage = Mathf.RoundToInt(damage * attacker.CritDamage);
         string critTag = isCrit ? " CRITICAL HIT!" : "";
+
+        AudioManager.Instance?.PlayHit();
 
         if (target.CombatStyle == CombatStyle.Block && target.IsBlocking)
         {
@@ -426,9 +395,7 @@ public class TurnCombatManager : MonoBehaviour
         Combatant target = enemies[selectedEnemyIndex];
         int damage = Mathf.Max(1, attacker.Attack - target.Defense);
         bool hit = ResolveAttack(attacker, target, damage, "basic attack", true);
-        AudioManager.Instance?.PlayHit();
 
-        // Self damage in resonance from basic attack
         if (resonanceMode && hit && ResonanceManager.Instance != null)
         {
             var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
@@ -443,7 +410,6 @@ public class TurnCombatManager : MonoBehaviour
                 combatUI.UpdateAllHP(party, enemies);
                 Debug.Log($"[BASIC RECOIL] {attacker.Name} HP:{casterRef.currentHP}/{casterRef.MaxHP}");
 
-                // Death from recoil
                 if (!casterRef.IsAlive)
                 {
                     CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
@@ -546,12 +512,15 @@ public class TurnCombatManager : MonoBehaviour
             return;
         }
 
-        // Single target damage
         while (selectedEnemyIndex < enemies.Count && !enemies[selectedEnemyIndex].IsAlive)
             selectedEnemyIndex++;
         if (selectedEnemyIndex >= enemies.Count) return;
 
         Combatant target = enemies[selectedEnemyIndex];
+
+        // Capture frozen state BEFORE combo resolution touches it
+        bool targetWasFrozenBeforeHit = target.IsFrozen;
+
         float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
             spell.affinity != SpellAffinity.None ? 1.5f : 1f;
         string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref affinityMult);
@@ -561,12 +530,11 @@ public class TurnCombatManager : MonoBehaviour
         string affinityNote = affinityMult > 1f ? $" (x{affinityMult:F1}!)" : "";
 
         combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}!{affinityNote}");
+        if (spell.spellSound != null) AudioManager.Instance?.PlaySFX(spell.spellSound);
         if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
-        if (spell.spellSound != null)
-            AudioManager.Instance?.PlaySFX(spell.spellSound);
 
         bool hit = ResolveAttack(attacker, target, damage, spell.spellName);
-        if (hit) ApplySpellEffects(spell, attacker, target, damage);
+        if (hit) ApplySpellEffects(spell, attacker, target, damage, targetWasFrozenBeforeHit);
 
         combatUI.UpdateAllHP(party, enemies);
         combatUI.BuildEnemyTargetButtons(enemies);
@@ -604,6 +572,7 @@ public class TurnCombatManager : MonoBehaviour
         var combatant = party.Find(p => p.Name == target.Name);
         combatant?.Refresh();
 
+        if (spell.spellSound != null) AudioManager.Instance?.PlaySFX(spell.spellSound);
         CombatSpriteManager.Instance?.ShowDamageNumber(target.Name, heal, true);
         combatUI.ShowCombatLog($"{caster.Name} uses {spell.spellName} on {target.Name}! +{heal} HP!");
         combatUI.UpdateAllHP(party, enemies);
@@ -622,6 +591,7 @@ public class TurnCombatManager : MonoBehaviour
         var combatant = party.Find(p => p.Name == target.Name);
         combatant?.Refresh();
 
+        if (spell.spellSound != null) AudioManager.Instance?.PlaySFX(spell.spellSound);
         combatUI.ShowCombatLog($"{caster.Name} uses {spell.spellName} on {target.Name}! " +
             $"{spell.statType} +{spell.statModifier} for {spell.modifierDuration} turns!");
         combatUI.UpdateAllHP(party, enemies);
@@ -643,6 +613,7 @@ public class TurnCombatManager : MonoBehaviour
         var enemyInst = GetEnemyInstance(target.Name);
 
         combatUI.ShowCombatLog($"{caster.Name} uses {spell.spellName} on {target.Name}!");
+        if (spell.spellSound != null) AudioManager.Instance?.PlaySFX(spell.spellSound);
 
         if (enemyInst != null && spell.statModifier != 0)
         {
@@ -679,21 +650,23 @@ public class TurnCombatManager : MonoBehaviour
             spell.affinity != SpellAffinity.None ? 1.5f : 1f;
 
         combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}! Hits all enemies!");
+        if (spell.spellSound != null) AudioManager.Instance?.PlaySFX(spell.spellSound);
 
         bool anyDefeated = false;
         foreach (var target in aliveEnemies)
         {
+            bool targetWasFrozenBeforeHit = target.IsFrozen;
             float mult = affinityMult;
             string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref mult);
             int scaledDamage = Mathf.RoundToInt(spell.flatDamage * (1f + attacker.Magic * 0.015f));
             int damage = Mathf.Max(1, Mathf.RoundToInt((scaledDamage - target.Defense) * mult));
-            if (spell.spellSound != null)
-                AudioManager.Instance?.PlaySFX(spell.spellSound);
 
             if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
 
             if (target.CombatStyle == CombatStyle.Evade && target.TryEvade())
             { combatUI.ShowCombatLog($"{target.Name} evaded!"); continue; }
+
+            AudioManager.Instance?.PlayHit();
 
             if (target.CombatStyle == CombatStyle.Block && target.IsBlocking)
             {
@@ -709,9 +682,7 @@ public class TurnCombatManager : MonoBehaviour
                 combatUI.ShowCombatLog($"{target.Name} takes {damage}!");
             }
 
-            // Apply status effects per target but NOT self damage here
-            // Only apply light heal and status effects, skip self damage in ApplySpellEffects for AOE
-            ApplySpellEffectsNoSelfDamage(spell, attacker, target, damage);
+            ApplySpellEffectsNoSelfDamage(spell, attacker, target, damage, targetWasFrozenBeforeHit);
 
             if (!target.IsAlive)
             {
@@ -721,8 +692,6 @@ public class TurnCombatManager : MonoBehaviour
             }
         }
 
-        // Self damage ONCE after hitting all targets
-        // After AOE self damage block replace with:
         if (spell.dealsSelfDamage)
         {
             var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
@@ -733,7 +702,6 @@ public class TurnCombatManager : MonoBehaviour
                 attacker.Refresh();
                 CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
                 combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
-                combatUI.UpdateAllHP(party, enemies);
 
                 if (!casterRef.IsAlive)
                 {
@@ -769,9 +737,8 @@ public class TurnCombatManager : MonoBehaviour
         });
     }
 
-    // Same as ApplySpellEffects but skips self damage (used by AOE)
     void ApplySpellEffectsNoSelfDamage(ManaAttackSO spell, Combatant attacker,
-        Combatant target, int damage)
+        Combatant target, int damage, bool targetWasFrozenBeforeHit)
     {
         if (spell.affinity == SpellAffinity.Light)
         {
@@ -787,8 +754,9 @@ public class TurnCombatManager : MonoBehaviour
             }
         }
 
-        bool wasJustThawed = spell.affinity == SpellAffinity.Fire && !target.IsFrozen;
-        if (!wasJustThawed && spell.statusEffect != StatusEffectType.None)
+        bool skipStatusBecauseJustThawed = spell.affinity == SpellAffinity.Fire && targetWasFrozenBeforeHit;
+
+        if (!skipStatusBecauseJustThawed && spell.statusEffect != StatusEffectType.None)
         {
             int speedReduction = spell.affinity == SpellAffinity.Water ? 3 : 0;
             target.ApplyStatusEffect(spell.statusEffect, spell.statusChance,
@@ -904,8 +872,8 @@ public class TurnCombatManager : MonoBehaviour
                 if (dotLogs.Count > 0)
                     combatUI.ShowCombatLogs(dotLogs, () =>
                         combatUI.ShowCombatLog(" ", () =>
-                        { combatUI.ShowGameOver(); combatActive = false; }));
-                else { combatUI.ShowGameOver(); combatActive = false; }
+                        { combatUI.ShowGameOver(false); combatActive = false; }));
+                else { combatUI.ShowGameOver(false); combatActive = false; }
                 return;
             }
 
@@ -922,8 +890,8 @@ public class TurnCombatManager : MonoBehaviour
             if (dotLogs.Count > 0)
                 combatUI.ShowCombatLogs(dotLogs, () =>
                     combatUI.ShowCombatLog(" ", () =>
-                    { combatUI.ShowGameOver(); combatActive = false; }));
-            else { combatUI.ShowGameOver(); combatActive = false; }
+                    { combatUI.ShowGameOver(false); combatActive = false; }));
+            else { combatUI.ShowGameOver(false); combatActive = false; }
             return;
         }
 
@@ -966,13 +934,39 @@ public class TurnCombatManager : MonoBehaviour
 
     public void NextTurnPublic() => NextTurn();
 
+    // HandleResonanceDeath now ONLY fires the duel-return flag if this really
+    // is the scripted forced-loss duel. Otherwise it's a normal game over.
+    void HandleResonanceDeath()
+    {
+        Debug.Log("[RESONANCE DEATH] Caster died from recoil");
+        combatActive = false;
+        resonanceMode = false;
+        ResonanceManager.Instance?.HideResonanceTint();
+
+        bool isScriptedDuel = ResonanceManager.ScriptedResonanceActive;
+        Debug.Log($"[RESONANCE DEATH] ScriptedResonanceActive={isScriptedDuel}");
+
+        if (isScriptedDuel)
+        {
+            ResonanceCutsceneManager.WaitingForDuelReturn = true;
+        }
+
+        foreach (var member in PartyManager.Instance.activeParty)
+            if (!member.IsAlive) member.currentHP = 1;
+
+        combatUI.ShowCombatLog("...", () =>
+        {
+            EncounterManager.CurrentEnemies.Clear();
+            UnityEngine.SceneManagement.SceneManager.LoadScene(combatUI.overworldScene);
+        });
+    }
+
     void HandleVictory()
     {
         resonanceMode = false;
         ResonanceManager.Instance?.OnBattleComplete();
         ResonanceManager.Instance?.HideResonanceTint();
 
-        // Recruit cutscene
         if (EncounterManager.ActiveRecruitCutscene != null)
         {
             EncounterManager.PendingRecruitCompletion = true;
@@ -987,10 +981,10 @@ public class TurnCombatManager : MonoBehaviour
             EncounterManager.ActiveCutscene = null;
         }
 
-        // Resonance battle won
-        if (ResonanceManager.IsResonating)
+        // Only flag resonance return if this is the actual scripted resonance battle
+        if (ResonanceManager.IsResonating && ResonanceManager.ScriptedResonanceActive)
         {
-            Debug.Log("[VICTORY] Resonance battle won – setting WaitingForResonanceBattleReturn");
+            Debug.Log("[VICTORY] Scripted resonance battle won – setting WaitingForResonanceBattleReturn");
             ResonanceCutsceneManager.WaitingForResonanceBattleReturn = true;
         }
 
