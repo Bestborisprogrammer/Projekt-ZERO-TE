@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TempHirose
   m_EditorClassIdentifier: 
   enemyName: Hirose
-  sprite: {fileID: -7903754828726696838, guid: afdfe06408cddb444b57c4eb65c0838a, type: 3}
+  sprite: {fileID: 7884561506904143944, guid: 42b21f83d71b8c248be7964d1821a046, type: 3}
   level: 1
   maxHP: 5000
   attack: 8

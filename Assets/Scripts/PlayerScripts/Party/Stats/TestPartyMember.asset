@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: TestPartyMember
   m_EditorClassIdentifier: 
   characterName: Hirose
-  portrait: {fileID: -7903754828726696838, guid: afdfe06408cddb444b57c4eb65c0838a, type: 3}
-  headPortrait: {fileID: -7903754828726696838, guid: adc875e48d55fb94c8080cb9d1ceb3a9, type: 3}
+  portrait: {fileID: 7884561506904143944, guid: 42b21f83d71b8c248be7964d1821a046, type: 3}
+  headPortrait: {fileID: 2378355503943272512, guid: d5c8eb7167e897d45b7fce5da898e35a, type: 3}
   startingLevel: 2
   maxHP: 65
   attack: 11

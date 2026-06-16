@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lines:
   - speakerName: Hirose
-    portrait: {fileID: 0}
+    portrait: {fileID: 2378355503943272512, guid: d5c8eb7167e897d45b7fce5da898e35a, type: 3}
     text: I appreciate your help for earlier, even if I didn't need it. What are
       you trying to achieve?
     typingSpeed: 0.1
@@ -35,13 +35,13 @@ MonoBehaviour:
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Hirose
-    portrait: {fileID: 0}
+    portrait: {fileID: 2378355503943272512, guid: d5c8eb7167e897d45b7fce5da898e35a, type: 3}
     text: Those were my exact thoughts too. My name is Hirose by the way.
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Hirose
-    portrait: {fileID: 0}
+    portrait: {fileID: 2378355503943272512, guid: d5c8eb7167e897d45b7fce5da898e35a, type: 3}
     text: Since we're both humans and we also coincidentally share the same goal,
       I guess we can cooperate for the time being.
     typingSpeed: 0.1
