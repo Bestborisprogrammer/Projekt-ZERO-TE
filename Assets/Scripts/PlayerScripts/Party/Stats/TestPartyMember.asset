@@ -16,18 +16,18 @@ MonoBehaviour:
   portrait: {fileID: 7884561506904143944, guid: 42b21f83d71b8c248be7964d1821a046, type: 3}
   headPortrait: {fileID: 2378355503943272512, guid: d5c8eb7167e897d45b7fce5da898e35a, type: 3}
   startingLevel: 2
-  maxHP: 65
-  attack: 11
-  defense: 3
+  maxHP: 52
+  attack: 6
+  defense: 2
   speed: 6
   maxMana: 50
-  magic: 12
-  hpGrowth: 8
-  attackGrowth: 4
+  magic: 13
+  hpGrowth: 7
+  attackGrowth: 2
   defenseGrowth: 1
   speedGrowth: 2
-  manaGrowth: 8
-  magicGrowth: 2
+  manaGrowth: 10
+  magicGrowth: 5
   baseXPToNextLevel: 100
   critRate: 0.05
   critDamage: 1.75

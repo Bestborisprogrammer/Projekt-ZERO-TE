@@ -17,9 +17,9 @@ MonoBehaviour:
   headPortrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
   startingLevel: 1
   maxHP: 50
-  attack: 9
+  attack: 8
   defense: 4
-  speed: 4
+  speed: 3
   maxMana: 40
   magic: 10
   hpGrowth: 12
@@ -27,7 +27,7 @@ MonoBehaviour:
   defenseGrowth: 2
   speedGrowth: 1
   manaGrowth: 6
-  magicGrowth: 2
+  magicGrowth: 3
   baseXPToNextLevel: 100
   critRate: 0.05
   critDamage: 1.75

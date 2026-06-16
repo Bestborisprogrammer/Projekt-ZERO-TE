@@ -39,3 +39,9 @@ MonoBehaviour:
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
+  - speakerName: Boris
+    portrait: {fileID: 4796411974396303719, guid: e640810668840b540a9a78a05e45a5c3, type: 3}
+    text: I REALLY recommend this Helmet.
+    typingSpeed: 0.1
+    autoAdvance: 0
+    autoAdvanceDelay: 0
