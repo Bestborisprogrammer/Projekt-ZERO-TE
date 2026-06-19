@@ -13,7 +13,6 @@ public class CharacterGear
     public GearSO ring1;
     public GearSO ring2;
 
-
     public CharacterGear(string name) { characterName = name; }
 
     public int TotalBonusMAG
@@ -95,7 +94,7 @@ public class GearManager : MonoBehaviour
 {
     public static GearManager Instance;
     public List<CharacterGear> allCharacterGear = new();
-    public List<GearStack> gearInventory = new(); // tracks quantities
+    public List<GearStack> gearInventory = new();
 
     void Awake()
     {
@@ -148,7 +147,6 @@ public class GearManager : MonoBehaviour
     {
         var charGear = GetGearFor(characterName);
 
-        // Unequip existing and return to inventory
         var current = charGear.GetSlot(gear.slot, isRing2);
         if (current != null)
         {
@@ -170,5 +168,21 @@ public class GearManager : MonoBehaviour
         AddGearToInventory(current);
         charGear.SetSlot(slot, null, isRing2);
         Debug.Log($"{characterName} unequipped {current.gearName}!");
+    }
+
+    // FIXED: uses allCharacterGear list, not a non-existent dictionary
+    public void ClearAllEquipped()
+    {
+        foreach (var charGear in allCharacterGear)
+        {
+            charGear.weapon = null;
+            charGear.helmet = null;
+            charGear.torso = null;
+            charGear.legs = null;
+            charGear.feet = null;
+            charGear.ring1 = null;
+            charGear.ring2 = null;
+        }
+        Debug.Log("[GEAR] All equipped gear cleared");
     }
 }

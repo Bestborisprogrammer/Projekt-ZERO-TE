@@ -5,8 +5,7 @@ public class GoldManager : MonoBehaviour
 {
     public static GoldManager Instance;
     public int gold = 0;
-    public string goldTextName = "GoldText"; // name of TMP in scene
-
+    public string goldTextName = "GoldText";
     private TextMeshProUGUI goldText;
 
     void Awake()
@@ -41,7 +40,6 @@ public class GoldManager : MonoBehaviour
 
     void FindAndRefreshUI()
     {
-        // Find gold text by name in current scene
         var obj = GameObject.Find(goldTextName);
         if (obj != null)
             goldText = obj.GetComponent<TextMeshProUGUI>();
@@ -72,5 +70,12 @@ public class GoldManager : MonoBehaviour
     {
         if (goldText != null)
             goldText.text = $"Gold: {gold}";
+    }
+
+    // FIXED: was referencing non-existent "currentGold" field, now uses "gold"
+    public void SetGold(int amount)
+    {
+        gold = amount;
+        RefreshUI();
     }
 }

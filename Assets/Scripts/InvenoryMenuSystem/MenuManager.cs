@@ -8,6 +8,7 @@ public class MenuManager : MonoBehaviour
     public GameObject partyPanel;
     public GameObject inventoryPanel;
     public GameObject gearPanel;
+    public GameObject savePanel;
 
     [Header("Scene")]
     public string overworldScene = "OverworldScene";
@@ -21,8 +22,8 @@ public class MenuManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Tab))
         {
-            // If any sub panel is open go back to button panel
-            if (partyPanel.activeSelf || inventoryPanel.activeSelf || gearPanel.activeSelf)
+            if (partyPanel.activeSelf || inventoryPanel.activeSelf ||
+                gearPanel.activeSelf || savePanel.activeSelf)
                 ShowButtonPanel();
             else
                 ReturnToOverworld();
@@ -35,6 +36,7 @@ public class MenuManager : MonoBehaviour
         partyPanel.SetActive(false);
         inventoryPanel.SetActive(false);
         gearPanel.SetActive(false);
+        savePanel.SetActive(false);
     }
 
     public void ShowParty()
@@ -43,6 +45,7 @@ public class MenuManager : MonoBehaviour
         partyPanel.SetActive(true);
         inventoryPanel.SetActive(false);
         gearPanel.SetActive(false);
+        savePanel.SetActive(false);
         partyPanel.GetComponent<PartyMenuPanel>()?.Refresh();
     }
 
@@ -52,6 +55,7 @@ public class MenuManager : MonoBehaviour
         partyPanel.SetActive(false);
         inventoryPanel.SetActive(true);
         gearPanel.SetActive(false);
+        savePanel.SetActive(false);
         inventoryPanel.GetComponent<InventoryMenuPanel>()?.Refresh();
     }
 
@@ -61,12 +65,21 @@ public class MenuManager : MonoBehaviour
         partyPanel.SetActive(false);
         inventoryPanel.SetActive(false);
         gearPanel.SetActive(true);
+        savePanel.SetActive(false);
         gearPanel.GetComponent<GearMenuPanel>()?.Refresh();
+    }
+
+    public void ShowSave()
+    {
+        buttonPanel.SetActive(false);
+        partyPanel.SetActive(false);
+        inventoryPanel.SetActive(false);
+        gearPanel.SetActive(false);
+        savePanel.SetActive(true);
     }
 
     public void ReturnToOverworld()
     {
-        // Position is restored by PlayerMovement2D or a dedicated restorer
         SceneManager.LoadScene(overworldScene);
     }
 }
