@@ -6,38 +6,18 @@ using System.Linq;
 
 public class SaveManager : MonoBehaviour
 {
-    private static SaveManager _instance;
-    public static SaveManager Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                // Auto-create if it doesn't exist yet — no more manual scene placement needed
-                var existing = FindFirstObjectByType<SaveManager>();
-                if (existing != null)
-                {
-                    _instance = existing;
-                }
-                else
-                {
-                    GameObject obj = new GameObject("SaveManager (Auto-Created)");
-                    _instance = obj.AddComponent<SaveManager>();
-                    Debug.Log("[SAVE MANAGER] Auto-created since none existed in scene");
-                }
-            }
-            return _instance;
-        }
-    }
+    public static SaveManager Instance { get; private set; }
 
     public const int MaxSlots = 10;
     public const int AutoSaveSlot = -1;
+
+    // FIXED: match your actual scene name exactly (lowercase 'o')
+    public const string OverworldSceneName = "overworldScene";
 
     [Header("Autosave")]
     public float autoSaveIntervalSeconds = 600f;
     private float autoSaveTimer = 0f;
 
-    // No longer manually assigned — auto-populated from Resources folders
     private List<CharacterStatsSO> allCharacterSOs = new();
     private List<ItemSO> allItemSOs = new();
     private List<GearSO> allGearSOs = new();
@@ -49,26 +29,33 @@ public class SaveManager : MonoBehaviour
     private static SaveData pendingLoadData = null;
     public static bool IsLoadingSave { get; private set; } = false;
 
-    void Awake()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Bootstrap()
     {
-        if (_instance == null)
-        {
-            _instance = this;
-            DontDestroyOnLoad(gameObject);
-            Debug.Log("[SAVE MANAGER] Awake - Instance set");
-        }
-        else if (_instance != this)
-        {
-            Debug.Log("[SAVE MANAGER] Duplicate destroyed");
-            Destroy(gameObject);
-            return;
-        }
+        if (Instance != null) return;
 
-        LoadDatabase();
+        GameObject obj = new GameObject("SaveManager");
+        Instance = obj.AddComponent<SaveManager>();
+        DontDestroyOnLoad(obj);
+        Debug.Log("[SAVE MANAGER] Bootstrapped via RuntimeInitializeOnLoadMethod - single instance guaranteed");
+
+        Instance.LoadDatabase();
     }
 
-    // Auto-loads EVERY SO of each type from anywhere in a "Resources" folder.
-    // No more manually dragging 1000 items into a list.
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            LoadDatabase();
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
+
     void LoadDatabase()
     {
         if (databaseLoaded) return;
@@ -87,11 +74,12 @@ public class SaveManager : MonoBehaviour
     {
         sessionPlaytime += Time.deltaTime;
 
-        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "OverworldScene")
+        // FIXED: was "OverworldScene" (capital O), now matches actual scene name
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == OverworldSceneName)
         {
             if (pendingLoadData != null)
             {
-                Debug.Log("[SAVE] pendingLoadData found in OverworldScene, applying now");
+                Debug.Log("[SAVE] *** pendingLoadData detected in correct scene - starting apply coroutine ***");
                 var dataToApply = pendingLoadData;
                 pendingLoadData = null;
                 StartCoroutine(ApplyLoadedDataDelayed(dataToApply));
@@ -117,10 +105,7 @@ public class SaveManager : MonoBehaviour
         return Path.Combine(Application.persistentDataPath, fileName);
     }
 
-    public bool SlotExists(int slot)
-    {
-        return File.Exists(GetPath(slot));
-    }
+    public bool SlotExists(int slot) => File.Exists(GetPath(slot));
 
     public SaveData LoadSlotPreview(int slot)
     {
@@ -138,12 +123,9 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    public CharacterStatsSO FindCharacterSO(string name) =>
-        allCharacterSOs.Find(c => c.characterName == name);
-    public ItemSO FindItemSO(string name) =>
-        allItemSOs.Find(i => i.itemName == name);
-    public GearSO FindGearSO(string name) =>
-        allGearSOs.Find(g => g.gearName == name);
+    public CharacterStatsSO FindCharacterSO(string name) => allCharacterSOs.Find(c => c.characterName == name);
+    public ItemSO FindItemSO(string name) => allItemSOs.Find(i => i.itemName == name);
+    public GearSO FindGearSO(string name) => allGearSOs.Find(g => g.gearName == name);
 
     public void SaveToSlot(int slot, string customName = null)
     {
@@ -151,7 +133,7 @@ public class SaveManager : MonoBehaviour
 
         if (PartyManager.Instance == null)
         {
-            Debug.LogError("[SAVE] PartyManager.Instance is null – cannot save outside OverworldScene!");
+            Debug.LogError("[SAVE] PartyManager.Instance is null – cannot save outside overworldScene!");
             return;
         }
 
@@ -162,12 +144,25 @@ public class SaveManager : MonoBehaviour
         data.dateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
         var player = GameObject.FindGameObjectWithTag("Player");
-        data.sceneName = "OverworldScene";
+        // FIXED: store the correct scene name so loading targets the right one
+        data.sceneName = OverworldSceneName;
+
         if (player != null)
         {
             data.playerX = player.transform.position.x;
             data.playerY = player.transform.position.y;
             data.playerZ = player.transform.position.z;
+        }
+        else if (PlayerPrefs.HasKey("PlayerReturnX"))
+        {
+            data.playerX = PlayerPrefs.GetFloat("PlayerReturnX");
+            data.playerY = PlayerPrefs.GetFloat("PlayerReturnY");
+            data.playerZ = PlayerPrefs.GetFloat("PlayerReturnZ");
+            Debug.Log($"[SAVE] Used cached menu-return position: {data.playerX},{data.playerY},{data.playerZ}");
+        }
+        else
+        {
+            Debug.LogWarning("[SAVE] Could not determine player position - saving as 0,0,0");
         }
 
         foreach (var member in PartyManager.Instance.allMembers)
@@ -247,7 +242,11 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[SAVE] Queued load for slot {slot}: {data.saveName}");
+        // FIXED: in case an old save file has the wrong-cased scene name saved,
+        // force it to the correct constant so loading always works
+        data.sceneName = OverworldSceneName;
+
+        Debug.Log($"[SAVE] Queued load for slot {slot}: {data.saveName}. Target scene: {data.sceneName}");
         currentSlot = slot;
 
         IsLoadingSave = true;
@@ -257,19 +256,34 @@ public class SaveManager : MonoBehaviour
 
     IEnumerator ApplyLoadedDataDelayed(SaveData data)
     {
-        // Wait several frames to make ABSOLUTELY sure every Awake/Start
-        // (including GameInitializer) has fully finished before we overwrite.
-        yield return null;
-        yield return null;
-        yield return null;
-        yield return new WaitUntil(() => PartyManager.Instance != null);
+        Debug.Log("[SAVE] ApplyLoadedDataDelayed coroutine STARTED");
 
-        ApplyLoadedData(data);
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+
+        yield return new WaitUntil(() => PartyManager.Instance != null);
+        yield return new WaitUntil(() => GoldManager.Instance != null);
+        yield return new WaitUntil(() => GearManager.Instance != null);
+        yield return new WaitUntil(() => InventoryManager.Instance != null);
+
+        Debug.Log("[SAVE] All managers confirmed ready, applying save data now");
+
+        try
+        {
+            ApplyLoadedData(data);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[SAVE] EXCEPTION during ApplyLoadedData: {e}");
+        }
+
         IsLoadingSave = false;
     }
 
     void ApplyLoadedData(SaveData data)
     {
+        Debug.Log($"[SAVE] ApplyLoadedData ENTERED for: {data.saveName}");
+
         if (PartyManager.Instance == null)
         {
             Debug.LogError("[SAVE] ApplyLoadedData called but PartyManager.Instance is still null!");
@@ -277,7 +291,6 @@ public class SaveManager : MonoBehaviour
         }
 
         sessionPlaytime = data.playtimeSeconds;
-        Debug.Log($"[SAVE] Applying loaded data: {data.saveName}");
 
         PartyManager.Instance.allMembers.Clear();
         PartyManager.Instance.activeParty.Clear();
@@ -287,8 +300,7 @@ public class SaveManager : MonoBehaviour
             var so = FindCharacterSO(entry.characterSOName);
             if (so == null)
             {
-                Debug.LogWarning($"[SAVE] Could not find CharacterStatsSO: {entry.characterSOName} " +
-                    $"- make sure it's inside a 'Resources' folder!");
+                Debug.LogWarning($"[SAVE] Could not find CharacterStatsSO: {entry.characterSOName}");
                 continue;
             }
 
@@ -300,6 +312,7 @@ public class SaveManager : MonoBehaviour
             inst.currentHP = entry.currentHP;
             inst.currentMana = entry.currentMana;
             PartyManager.Instance.allMembers.Add(inst);
+            Debug.Log($"[SAVE] Restored member: {inst.Name} Lv{inst.level} HP:{inst.currentHP}");
         }
 
         foreach (var name in data.activePartyNames)
@@ -309,7 +322,7 @@ public class SaveManager : MonoBehaviour
                 PartyManager.Instance.activeParty.Add(inst);
         }
 
-        Debug.Log($"[SAVE] Party restored: {string.Join(",", PartyManager.Instance.activeParty.ConvertAll(m => m.Name))}");
+        Debug.Log($"[SAVE] Active party restored: {string.Join(",", PartyManager.Instance.activeParty.ConvertAll(m => m.Name))}");
 
         if (InventoryManager.Instance != null)
         {
@@ -324,6 +337,7 @@ public class SaveManager : MonoBehaviour
                 }
                 InventoryManager.Instance.items.Add(new InventoryItem(so, itemSave.quantity));
             }
+            Debug.Log($"[SAVE] Inventory restored: {InventoryManager.Instance.items.Count} item stacks");
         }
 
         if (GearManager.Instance != null)
@@ -348,10 +362,14 @@ public class SaveManager : MonoBehaviour
                 charGear.ring1 = FindGearSO(eq.ring1Name);
                 charGear.ring2 = FindGearSO(eq.ring2Name);
             }
+            Debug.Log($"[SAVE] Gear restored: {GearManager.Instance.gearInventory.Count} stacks in inventory");
         }
 
         if (GoldManager.Instance != null)
+        {
             GoldManager.Instance.SetGold(data.gold);
+            Debug.Log($"[SAVE] Gold restored: {GoldManager.Instance.gold}");
+        }
 
         ResonanceManager.MeterUnlocked = data.resonanceMeterUnlocked;
         if (ResonanceManager.Instance != null)
@@ -359,12 +377,20 @@ public class SaveManager : MonoBehaviour
 
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
+        {
             player.transform.position = new Vector3(data.playerX, data.playerY, data.playerZ);
+            Debug.Log($"[SAVE] Player position set to: {player.transform.position}");
+        }
+        else
+        {
+            Debug.LogWarning("[SAVE] Could not find Player GameObject to set position!");
+        }
 
         EncounterManager.PlayerReturnPosition = Vector3.zero;
 
-        Debug.Log($"[SAVE] Load complete! Gold:{GoldManager.Instance?.gold} " +
-            $"PartyCount:{PartyManager.Instance.activeParty.Count}");
+        Debug.Log($"[SAVE] *** LOAD COMPLETE *** Gold:{GoldManager.Instance?.gold} " +
+            $"PartyCount:{PartyManager.Instance.activeParty.Count} " +
+            $"Members:{string.Join(",", PartyManager.Instance.activeParty.ConvertAll(m => m.Name))}");
     }
 
     public void DeleteSlot(int slot)

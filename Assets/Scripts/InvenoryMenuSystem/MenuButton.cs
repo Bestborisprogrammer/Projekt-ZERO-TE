@@ -18,7 +18,6 @@ public class MenuButton : MonoBehaviour
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
 
-        // Block if player is frozen
         if (player != null)
         {
             var movement = player.GetComponent<PlayerMovement2D>();
@@ -29,14 +28,12 @@ public class MenuButton : MonoBehaviour
             }
         }
 
-        // Block if dialogue is open
         if (DialogueUI.Instance != null && DialogueUI.Instance.IsDialogueOpen)
         {
             Debug.Log("[MENU] Blocked – dialogue open");
             return;
         }
 
-        // Block if encounter active
         if (EncounterManager.CurrentEnemies != null &&
             EncounterManager.CurrentEnemies.Count > 0)
         {
@@ -53,12 +50,12 @@ public class MenuButton : MonoBehaviour
             PlayerPrefs.Save();
         }
 
+        // Back to simple scene replace - no more additive loading
         SceneManager.LoadScene(menuScene);
     }
 
     void OpenPartyStatus()
     {
-        // Same blocks as menu
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {

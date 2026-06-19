@@ -11,7 +11,7 @@ public class MenuManager : MonoBehaviour
     public GameObject savePanel;
 
     [Header("Scene")]
-    public string overworldScene = "OverworldScene";
+    public string overworldScene = "overworldScene"; // FIXED: lowercase to match actual scene name
 
     void Start()
     {
@@ -80,6 +80,7 @@ public class MenuManager : MonoBehaviour
 
     public void ReturnToOverworld()
     {
+        Debug.Log($"[MENU] Returning to overworld via scene replace: {overworldScene}");
         SceneManager.LoadScene(overworldScene);
     }
 }
