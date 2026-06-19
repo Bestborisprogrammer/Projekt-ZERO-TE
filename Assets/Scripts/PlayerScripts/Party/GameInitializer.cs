@@ -6,6 +6,13 @@ public class GameInitializer : MonoBehaviour
 
     void Awake()
     {
+        // Never wipe PlayerPrefs while a save is actively being loaded
+        if (SaveManager.IsLoadingSave)
+        {
+            Debug.Log("[GAME INIT] Skipping PlayerPrefs wipe - a save is being loaded");
+            return;
+        }
+
         if (!hasInitialized)
         {
             PlayerPrefs.DeleteAll();
