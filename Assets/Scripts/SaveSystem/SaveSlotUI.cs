@@ -28,10 +28,6 @@ public class SaveSlotUI : MonoBehaviour
             slotButton.onClick.RemoveAllListeners();
             slotButton.onClick.AddListener(() => parentPanel.OnSlotClicked(slotIndex));
         }
-        else
-        {
-            Debug.LogError($"[SAVE SLOT UI] slotButton not assigned on prefab for slot {index}!");
-        }
     }
 
     public void Refresh()
@@ -42,12 +38,7 @@ public class SaveSlotUI : MonoBehaviour
                 Destroy(child.gameObject);
         }
 
-        if (SaveManager.Instance == null)
-        {
-            Debug.LogError("[SAVE SLOT UI] SaveManager.Instance is null!");
-            return;
-        }
-
+        // Instance now auto-creates itself, this will never be null
         var data = SaveManager.Instance.LoadSlotPreview(slotIndex);
 
         bool isAuto = slotIndex == SaveManager.AutoSaveSlot;
@@ -71,16 +62,14 @@ public class SaveSlotUI : MonoBehaviour
         if (dateText != null)
             dateText.text = data.dateTime;
 
-        // Defensive: data.activePartyNames might be null if save was malformed
         if (data.activePartyNames != null && memberPortraitParent != null && memberPortraitPrefab != null)
         {
             foreach (var memberName in data.activePartyNames)
             {
-                var so = SaveManager.Instance.allCharacterSOs.Find(c => c.characterName == memberName);
+                var so = SaveManager.Instance.FindCharacterSO(memberName);
                 if (so == null)
                 {
-                    Debug.LogWarning($"[SAVE SLOT UI] Could not find CharacterStatsSO for {memberName} " +
-                        $"in slot {slotIndex} - is it assigned in SaveManager's allCharacterSOs list?");
+                    Debug.LogWarning($"[SAVE SLOT UI] Could not find CharacterStatsSO for {memberName}");
                     continue;
                 }
 
