@@ -81,6 +81,14 @@ public class InventoryMenuPanel : MonoBehaviour
             }
             else if (pendingItem.itemType == ItemType.Buff)
                 preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
+            else if (pendingItem.itemType == ItemType.ManaRestore)
+            {
+                int totalRestore = pendingItem.flatHeal; // reused field for mana amount, same as combat version
+                int actual = Mathf.Min(totalRestore, member.MaxMana - member.currentMana);
+                preview = $"Restores +{actual} MP";
+            }
+            else if (pendingItem.itemType == ItemType.Buff)
+                preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
 
             if (tmps.Length > 0)
                 tmps[0].text = $"{member.Name}  Lv.{member.level}\n" +

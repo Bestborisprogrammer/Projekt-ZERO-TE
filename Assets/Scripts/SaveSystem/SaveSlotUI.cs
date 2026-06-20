@@ -74,11 +74,23 @@ public class SaveSlotUI : MonoBehaviour
                 }
 
                 GameObject portrait = Instantiate(memberPortraitPrefab, memberPortraitParent);
+
+                // FIXED: search children too, in case Image isn't on the prefab root
                 var img = portrait.GetComponent<Image>();
+                if (img == null)
+                    img = portrait.GetComponentInChildren<Image>();
+
                 if (img != null)
                 {
                     if (so.headPortrait != null) img.sprite = so.headPortrait;
                     else if (so.portrait != null) img.sprite = so.portrait;
+
+                    if (img.sprite == null)
+                        Debug.LogWarning($"[SAVE SLOT UI] {memberName}'s CharacterStatsSO has no headPortrait or portrait assigned!");
+                }
+                else
+                {
+                    Debug.LogError("[SAVE SLOT UI] memberPortraitPrefab has no Image component anywhere - check the prefab!");
                 }
             }
         }

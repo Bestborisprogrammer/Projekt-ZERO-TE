@@ -407,6 +407,11 @@ public class SaveManager : MonoBehaviour
     {
         int h = Mathf.FloorToInt(seconds / 3600f);
         int m = Mathf.FloorToInt((seconds % 3600f) / 60f);
-        return $"{h:00}h {m:00}m";
+        int s = Mathf.FloorToInt(seconds % 60f);
+
+        if (h > 0)
+            return $"{h:00}h {m:00}m";
+        else
+            return $"{m:00}m {s:00}s";
     }
 }
