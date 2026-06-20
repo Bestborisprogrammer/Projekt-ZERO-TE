@@ -63,49 +63,40 @@ public class InventoryMenuPanel : MonoBehaviour
         foreach (var member in PartyManager.Instance.activeParty)
         {
             GameObject btn = Instantiate(targetMemberPrefab, targetParent);
-
-            // Get button from root OR any child
-            Button button = btn.GetComponent<Button>();
-            if (button == null)
-                button = btn.GetComponentInChildren<Button>();
-
             var tmps = btn.GetComponentsInChildren<TextMeshProUGUI>();
 
             string preview = "";
+            string statLine = "";
+
             if (pendingItem.itemType == ItemType.Heal)
             {
                 int totalHeal = pendingItem.flatHeal +
                     Mathf.RoundToInt(member.MaxHP * pendingItem.percentHeal);
                 int actual = Mathf.Min(totalHeal, member.MaxHP - member.currentHP);
                 preview = $"Heals +{actual} HP";
+                statLine = $"HP: {member.currentHP}/{member.MaxHP}";
             }
             else if (pendingItem.itemType == ItemType.Buff)
+            {
                 preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
+                statLine = $"HP: {member.currentHP}/{member.MaxHP}";
+            }
             else if (pendingItem.itemType == ItemType.ManaRestore)
             {
-                int totalRestore = pendingItem.flatHeal; // reused field for mana amount, same as combat version
+                int totalRestore = pendingItem.flatHeal;
                 int actual = Mathf.Min(totalRestore, member.MaxMana - member.currentMana);
                 preview = $"Restores +{actual} MP";
+                // FIXED: show MP stats for mana items instead of HP
+                statLine = $"MP: {member.currentMana}/{member.MaxMana}";
             }
-            else if (pendingItem.itemType == ItemType.Buff)
-                preview = $"+{pendingItem.statModifier} {pendingItem.statType} ({pendingItem.modifierDuration} turns)";
 
             if (tmps.Length > 0)
                 tmps[0].text = $"{member.Name}  Lv.{member.level}\n" +
-                    $"HP: {member.currentHP}/{member.MaxHP}\n{preview}";
+                    $"{statLine}\n{preview}";
 
-            Debug.Log($"[MENU] Spawned button for {member.Name}, button null: {button == null}");
-
-            if (button != null)
-            {
-                button.onClick.RemoveAllListeners();
-                var capturedMember = member;
-                button.onClick.AddListener(() =>
-                {
-                    Debug.Log($"[MENU] Button clicked for {capturedMember.Name}");
-                    UseItemOnMember(capturedMember);
-                });
-            }
+            var capturedMember = member;
+            btn.GetComponent<Button>()?.onClick.AddListener(() =>
+                UseItemOnMember(capturedMember));
         }
     }
 
