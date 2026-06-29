@@ -36,6 +36,9 @@ public class EncounterManager : MonoBehaviour
         if (player != null)
             PlayerReturnPosition = player.transform.position;
 
+        // Snapshot party/inventory state before the fight starts
+        GameOverManager.SnapshotBeforeBattle();
+
         CurrentEnemies = enemies;
         StartCoroutine(BattleTransition());
     }

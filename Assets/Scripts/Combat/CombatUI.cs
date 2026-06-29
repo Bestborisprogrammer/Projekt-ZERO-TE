@@ -813,7 +813,7 @@ public class CombatUI : MonoBehaviour
     // isForcedDuelLoss must be explicitly passed true ONLY from the scripted
     // forced-loss duel path. Normal game overs pass false and do NOT touch
     // any resonance flags.
-    public void ShowGameOver(bool isForcedDuelLoss)
+    public void ShowGameOver(bool isForcedDuelLoss = false)
     {
         Debug.Log($"[GAMEOVER] isForcedDuelLoss={isForcedDuelLoss}");
 
@@ -821,15 +821,30 @@ public class CombatUI : MonoBehaviour
         {
             ResonanceCutsceneManager.WaitingForDuelReturn = true;
             ResonanceManager.Instance?.HideResonanceTint();
+
+            foreach (var member in PartyManager.Instance.activeParty)
+                member.currentHP = 1;
+
+            victoryPanel.SetActive(true);
+            victoryPanel.transform.SetAsLastSibling();
+            victoryXPText.text = "...";
+            StartCoroutine(ReturnAfterDelay(3f));
+            return;
         }
 
-        foreach (var member in PartyManager.Instance.activeParty)
-            member.currentHP = 1;
-
-        victoryPanel.SetActive(true);
-        victoryPanel.transform.SetAsLastSibling();
-        victoryXPText.text = "...";
-        StartCoroutine(ReturnAfterDelay(3f));
+        // Real game over
+        if (GameOverManager.Instance != null)
+        {
+            GameOverManager.Instance.ShowGameOver();
+        }
+        else
+        {
+            Debug.LogError("[GAMEOVER] GameOverManager.Instance is null!");
+            // Fallback – just return to overworld so nothing bricks
+            foreach (var member in PartyManager.Instance.activeParty)
+                member.currentHP = 1;
+            StartCoroutine(ReturnAfterDelay(3f));
+        }
     }
 
     IEnumerator ReturnAfterDelay(float delay)
