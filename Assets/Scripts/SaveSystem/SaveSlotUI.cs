@@ -64,6 +64,9 @@ public class SaveSlotUI : MonoBehaviour
 
         if (data.activePartyNames != null && memberPortraitParent != null && memberPortraitPrefab != null)
         {
+            Debug.Log($"[SAVE SLOT UI] Building {data.activePartyNames.Count} portraits. " +
+                $"Parent size: {((RectTransform)memberPortraitParent).rect.width}x{((RectTransform)memberPortraitParent).rect.height}");
+
             foreach (var memberName in data.activePartyNames)
             {
                 var so = SaveManager.Instance.FindCharacterSO(memberName);
@@ -73,26 +76,41 @@ public class SaveSlotUI : MonoBehaviour
                     continue;
                 }
 
-                GameObject portrait = Instantiate(memberPortraitPrefab, memberPortraitParent);
+                Debug.Log($"[SAVE SLOT UI] Found SO for {memberName}. " +
+                    $"headPortrait={so.headPortrait != null} portrait={so.portrait != null}");
 
-                // FIXED: search children too, in case Image isn't on the prefab root
+                GameObject portrait = Instantiate(memberPortraitPrefab, memberPortraitParent);
+                portrait.SetActive(true);
+
+                var rt = portrait.GetComponent<RectTransform>();
+                if (rt != null)
+                    Debug.Log($"[SAVE SLOT UI] Portrait instantiated. Size: {rt.rect.width}x{rt.rect.height} " +
+                        $"localScale: {rt.localScale} anchoredPos: {rt.anchoredPosition}");
+
                 var img = portrait.GetComponent<Image>();
                 if (img == null)
                     img = portrait.GetComponentInChildren<Image>();
 
                 if (img != null)
                 {
+                    Debug.Log($"[SAVE SLOT UI] Image found. Current sprite={img.sprite} color={img.color}");
+
                     if (so.headPortrait != null) img.sprite = so.headPortrait;
                     else if (so.portrait != null) img.sprite = so.portrait;
 
-                    if (img.sprite == null)
-                        Debug.LogWarning($"[SAVE SLOT UI] {memberName}'s CharacterStatsSO has no headPortrait or portrait assigned!");
+                    // Force full visibility regardless of prefab defaults
+                    var c = img.color;
+                    c.a = 1f;
+                    img.color = c;
+                    img.enabled = true;
+
+                    Debug.Log($"[SAVE SLOT UI] After assign - sprite={img.sprite} color={img.color} enabled={img.enabled}");
                 }
                 else
                 {
-                    Debug.LogError("[SAVE SLOT UI] memberPortraitPrefab has no Image component anywhere - check the prefab!");
+                    Debug.LogError("[SAVE SLOT UI] memberPortraitPrefab has NO Image component anywhere!");
                 }
             }
         }
     }
-}
+        }
