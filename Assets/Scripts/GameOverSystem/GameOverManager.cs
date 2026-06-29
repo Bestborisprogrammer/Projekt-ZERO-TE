@@ -19,7 +19,6 @@ public class GameOverManager : MonoBehaviour
     public string mainMenuScene = "MainMenu";
     public string overworldScene = "overworldScene";
 
-    // Snapshot of state when battle started - for retry restore
     private static List<CombatSnapshot> partySnapshot = new();
     private static List<InventoryItemSave> inventorySnapshot = new();
     private static int goldSnapshot = 0;
@@ -39,8 +38,6 @@ public class GameOverManager : MonoBehaviour
         mainMenuButton?.onClick.AddListener(OnMainMenu);
     }
 
-    // Call this RIGHT BEFORE starting any encounter
-    // so we have a clean snapshot to restore on retry
     public static void SnapshotBeforeBattle()
     {
         partySnapshot.Clear();
@@ -73,22 +70,18 @@ public class GameOverManager : MonoBehaviour
 
         goldSnapshot = GoldManager.Instance != null ? GoldManager.Instance.gold : 0;
 
-        Debug.Log($"[GAME OVER] Snapshot taken. " +
-            $"Party: {partySnapshot.Count} members, " +
-            $"Items: {inventorySnapshot.Count} stacks, " +
-            $"Gold: {goldSnapshot}");
+        Debug.Log($"[GAME OVER] Snapshot: {partySnapshot.Count} members, " +
+            $"{inventorySnapshot.Count} item stacks, Gold:{goldSnapshot}");
     }
 
     public void ShowGameOver()
     {
-        Debug.Log("[GAME OVER] Showing game over screen");
+        Debug.Log("[GAME OVER] Showing screen");
         gameOverPanel.SetActive(true);
         gameOverPanel.transform.SetAsLastSibling();
         gameOverTitleText.text = "Your party has fallen...";
 
-        bool hasAnySave = false;
-        if (SaveManager.Instance.SlotExists(SaveManager.AutoSaveSlot))
-            hasAnySave = true;
+        bool hasAnySave = SaveManager.Instance.SlotExists(SaveManager.AutoSaveSlot);
         for (int i = 0; i < SaveManager.MaxSlots && !hasAnySave; i++)
             if (SaveManager.Instance.SlotExists(i)) hasAnySave = true;
 
@@ -98,11 +91,11 @@ public class GameOverManager : MonoBehaviour
 
     void OnRetry()
     {
-        Debug.Log("[GAME OVER] Retry – restoring pre-battle state");
+        Debug.Log("[GAME OVER] Retry pressed");
         Time.timeScale = 1f;
         gameOverPanel.SetActive(false);
 
-        // Restore HP/mana to pre-battle values (at 50% hp cap)
+        // Restore HP to 50% of pre-battle value, full mana restore
         if (PartyManager.Instance != null)
         {
             foreach (var member in PartyManager.Instance.activeParty)
@@ -111,7 +104,7 @@ public class GameOverManager : MonoBehaviour
                 if (snap != null)
                 {
                     member.currentHP = Mathf.Max(1, Mathf.RoundToInt(snap.hp * 0.5f));
-                    member.currentMana = snap.mana; // full mana restored
+                    member.currentMana = snap.mana;
                 }
                 else
                 {
@@ -120,7 +113,7 @@ public class GameOverManager : MonoBehaviour
             }
         }
 
-        // Restore inventory to pre-battle snapshot
+        // Restore inventory to pre-battle state
         if (InventoryManager.Instance != null && inventorySnapshot.Count > 0)
         {
             InventoryManager.Instance.items.Clear();
@@ -130,11 +123,41 @@ public class GameOverManager : MonoBehaviour
                 if (so == null) continue;
                 InventoryManager.Instance.items.Add(new InventoryItem(so, itemSave.quantity));
             }
-            Debug.Log($"[GAME OVER] Inventory restored to {inventorySnapshot.Count} stacks");
         }
+
+        // Reset the encounter trigger so it fires again on retry
+        ResetEncounterForRetry();
 
         EncounterManager.CurrentEnemies.Clear();
         SceneManager.LoadScene(overworldScene);
+    }
+
+    void ResetEncounterForRetry()
+    {
+        if (EncounterManager.LastEncounterWasScripted)
+        {
+            // Clear the DialogueTrigger's one-time flag so the
+            // cutscene/dialogue runs again when player walks back in
+            string key = EncounterManager.LastEncounterTriggerID;
+            if (!string.IsNullOrEmpty(key))
+            {
+                PlayerPrefs.DeleteKey(key);
+                PlayerPrefs.Save();
+                Debug.Log($"[GAME OVER] Cleared scripted encounter flag: {key}");
+            }
+            else
+            {
+                Debug.LogWarning("[GAME OVER] Scripted encounter had no DialogueTrigger key set - " +
+                    "assign 'Dialogue Trigger Save Key' on CutsceneManager in the Inspector");
+            }
+        }
+        else if (!string.IsNullOrEmpty(EncounterManager.LastEncounterTriggerID))
+        {
+            // Normal encounter - clear its uniqueID flag so it re-spawns
+            PlayerPrefs.DeleteKey(EncounterManager.LastEncounterTriggerID);
+            PlayerPrefs.Save();
+            Debug.Log($"[GAME OVER] Cleared normal encounter flag: {EncounterManager.LastEncounterTriggerID}");
+        }
     }
 
     void OnLoadLastSave()
@@ -147,7 +170,7 @@ public class GameOverManager : MonoBehaviour
         if (mostRecentSlot != int.MinValue)
             SaveManager.Instance.LoadFromSlot(mostRecentSlot);
         else
-            Debug.LogWarning("[GAME OVER] No save found to load!");
+            Debug.LogWarning("[GAME OVER] No save found!");
     }
 
     int FindMostRecentSlot()
@@ -155,12 +178,10 @@ public class GameOverManager : MonoBehaviour
         int bestSlot = int.MinValue;
         System.DateTime bestTime = System.DateTime.MinValue;
 
-        // Check autosave + all 10 slots
         for (int i = SaveManager.AutoSaveSlot; i < SaveManager.MaxSlots; i++)
         {
             var preview = SaveManager.Instance.LoadSlotPreview(i);
             if (preview == null || preview.isEmpty) continue;
-
             if (System.DateTime.TryParse(preview.dateTime, out var parsed))
             {
                 if (parsed > bestTime)
@@ -171,7 +192,7 @@ public class GameOverManager : MonoBehaviour
             }
         }
 
-        Debug.Log($"[GAME OVER] Most recent slot found: {bestSlot}");
+        Debug.Log($"[GAME OVER] Most recent slot: {bestSlot}");
         return bestSlot;
     }
 

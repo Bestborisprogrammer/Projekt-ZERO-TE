@@ -38,6 +38,9 @@ public class DialogueTrigger : MonoBehaviour
         }
         if (promptText != null)
             promptText.gameObject.SetActive(false);
+
+        saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
+        Debug.Log($"[DIALOGUE TRIGGER] saveKey = {saveKey}");
     }
 
     void Update()

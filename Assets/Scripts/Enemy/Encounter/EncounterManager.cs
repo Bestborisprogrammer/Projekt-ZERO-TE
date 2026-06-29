@@ -20,6 +20,11 @@ public class EncounterManager : MonoBehaviour
     public static bool IsForcedLossBattle { get; set; } = false;
     public static bool ForcedLossBattleDone { get; set; } = false;
 
+    // Track what kind of encounter triggered this battle so retry knows what to do
+    public static string LastEncounterTriggerID { get; set; } = ""; // PlayerPrefs key for normal encounters
+    public static bool LastEncounterWasScripted { get; set; } = false; // CutsceneManager first battle
+    public static bool LastEncounterWasRecruit { get; set; } = false;
+
     void Awake()
     {
         if (Instance == null)
@@ -36,7 +41,6 @@ public class EncounterManager : MonoBehaviour
         if (player != null)
             PlayerReturnPosition = player.transform.position;
 
-        // Snapshot party/inventory state before the fight starts
         GameOverManager.SnapshotBeforeBattle();
 
         CurrentEnemies = enemies;

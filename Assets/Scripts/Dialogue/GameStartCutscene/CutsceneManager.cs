@@ -16,10 +16,15 @@ public class CutsceneManager : MonoBehaviour
     private bool battleDone = false;
     private Coroutine chargeCoroutine;
 
+    // DialogueTrigger saveKey that marks this scripted sequence as done
+    // Set this to match the saveKey of the DialogueTrigger that starts this cutscene
+    // e.g. "dlg_YourTriggerName_X_Y" — find it by checking the trigger's saveKey log
+    [Header("Retry Support")]
+    public string dialogueTriggerSaveKey = "";
+
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
-
         if (fogEffect != null)
             fogEffect.SetActive(false);
     }
@@ -42,7 +47,6 @@ public class CutsceneManager : MonoBehaviour
             fogEffect.SetActive(true);
 
         yield return new WaitForSeconds(0.5f);
-
         chargeCoroutine = StartCoroutine(MonsterCharge());
     }
 
@@ -86,8 +90,14 @@ public class CutsceneManager : MonoBehaviour
             if (rb != null) rb.linearVelocity = Vector2.zero;
         }
 
+        // Store the dialogue trigger save key so retry can clear it
+        EncounterManager.LastEncounterWasScripted = true;
+        if (!string.IsNullOrEmpty(dialogueTriggerSaveKey))
+            EncounterManager.LastEncounterTriggerID = dialogueTriggerSaveKey;
+
         EncounterManager.ActiveCutscene = this;
-        EncounterManager.Instance.StartEncounter(new List<EnemyStatsSO> { monsterEnemySO });
+        EncounterManager.Instance.StartEncounter(
+            new List<EnemyStatsSO> { monsterEnemySO });
     }
 
     public void OnBattleComplete()

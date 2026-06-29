@@ -4,11 +4,12 @@ using System.Collections.Generic;
 public class EnemyEncounter : MonoBehaviour
 {
     public List<EnemyStatsSO> enemies;
-    private string uniqueID;
+    public string uniqueID; // make this public so retry can reset it
 
     void Awake()
     {
-        uniqueID = $"enemy_{transform.position.x}_{transform.position.y}";
+        if (string.IsNullOrEmpty(uniqueID))
+            uniqueID = $"enemy_{transform.position.x}_{transform.position.y}";
     }
 
     void Start()
@@ -21,18 +22,21 @@ public class EnemyEncounter : MonoBehaviour
     {
         if (!other.CompareTag("Player")) return;
 
-        // Freeze player
         var movement = other.GetComponent<PlayerMovement2D>();
         if (movement != null) movement.enabled = false;
         var playerRB = other.GetComponent<Rigidbody2D>();
         if (playerRB != null) playerRB.linearVelocity = Vector2.zero;
 
-        // Freeze this enemy
         var patrol = GetComponent<EnemyPatrol>();
         if (patrol != null) patrol.Freeze();
 
         var enemyRB = GetComponent<Rigidbody2D>();
         if (enemyRB != null) enemyRB.linearVelocity = Vector2.zero;
+
+        // Store this ID so retry can reset it
+        EncounterManager.LastEncounterTriggerID = uniqueID;
+        EncounterManager.LastEncounterWasScripted = false;
+        EncounterManager.LastEncounterWasRecruit = false;
 
         PlayerPrefs.SetInt(uniqueID, 1);
         PlayerPrefs.Save();
