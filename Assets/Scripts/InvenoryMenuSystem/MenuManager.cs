@@ -11,7 +11,7 @@ public class MenuManager : MonoBehaviour
     public GameObject savePanel;
 
     [Header("Scene")]
-    public string overworldScene = "OverworldScene";
+    public string overworldScene = "overworldScene";
 
     void Start()
     {
@@ -80,6 +80,18 @@ public class MenuManager : MonoBehaviour
 
     public void ReturnToOverworld()
     {
+        Debug.Log($"[MENU] Returning to overworld via scene replace: {overworldScene}");
         SceneManager.LoadScene(overworldScene);
+    }
+
+    // NEW: Quit button
+    public void QuitGame()
+    {
+        Debug.Log("[MENU] Quit button pressed");
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }

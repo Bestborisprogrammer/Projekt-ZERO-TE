@@ -177,9 +177,19 @@ public class MainMenuController : MonoBehaviour
     // ── BUTTONS ───────────────────────────────────
     public void StartGame()
     {
-        // New Game – wipes nothing on disk, just starts fresh in-memory
-        Debug.Log("[MAINMENU] New Game started");
+        Debug.Log("[MAINMENU] New Game started - performing full reset");
+
         SaveManager.Instance.currentSlot = -2;
+        SaveManager.Instance.sessionPlaytime = 0f;
+
+        // Force a full fresh-game wipe regardless of session flag,
+        // since this is an explicit "New Game" request
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.SetInt("session_initialized_flag", 1);
+        PlayerPrefs.Save();
+
+        GearMenuPanel.ResetInitialized();
+
         SceneManager.LoadScene(gameScene);
     }
 

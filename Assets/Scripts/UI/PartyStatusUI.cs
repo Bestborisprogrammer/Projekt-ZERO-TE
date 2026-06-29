@@ -27,6 +27,13 @@ public class PartyStatusUI : MonoBehaviour
 
     public void TogglePanel()
     {
+        // Guard: don't open if there's nothing to show yet (e.g. mid save-load)
+        if (!isOpen && (PartyManager.Instance == null || PartyManager.Instance.activeParty.Count == 0))
+        {
+            Debug.LogWarning("[PARTY STATUS] Cannot open - no party data available yet");
+            return;
+        }
+
         isOpen = !isOpen;
 
         statusPanel.SetActive(isOpen);
@@ -47,6 +54,7 @@ public class PartyStatusUI : MonoBehaviour
 
     void PrevMember()
     {
+        if (PartyManager.Instance == null || PartyManager.Instance.activeParty.Count == 0) return;
         currentIndex--;
         if (currentIndex < 0)
             currentIndex = PartyManager.Instance.activeParty.Count - 1;
@@ -55,6 +63,7 @@ public class PartyStatusUI : MonoBehaviour
 
     void NextMember()
     {
+        if (PartyManager.Instance == null || PartyManager.Instance.activeParty.Count == 0) return;
         currentIndex++;
         if (currentIndex >= PartyManager.Instance.activeParty.Count)
             currentIndex = 0;
@@ -65,10 +74,17 @@ public class PartyStatusUI : MonoBehaviour
     {
         if (PartyManager.Instance == null) return;
 
+        // Guard against the exact crash you hit: empty party / out-of-range index
+        if (PartyManager.Instance.activeParty.Count == 0)
+        {
+            Debug.LogWarning("[PARTY STATUS] activeParty is empty, cannot show member");
+            return;
+        }
+        index = Mathf.Clamp(index, 0, PartyManager.Instance.activeParty.Count - 1);
+
         var member = PartyManager.Instance.activeParty[index];
         float xpPercent = (float)member.currentXP / member.xpToNextLevel * 100f;
 
-        // Build affinity string
         string affinities = member.baseData.affinities.Count > 0
             ? string.Join(", ", member.baseData.affinities)
             : "None";
@@ -78,19 +94,12 @@ public class PartyStatusUI : MonoBehaviour
             $"{member.Name} | Lv. {member.level}\n" +
             $"═════════════════════\n" +
             $"HP:  {member.currentHP} / {member.MaxHP}\n\n" +
-
             $"MP:  {member.currentMana} / {member.MaxMana}\n\n" +
-
             $"ATK: {member.Attack}\n\n" +
-
             $"DEF: {member.Defense}\n\n" +
-
             $"SPD: {member.Speed}\n\n" +
-
             $"MAG: {member.Magic}\n\n" +
-
             $"Affinity: {affinities}\n\n" +
-
             $"XP:  {member.currentXP} / {member.xpToNextLevel}  ({xpPercent:F1}%)";
 
         pageText.text = $"{index + 1}/{PartyManager.Instance.activeParty.Count}";

@@ -28,10 +28,6 @@ public class SaveSlotUI : MonoBehaviour
             slotButton.onClick.RemoveAllListeners();
             slotButton.onClick.AddListener(() => parentPanel.OnSlotClicked(slotIndex));
         }
-        else
-        {
-            Debug.LogError($"[SAVE SLOT UI] slotButton not assigned on prefab for slot {index}!");
-        }
     }
 
     public void Refresh()
@@ -42,12 +38,7 @@ public class SaveSlotUI : MonoBehaviour
                 Destroy(child.gameObject);
         }
 
-        if (SaveManager.Instance == null)
-        {
-            Debug.LogError("[SAVE SLOT UI] SaveManager.Instance is null!");
-            return;
-        }
-
+        // Instance now auto-creates itself, this will never be null
         var data = SaveManager.Instance.LoadSlotPreview(slotIndex);
 
         bool isAuto = slotIndex == SaveManager.AutoSaveSlot;
@@ -71,25 +62,35 @@ public class SaveSlotUI : MonoBehaviour
         if (dateText != null)
             dateText.text = data.dateTime;
 
-        // Defensive: data.activePartyNames might be null if save was malformed
         if (data.activePartyNames != null && memberPortraitParent != null && memberPortraitPrefab != null)
         {
             foreach (var memberName in data.activePartyNames)
             {
-                var so = SaveManager.Instance.allCharacterSOs.Find(c => c.characterName == memberName);
+                var so = SaveManager.Instance.FindCharacterSO(memberName);
                 if (so == null)
                 {
-                    Debug.LogWarning($"[SAVE SLOT UI] Could not find CharacterStatsSO for {memberName} " +
-                        $"in slot {slotIndex} - is it assigned in SaveManager's allCharacterSOs list?");
+                    Debug.LogWarning($"[SAVE SLOT UI] Could not find CharacterStatsSO for {memberName}");
                     continue;
                 }
 
                 GameObject portrait = Instantiate(memberPortraitPrefab, memberPortraitParent);
+
+                // FIXED: search children too, in case Image isn't on the prefab root
                 var img = portrait.GetComponent<Image>();
+                if (img == null)
+                    img = portrait.GetComponentInChildren<Image>();
+
                 if (img != null)
                 {
                     if (so.headPortrait != null) img.sprite = so.headPortrait;
                     else if (so.portrait != null) img.sprite = so.portrait;
+
+                    if (img.sprite == null)
+                        Debug.LogWarning($"[SAVE SLOT UI] {memberName}'s CharacterStatsSO has no headPortrait or portrait assigned!");
+                }
+                else
+                {
+                    Debug.LogError("[SAVE SLOT UI] memberPortraitPrefab has no Image component anywhere - check the prefab!");
                 }
             }
         }
