@@ -20,8 +20,6 @@ public class DialogueTrigger : MonoBehaviour
     [Header("Linked Systems (optional)")]
     public CutsceneManager linkedCutsceneManager;
     public RecruitCutsceneManager linkedRecruitCutscene;
-
-    [Header("Linked Systems (optional)")]
     public ResonanceCutsceneManager linkedResonanceCutscene;
 
     private bool triggered = false;
@@ -31,9 +29,10 @@ public class DialogueTrigger : MonoBehaviour
     void Start()
     {
         saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
-        Debug.Log($"[DIALOGUE TRIGGER] saveKey = {saveKey}");
 
-        saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
+        // Register so SaveManager tracks this flag per-save-slot
+        TrackedPlayerPrefsKeys.Register(saveKey);
+
         if (oneTimeOnly && PlayerPrefs.GetInt(saveKey, 0) == 1)
         {
             gameObject.SetActive(false);
@@ -41,9 +40,6 @@ public class DialogueTrigger : MonoBehaviour
         }
         if (promptText != null)
             promptText.gameObject.SetActive(false);
-
-        saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
-        Debug.Log($"[DIALOGUE TRIGGER] saveKey = {saveKey}");
     }
 
     void Update()

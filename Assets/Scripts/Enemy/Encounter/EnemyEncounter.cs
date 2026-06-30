@@ -4,12 +4,15 @@ using System.Collections.Generic;
 public class EnemyEncounter : MonoBehaviour
 {
     public List<EnemyStatsSO> enemies;
-    public string uniqueID; // make this public so retry can reset it
+    public string uniqueID;
 
     void Awake()
     {
         if (string.IsNullOrEmpty(uniqueID))
             uniqueID = $"enemy_{transform.position.x}_{transform.position.y}";
+
+        // Register so SaveManager tracks this flag per-save-slot
+        TrackedPlayerPrefsKeys.Register(uniqueID);
     }
 
     void Start()
@@ -33,7 +36,6 @@ public class EnemyEncounter : MonoBehaviour
         var enemyRB = GetComponent<Rigidbody2D>();
         if (enemyRB != null) enemyRB.linearVelocity = Vector2.zero;
 
-        // Store this ID so retry can reset it
         EncounterManager.LastEncounterTriggerID = uniqueID;
         EncounterManager.LastEncounterWasScripted = false;
         EncounterManager.LastEncounterWasRecruit = false;

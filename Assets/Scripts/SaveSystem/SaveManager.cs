@@ -10,8 +10,6 @@ public class SaveManager : MonoBehaviour
 
     public const int MaxSlots = 10;
     public const int AutoSaveSlot = -1;
-
-    // FIXED: match your actual scene name exactly (lowercase 'o')
     public const string OverworldSceneName = "overworldScene";
 
     [Header("Autosave")]
@@ -74,7 +72,6 @@ public class SaveManager : MonoBehaviour
     {
         sessionPlaytime += Time.deltaTime;
 
-        // FIXED: was "OverworldScene" (capital O), now matches actual scene name
         if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == OverworldSceneName)
         {
             if (pendingLoadData != null)
@@ -144,7 +141,6 @@ public class SaveManager : MonoBehaviour
         data.dateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
         var player = GameObject.FindGameObjectWithTag("Player");
-        // FIXED: store the correct scene name so loading targets the right one
         data.sceneName = OverworldSceneName;
 
         if (player != null)
@@ -218,6 +214,21 @@ public class SaveManager : MonoBehaviour
         data.resonanceMeterUnlocked = ResonanceManager.MeterUnlocked;
         data.resonanceMeterValue = ResonanceManager.Instance != null ? ResonanceManager.Instance.currentMeter : 0f;
 
+        // Capture every registered one-time-trigger PlayerPrefs flag into THIS save slot
+        data.playerPrefsKeys = new List<string>();
+        data.playerPrefsValues = new List<int>();
+
+        foreach (var key in TrackedPlayerPrefsKeys.AllKnownKeys)
+        {
+            if (PlayerPrefs.HasKey(key))
+            {
+                data.playerPrefsKeys.Add(key);
+                data.playerPrefsValues.Add(PlayerPrefs.GetInt(key));
+            }
+        }
+
+        Debug.Log($"[SAVE] Captured {data.playerPrefsKeys.Count} PlayerPrefs flags into save");
+
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(GetPath(slot), json);
         currentSlot = slot;
@@ -242,8 +253,6 @@ public class SaveManager : MonoBehaviour
             return;
         }
 
-        // FIXED: in case an old save file has the wrong-cased scene name saved,
-        // force it to the correct constant so loading always works
         data.sceneName = OverworldSceneName;
 
         Debug.Log($"[SAVE] Queued load for slot {slot}: {data.saveName}. Target scene: {data.sceneName}");
@@ -374,6 +383,20 @@ public class SaveManager : MonoBehaviour
         ResonanceManager.MeterUnlocked = data.resonanceMeterUnlocked;
         if (ResonanceManager.Instance != null)
             ResonanceManager.Instance.currentMeter = data.resonanceMeterValue;
+
+        // Restore PlayerPrefs flags to EXACTLY match this save slot.
+        // Wipe every tracked key first, then re-apply only what this save had.
+        foreach (var key in TrackedPlayerPrefsKeys.AllKnownKeys)
+            PlayerPrefs.DeleteKey(key);
+
+        if (data.playerPrefsKeys != null)
+        {
+            for (int i = 0; i < data.playerPrefsKeys.Count; i++)
+                PlayerPrefs.SetInt(data.playerPrefsKeys[i], data.playerPrefsValues[i]);
+        }
+        PlayerPrefs.Save();
+
+        Debug.Log($"[SAVE] Restored {data.playerPrefsKeys?.Count ?? 0} PlayerPrefs flags from save slot");
 
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
