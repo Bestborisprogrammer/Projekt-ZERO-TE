@@ -853,4 +853,9 @@ public class CombatUI : MonoBehaviour
         EncounterManager.CurrentEnemies.Clear();
         SceneManager.LoadScene(overworldScene);
     }
+
+    public void HideAllResultPanels()
+    {
+        if (victoryPanel != null) victoryPanel.SetActive(false);
+    }
 }

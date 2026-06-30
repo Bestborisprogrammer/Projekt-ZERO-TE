@@ -104,6 +104,7 @@ public class TurnCombatManager : MonoBehaviour
         }
     }
 
+
     void StartResonanceTurn()
     {
         if (!combatActive) return;
@@ -1012,5 +1013,23 @@ public class TurnCombatManager : MonoBehaviour
         PartyManager.Instance.GiveXPToAll(totalXP);
         combatUI.ShowVictory(totalXP, totalGold, drops);
         combatActive = false;
+    }
+    // Called by GameOverManager on retry - re-runs combat setup with the same
+    // enemy list, fresh turn order, without touching the scene at all.
+    public void RestartCombat()
+    {
+        Debug.Log("[COMBAT] RestartCombat called");
+
+        // Clear any forced-loss/resonance flags so retry behaves as a normal battle restart
+        resonanceMode = false;
+
+        // Hide victory/gameover panels if still visible
+        if (combatUI != null)
+        {
+            combatUI.HideAllResultPanels();
+        }
+
+        // Re-run the exact same setup logic used on first entry
+        SetupCombat();
     }
 }

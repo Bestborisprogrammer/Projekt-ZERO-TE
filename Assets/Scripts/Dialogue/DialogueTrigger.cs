@@ -31,6 +31,9 @@ public class DialogueTrigger : MonoBehaviour
     void Start()
     {
         saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
+        Debug.Log($"[DIALOGUE TRIGGER] saveKey = {saveKey}");
+
+        saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
         if (oneTimeOnly && PlayerPrefs.GetInt(saveKey, 0) == 1)
         {
             gameObject.SetActive(false);

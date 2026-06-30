@@ -17,7 +17,6 @@ public class GameOverManager : MonoBehaviour
 
     [Header("Scene")]
     public string mainMenuScene = "MainMenu";
-    public string overworldScene = "overworldScene";
 
     private static List<CombatSnapshot> partySnapshot = new();
     private static List<InventoryItemSave> inventorySnapshot = new();
@@ -89,13 +88,15 @@ public class GameOverManager : MonoBehaviour
         Time.timeScale = 0f;
     }
 
+    // FIXED: Retry now stays entirely inside CombatScene.
+    // No scene load, no overworld round-trip, no skipped cutscenes.
     void OnRetry()
     {
-        Debug.Log("[GAME OVER] Retry pressed");
+        Debug.Log("[GAME OVER] Retry pressed - restarting battle in place");
         Time.timeScale = 1f;
         gameOverPanel.SetActive(false);
 
-        // Restore HP to 50% of pre-battle value, full mana restore
+        // Restore HP to 50% of pre-battle value, mana back to pre-battle value
         if (PartyManager.Instance != null)
         {
             foreach (var member in PartyManager.Instance.activeParty)
@@ -109,11 +110,12 @@ public class GameOverManager : MonoBehaviour
                 else
                 {
                     member.currentHP = Mathf.Max(1, member.MaxHP / 2);
+                    member.currentMana = member.MaxMana;
                 }
             }
         }
 
-        // Restore inventory to pre-battle state
+        // Restore inventory to pre-battle state (so used potions etc come back)
         if (InventoryManager.Instance != null && inventorySnapshot.Count > 0)
         {
             InventoryManager.Instance.items.Clear();
@@ -125,38 +127,18 @@ public class GameOverManager : MonoBehaviour
             }
         }
 
-        // Reset the encounter trigger so it fires again on retry
-        ResetEncounterForRetry();
+        if (GoldManager.Instance != null)
+            GoldManager.Instance.SetGold(goldSnapshot);
 
-        EncounterManager.CurrentEnemies.Clear();
-        SceneManager.LoadScene(overworldScene);
-    }
-
-    void ResetEncounterForRetry()
-    {
-        if (EncounterManager.LastEncounterWasScripted)
+        // Re-run combat setup directly, same enemies, same scene
+        if (TurnCombatManager.Instance != null)
         {
-            // Clear the DialogueTrigger's one-time flag so the
-            // cutscene/dialogue runs again when player walks back in
-            string key = EncounterManager.LastEncounterTriggerID;
-            if (!string.IsNullOrEmpty(key))
-            {
-                PlayerPrefs.DeleteKey(key);
-                PlayerPrefs.Save();
-                Debug.Log($"[GAME OVER] Cleared scripted encounter flag: {key}");
-            }
-            else
-            {
-                Debug.LogWarning("[GAME OVER] Scripted encounter had no DialogueTrigger key set - " +
-                    "assign 'Dialogue Trigger Save Key' on CutsceneManager in the Inspector");
-            }
+            Debug.Log("[GAME OVER] Restarting TurnCombatManager.SetupCombat()");
+            TurnCombatManager.Instance.RestartCombat();
         }
-        else if (!string.IsNullOrEmpty(EncounterManager.LastEncounterTriggerID))
+        else
         {
-            // Normal encounter - clear its uniqueID flag so it re-spawns
-            PlayerPrefs.DeleteKey(EncounterManager.LastEncounterTriggerID);
-            PlayerPrefs.Save();
-            Debug.Log($"[GAME OVER] Cleared normal encounter flag: {EncounterManager.LastEncounterTriggerID}");
+            Debug.LogError("[GAME OVER] TurnCombatManager.Instance is null - cannot retry in place!");
         }
     }
 
@@ -165,6 +147,12 @@ public class GameOverManager : MonoBehaviour
         Debug.Log("[GAME OVER] Loading most recent save");
         Time.timeScale = 1f;
         gameOverPanel.SetActive(false);
+
+        // Clear any leftover encounter state so the loaded overworld
+        // doesn't think a battle is still active
+        EncounterManager.CurrentEnemies.Clear();
+        EncounterManager.ActiveCutscene = null;
+        EncounterManager.ActiveRecruitCutscene = null;
 
         int mostRecentSlot = FindMostRecentSlot();
         if (mostRecentSlot != int.MinValue)
@@ -196,11 +184,24 @@ public class GameOverManager : MonoBehaviour
         return bestSlot;
     }
 
+    // FIXED: explicitly clears all encounter/cutscene flags before
+    // going to MainMenu, so New Game truly starts fresh instead of
+    // immediately re-triggering the battle that just ended.
     void OnMainMenu()
     {
-        Debug.Log("[GAME OVER] Main menu");
+        Debug.Log("[GAME OVER] Going to main menu - clearing all encounter state");
         Time.timeScale = 1f;
         gameOverPanel.SetActive(false);
+
+        EncounterManager.CurrentEnemies.Clear();
+        EncounterManager.ActiveCutscene = null;
+        EncounterManager.ActiveRecruitCutscene = null;
+        EncounterManager.IsResonanceBattle = false;
+        EncounterManager.IsForcedLossBattle = false;
+        EncounterManager.IsRecruitBattle = false;
+        EncounterManager.PendingRecruitCompletion = false;
+        EncounterManager.PendingRecruitMemberName = "";
+
         SceneManager.LoadScene(mainMenuScene);
     }
 }
