@@ -17,9 +17,9 @@ MonoBehaviour:
   icon: {fileID: 0}
   itemType: 0
   itemTarget: 0
-  buyPrice: 15
+  buyPrice: 20
   sellPrice: 10
-  flatHeal: 40
+  flatHeal: 30
   percentHeal: 0
   statType: 1
   statModifier: 10

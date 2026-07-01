@@ -17,12 +17,12 @@ MonoBehaviour:
   icon: {fileID: 0}
   itemType: 2
   itemTarget: 1
-  buyPrice: 10
-  sellPrice: 5
+  buyPrice: 30
+  sellPrice: 15
   flatHeal: 50
   percentHeal: 0
   statType: 2
-  statModifier: 10
+  statModifier: 2
   modifierDuration: 3
   statusEffect: 0
   statusChance: 0
