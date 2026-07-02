@@ -16,8 +16,8 @@ MonoBehaviour:
   description: A basic sword
   slot: 0
   icon: {fileID: 0}
-  bonusHP: 4
-  bonusATK: 4
+  bonusHP: 1
+  bonusATK: 3
   bonusDEF: 1
   bonusSPD: 1
   bonusMP: 3

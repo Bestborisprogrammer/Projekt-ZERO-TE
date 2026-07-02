@@ -14,12 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gearName: Helmet
   description: A basic iron helmet.
-  icon: {fileID: 0}
   slot: 1
-  buyPrice: 70
-  sellPrice: 40
+  icon: {fileID: 0}
   bonusHP: 5
   bonusATK: 0
   bonusDEF: 3
   bonusSPD: 0
   bonusMP: 3
+  bonusMAG: 0
+  buyPrice: 50
+  sellPrice: 30

@@ -16,7 +16,7 @@ MonoBehaviour:
   sprite: {fileID: -2423643006674520593, guid: 42749d0e38b787046932ab363a35cdf3, type: 3}
   level: 1
   maxHP: 50
-  attack: 17
+  attack: 16
   defense: 4
   speed: 1
   maxMana: 20
