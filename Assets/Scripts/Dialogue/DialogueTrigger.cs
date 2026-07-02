@@ -26,18 +26,26 @@ public class DialogueTrigger : MonoBehaviour
     private bool playerNearby = false;
     private string saveKey;
 
+    void Awake()
+    {
+        // Build saveKey here so it exists for both Register AND Start's check
+        saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
+        TrackedPlayerPrefsKeys.Register(saveKey);
+        Debug.Log($"[DIALOGUE TRIGGER] Awake - saveKey: {saveKey}");
+    }
+
     void Start()
     {
-        saveKey = $"dlg_{gameObject.name}_{transform.position.x}_{transform.position.y}";
+        int flagValue = PlayerPrefs.GetInt(saveKey, 0);
+        Debug.Log($"[DIALOGUE TRIGGER] Start - {saveKey} = {flagValue}");
 
-        // Register so SaveManager tracks this flag per-save-slot
-        TrackedPlayerPrefsKeys.Register(saveKey);
-
-        if (oneTimeOnly && PlayerPrefs.GetInt(saveKey, 0) == 1)
+        if (oneTimeOnly && flagValue == 1)
         {
+            Debug.Log($"[DIALOGUE TRIGGER] Already triggered - disabling {gameObject.name}");
             gameObject.SetActive(false);
             return;
         }
+
         if (promptText != null)
             promptText.gameObject.SetActive(false);
     }
@@ -88,6 +96,7 @@ public class DialogueTrigger : MonoBehaviour
 
             if (oneTimeOnly)
             {
+                Debug.Log($"[DIALOGUE TRIGGER] Marking complete: {saveKey} = 1");
                 PlayerPrefs.SetInt(saveKey, 1);
                 PlayerPrefs.Save();
                 gameObject.SetActive(false);

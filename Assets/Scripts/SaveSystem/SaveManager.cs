@@ -31,12 +31,10 @@ public class SaveManager : MonoBehaviour
     static void Bootstrap()
     {
         if (Instance != null) return;
-
         GameObject obj = new GameObject("SaveManager");
         Instance = obj.AddComponent<SaveManager>();
         DontDestroyOnLoad(obj);
-        Debug.Log("[SAVE MANAGER] Bootstrapped via RuntimeInitializeOnLoadMethod - single instance guaranteed");
-
+        Debug.Log("[SAVE MANAGER] Bootstrapped");
         Instance.LoadDatabase();
     }
 
@@ -49,22 +47,16 @@ public class SaveManager : MonoBehaviour
             LoadDatabase();
         }
         else if (Instance != this)
-        {
             Destroy(gameObject);
-        }
     }
 
     void LoadDatabase()
     {
         if (databaseLoaded) return;
-
         allCharacterSOs = Resources.LoadAll<CharacterStatsSO>("").ToList();
         allItemSOs = Resources.LoadAll<ItemSO>("").ToList();
         allGearSOs = Resources.LoadAll<GearSO>("").ToList();
-
-        Debug.Log($"[SAVE MANAGER] Database loaded: {allCharacterSOs.Count} characters, " +
-            $"{allItemSOs.Count} items, {allGearSOs.Count} gear");
-
+        Debug.Log($"[SAVE MANAGER] Database: {allCharacterSOs.Count} chars, {allItemSOs.Count} items, {allGearSOs.Count} gear");
         databaseLoaded = true;
     }
 
@@ -76,7 +68,7 @@ public class SaveManager : MonoBehaviour
         {
             if (pendingLoadData != null)
             {
-                Debug.Log("[SAVE] *** pendingLoadData detected in correct scene - starting apply coroutine ***");
+                Debug.Log("[SAVE] pendingLoadData detected - starting apply coroutine");
                 var dataToApply = pendingLoadData;
                 pendingLoadData = null;
                 StartCoroutine(ApplyLoadedDataDelayed(dataToApply));
@@ -110,12 +102,11 @@ public class SaveManager : MonoBehaviour
         if (!File.Exists(path)) return null;
         try
         {
-            string json = File.ReadAllText(path);
-            return JsonUtility.FromJson<SaveData>(json);
+            return JsonUtility.FromJson<SaveData>(File.ReadAllText(path));
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"[SAVE] Failed to read preview for slot {slot}: {e.Message}");
+            Debug.LogError($"[SAVE] Preview failed slot {slot}: {e.Message}");
             return null;
         }
     }
@@ -130,7 +121,7 @@ public class SaveManager : MonoBehaviour
 
         if (PartyManager.Instance == null)
         {
-            Debug.LogError("[SAVE] PartyManager.Instance is null – cannot save outside overworldScene!");
+            Debug.LogError("[SAVE] PartyManager null - cannot save!");
             return;
         }
 
@@ -139,10 +130,9 @@ public class SaveManager : MonoBehaviour
         data.saveName = customName ?? $"Edward's Save Slot {slot + 1}";
         data.playtimeSeconds = sessionPlaytime;
         data.dateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
-
-        var player = GameObject.FindGameObjectWithTag("Player");
         data.sceneName = OverworldSceneName;
 
+        var player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
             data.playerX = player.transform.position.x;
@@ -154,15 +144,10 @@ public class SaveManager : MonoBehaviour
             data.playerX = PlayerPrefs.GetFloat("PlayerReturnX");
             data.playerY = PlayerPrefs.GetFloat("PlayerReturnY");
             data.playerZ = PlayerPrefs.GetFloat("PlayerReturnZ");
-            Debug.Log($"[SAVE] Used cached menu-return position: {data.playerX},{data.playerY},{data.playerZ}");
-        }
-        else
-        {
-            Debug.LogWarning("[SAVE] Could not determine player position - saving as 0,0,0");
+            Debug.Log($"[SAVE] Position from cache: {data.playerX},{data.playerY},{data.playerZ}");
         }
 
         foreach (var member in PartyManager.Instance.allMembers)
-        {
             data.allMembers.Add(new CharacterSaveEntry
             {
                 characterSOName = member.baseData.characterName,
@@ -172,27 +157,17 @@ public class SaveManager : MonoBehaviour
                 currentHP = member.currentHP,
                 currentMana = member.currentMana
             });
-        }
+
         foreach (var active in PartyManager.Instance.activeParty)
             data.activePartyNames.Add(active.baseData.characterName);
 
         foreach (var item in InventoryManager.Instance.items)
-        {
             data.inventoryItems.Add(new InventoryItemSave
-            {
-                itemSOName = item.itemData.itemName,
-                quantity = item.quantity
-            });
-        }
+            { itemSOName = item.itemData.itemName, quantity = item.quantity });
 
         foreach (var stack in GearManager.Instance.gearInventory)
-        {
             data.gearStacks.Add(new GearStackSave
-            {
-                gearSOName = stack.gear.gearName,
-                quantity = stack.quantity
-            });
-        }
+            { gearSOName = stack.gear.gearName, quantity = stack.quantity });
 
         foreach (var member in PartyManager.Instance.allMembers)
         {
@@ -214,25 +189,27 @@ public class SaveManager : MonoBehaviour
         data.resonanceMeterUnlocked = ResonanceManager.MeterUnlocked;
         data.resonanceMeterValue = ResonanceManager.Instance != null ? ResonanceManager.Instance.currentMeter : 0f;
 
-        // Capture every registered one-time-trigger PlayerPrefs flag into THIS save slot
+        // Capture PlayerPrefs story flags into this save slot
         data.playerPrefsKeys = new List<string>();
         data.playerPrefsValues = new List<int>();
 
-        foreach (var key in TrackedPlayerPrefsKeys.AllKnownKeys)
+        var allTracked = TrackedPlayerPrefsKeys.GetAllTrackedKeys();
+        Debug.Log($"[SAVE] Capturing {allTracked.Count} tracked keys");
+        foreach (var key in allTracked)
         {
             if (PlayerPrefs.HasKey(key))
             {
+                int val = PlayerPrefs.GetInt(key, 0);
                 data.playerPrefsKeys.Add(key);
-                data.playerPrefsValues.Add(PlayerPrefs.GetInt(key));
+                data.playerPrefsValues.Add(val);
+                Debug.Log($"[SAVE] Flag: {key} = {val}");
             }
         }
+        Debug.Log($"[SAVE] Captured {data.playerPrefsKeys.Count} flags");
 
-        Debug.Log($"[SAVE] Captured {data.playerPrefsKeys.Count} PlayerPrefs flags into save");
-
-        string json = JsonUtility.ToJson(data, true);
-        File.WriteAllText(GetPath(slot), json);
+        File.WriteAllText(GetPath(slot), JsonUtility.ToJson(data, true));
         currentSlot = slot;
-        Debug.Log($"[SAVE] Saved to {GetPath(slot)}");
+        Debug.Log($"[SAVE] Done: {GetPath(slot)}");
     }
 
     public void LoadFromSlot(int slot)
@@ -240,22 +217,19 @@ public class SaveManager : MonoBehaviour
         string path = GetPath(slot);
         if (!File.Exists(path))
         {
-            Debug.LogError($"[SAVE] No save found at slot {slot}");
+            Debug.LogError($"[SAVE] No save at slot {slot}");
             return;
         }
 
-        string json = File.ReadAllText(path);
-        var data = JsonUtility.FromJson<SaveData>(json);
-
+        var data = JsonUtility.FromJson<SaveData>(File.ReadAllText(path));
         if (data == null)
         {
-            Debug.LogError($"[SAVE] Failed to parse save data for slot {slot}");
+            Debug.LogError($"[SAVE] Parse failed slot {slot}");
             return;
         }
 
         data.sceneName = OverworldSceneName;
-
-        Debug.Log($"[SAVE] Queued load for slot {slot}: {data.saveName}. Target scene: {data.sceneName}");
+        Debug.Log($"[SAVE] Queued load slot {slot}: {data.saveName}");
         currentSlot = slot;
 
         IsLoadingSave = true;
@@ -265,7 +239,7 @@ public class SaveManager : MonoBehaviour
 
     IEnumerator ApplyLoadedDataDelayed(SaveData data)
     {
-        Debug.Log("[SAVE] ApplyLoadedDataDelayed coroutine STARTED");
+        Debug.Log("[SAVE] ApplyLoadedDataDelayed started");
 
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
@@ -275,27 +249,21 @@ public class SaveManager : MonoBehaviour
         yield return new WaitUntil(() => GearManager.Instance != null);
         yield return new WaitUntil(() => InventoryManager.Instance != null);
 
-        Debug.Log("[SAVE] All managers confirmed ready, applying save data now");
+        Debug.Log("[SAVE] All managers ready - applying");
 
-        try
-        {
-            ApplyLoadedData(data);
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[SAVE] EXCEPTION during ApplyLoadedData: {e}");
-        }
+        try { ApplyLoadedData(data); }
+        catch (System.Exception e) { Debug.LogError($"[SAVE] Exception: {e}"); }
 
         IsLoadingSave = false;
     }
 
     void ApplyLoadedData(SaveData data)
     {
-        Debug.Log($"[SAVE] ApplyLoadedData ENTERED for: {data.saveName}");
+        Debug.Log($"[SAVE] ApplyLoadedData: {data.saveName}");
 
         if (PartyManager.Instance == null)
         {
-            Debug.LogError("[SAVE] ApplyLoadedData called but PartyManager.Instance is still null!");
+            Debug.LogError("[SAVE] PartyManager null in ApplyLoadedData!");
             return;
         }
 
@@ -307,12 +275,7 @@ public class SaveManager : MonoBehaviour
         foreach (var entry in data.allMembers)
         {
             var so = FindCharacterSO(entry.characterSOName);
-            if (so == null)
-            {
-                Debug.LogWarning($"[SAVE] Could not find CharacterStatsSO: {entry.characterSOName}");
-                continue;
-            }
-
+            if (so == null) { Debug.LogWarning($"[SAVE] Missing SO: {entry.characterSOName}"); continue; }
             var inst = new CharacterInstance { baseData = so };
             inst.Initialize();
             inst.level = entry.level;
@@ -321,99 +284,98 @@ public class SaveManager : MonoBehaviour
             inst.currentHP = entry.currentHP;
             inst.currentMana = entry.currentMana;
             PartyManager.Instance.allMembers.Add(inst);
-            Debug.Log($"[SAVE] Restored member: {inst.Name} Lv{inst.level} HP:{inst.currentHP}");
+            Debug.Log($"[SAVE] Restored: {inst.Name} Lv{inst.level} HP:{inst.currentHP}");
         }
 
         foreach (var name in data.activePartyNames)
         {
             var inst = PartyManager.Instance.allMembers.Find(m => m.Name == name);
-            if (inst != null)
-                PartyManager.Instance.activeParty.Add(inst);
+            if (inst != null) PartyManager.Instance.activeParty.Add(inst);
         }
 
-        Debug.Log($"[SAVE] Active party restored: {string.Join(",", PartyManager.Instance.activeParty.ConvertAll(m => m.Name))}");
+        Debug.Log($"[SAVE] Party: {string.Join(",", PartyManager.Instance.activeParty.ConvertAll(m => m.Name))}");
 
         if (InventoryManager.Instance != null)
         {
             InventoryManager.Instance.items.Clear();
-            foreach (var itemSave in data.inventoryItems)
+            foreach (var s in data.inventoryItems)
             {
-                var so = FindItemSO(itemSave.itemSOName);
-                if (so == null)
-                {
-                    Debug.LogWarning($"[SAVE] Could not find ItemSO: {itemSave.itemSOName}");
-                    continue;
-                }
-                InventoryManager.Instance.items.Add(new InventoryItem(so, itemSave.quantity));
+                var so = FindItemSO(s.itemSOName);
+                if (so == null) continue;
+                InventoryManager.Instance.items.Add(new InventoryItem(so, s.quantity));
             }
-            Debug.Log($"[SAVE] Inventory restored: {InventoryManager.Instance.items.Count} item stacks");
+            Debug.Log($"[SAVE] Inventory: {InventoryManager.Instance.items.Count} stacks");
         }
 
         if (GearManager.Instance != null)
         {
             GearManager.Instance.gearInventory.Clear();
-            foreach (var gearSave in data.gearStacks)
+            foreach (var s in data.gearStacks)
             {
-                var so = FindGearSO(gearSave.gearSOName);
+                var so = FindGearSO(s.gearSOName);
                 if (so == null) continue;
-                GearManager.Instance.gearInventory.Add(new GearStack(so, gearSave.quantity));
+                GearManager.Instance.gearInventory.Add(new GearStack(so, s.quantity));
             }
 
             GearManager.Instance.ClearAllEquipped();
             foreach (var eq in data.equippedGear)
             {
-                var charGear = GearManager.Instance.GetGearFor(eq.characterName);
-                charGear.weapon = FindGearSO(eq.weaponName);
-                charGear.helmet = FindGearSO(eq.helmetName);
-                charGear.torso = FindGearSO(eq.torsoName);
-                charGear.legs = FindGearSO(eq.legsName);
-                charGear.feet = FindGearSO(eq.feetName);
-                charGear.ring1 = FindGearSO(eq.ring1Name);
-                charGear.ring2 = FindGearSO(eq.ring2Name);
+                var cg = GearManager.Instance.GetGearFor(eq.characterName);
+                cg.weapon = FindGearSO(eq.weaponName);
+                cg.helmet = FindGearSO(eq.helmetName);
+                cg.torso = FindGearSO(eq.torsoName);
+                cg.legs = FindGearSO(eq.legsName);
+                cg.feet = FindGearSO(eq.feetName);
+                cg.ring1 = FindGearSO(eq.ring1Name);
+                cg.ring2 = FindGearSO(eq.ring2Name);
             }
-            Debug.Log($"[SAVE] Gear restored: {GearManager.Instance.gearInventory.Count} stacks in inventory");
+            Debug.Log($"[SAVE] Gear: {GearManager.Instance.gearInventory.Count} stacks");
         }
 
         if (GoldManager.Instance != null)
         {
             GoldManager.Instance.SetGold(data.gold);
-            Debug.Log($"[SAVE] Gold restored: {GoldManager.Instance.gold}");
+            Debug.Log($"[SAVE] Gold: {GoldManager.Instance.gold}");
         }
 
         ResonanceManager.MeterUnlocked = data.resonanceMeterUnlocked;
         if (ResonanceManager.Instance != null)
             ResonanceManager.Instance.currentMeter = data.resonanceMeterValue;
 
-        // Restore PlayerPrefs flags to EXACTLY match this save slot.
-        // Wipe every tracked key first, then re-apply only what this save had.
-        foreach (var key in TrackedPlayerPrefsKeys.AllKnownKeys)
-            PlayerPrefs.DeleteKey(key);
+        // Restore PlayerPrefs story flags to EXACTLY what they were at save time
+        var allTracked = TrackedPlayerPrefsKeys.GetAllTrackedKeys();
+        Debug.Log($"[SAVE] Wiping {allTracked.Count} tracked keys before restore");
+        foreach (var key in allTracked)
+        {
+            if (PlayerPrefs.HasKey(key))
+            {
+                Debug.Log($"[SAVE] Wiping: {key} (was {PlayerPrefs.GetInt(key, 0)})");
+                PlayerPrefs.DeleteKey(key);
+            }
+        }
 
+        int restored = 0;
         if (data.playerPrefsKeys != null)
         {
             for (int i = 0; i < data.playerPrefsKeys.Count; i++)
+            {
                 PlayerPrefs.SetInt(data.playerPrefsKeys[i], data.playerPrefsValues[i]);
+                Debug.Log($"[SAVE] Restored flag: {data.playerPrefsKeys[i]} = {data.playerPrefsValues[i]}");
+                restored++;
+            }
         }
         PlayerPrefs.Save();
-
-        Debug.Log($"[SAVE] Restored {data.playerPrefsKeys?.Count ?? 0} PlayerPrefs flags from save slot");
+        Debug.Log($"[SAVE] PlayerPrefs: {restored} flags restored");
 
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
             player.transform.position = new Vector3(data.playerX, data.playerY, data.playerZ);
-            Debug.Log($"[SAVE] Player position set to: {player.transform.position}");
-        }
-        else
-        {
-            Debug.LogWarning("[SAVE] Could not find Player GameObject to set position!");
+            Debug.Log($"[SAVE] Position: {player.transform.position}");
         }
 
         EncounterManager.PlayerReturnPosition = Vector3.zero;
-
-        Debug.Log($"[SAVE] *** LOAD COMPLETE *** Gold:{GoldManager.Instance?.gold} " +
-            $"PartyCount:{PartyManager.Instance.activeParty.Count} " +
-            $"Members:{string.Join(",", PartyManager.Instance.activeParty.ConvertAll(m => m.Name))}");
+        Debug.Log($"[SAVE] *** LOAD COMPLETE *** Gold:{GoldManager.Instance?.gold} Party:{PartyManager.Instance.activeParty.Count}");
     }
 
     public void DeleteSlot(int slot)
@@ -431,10 +393,6 @@ public class SaveManager : MonoBehaviour
         int h = Mathf.FloorToInt(seconds / 3600f);
         int m = Mathf.FloorToInt((seconds % 3600f) / 60f);
         int s = Mathf.FloorToInt(seconds % 60f);
-
-        if (h > 0)
-            return $"{h:00}h {m:00}m";
-        else
-            return $"{m:00}m {s:00}s";
+        return h > 0 ? $"{h:00}h {m:00}m" : $"{m:00}m {s:00}s";
     }
 }

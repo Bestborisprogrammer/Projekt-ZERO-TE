@@ -63,10 +63,15 @@ public class InventoryMenuPanel : MonoBehaviour
         foreach (var member in PartyManager.Instance.activeParty)
         {
             GameObject btn = Instantiate(targetMemberPrefab, targetParent);
+
+            // FIXED: search root AND children for Button component
+            Button button = btn.GetComponent<Button>();
+            if (button == null) button = btn.GetComponentInChildren<Button>();
+
             var tmps = btn.GetComponentsInChildren<TextMeshProUGUI>();
 
-            string preview = "";
             string statLine = "";
+            string preview = "";
 
             if (pendingItem.itemType == ItemType.Heal)
             {
@@ -86,17 +91,24 @@ public class InventoryMenuPanel : MonoBehaviour
                 int totalRestore = pendingItem.flatHeal;
                 int actual = Mathf.Min(totalRestore, member.MaxMana - member.currentMana);
                 preview = $"Restores +{actual} MP";
-                // FIXED: show MP stats for mana items instead of HP
                 statLine = $"MP: {member.currentMana}/{member.MaxMana}";
             }
 
             if (tmps.Length > 0)
-                tmps[0].text = $"{member.Name}  Lv.{member.level}\n" +
-                    $"{statLine}\n{preview}";
+                tmps[0].text = $"{member.Name}  Lv.{member.level}\n{statLine}\n{preview}";
 
-            var capturedMember = member;
-            btn.GetComponent<Button>()?.onClick.AddListener(() =>
-                UseItemOnMember(capturedMember));
+            Debug.Log($"[MENU] Button for {member.Name}: button null={button == null}");
+
+            if (button != null)
+            {
+                button.onClick.RemoveAllListeners();
+                var capturedMember = member;
+                button.onClick.AddListener(() =>
+                {
+                    Debug.Log($"[MENU] Button clicked for {capturedMember.Name}");
+                    UseItemOnMember(capturedMember);
+                });
+            }
         }
     }
 
@@ -115,8 +127,7 @@ public class InventoryMenuPanel : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[MENU] Using {pendingItem.itemName} (type:{pendingItem.itemType}) on {member.Name}");
-        Debug.Log($"[MENU] Before - HP: {member.currentHP}/{member.MaxHP}  statMods: {member.statModifiers.Count}");
+        Debug.Log($"[MENU] Using {pendingItem.itemName} ({pendingItem.itemType}) on {member.Name}");
 
         if (pendingItem.itemType == ItemType.Heal)
         {
@@ -126,9 +137,7 @@ public class InventoryMenuPanel : MonoBehaviour
             int before = member.currentHP;
             member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + totalHeal);
             int actual = member.currentHP - before;
-            Debug.Log($"[MENU] Heal: flatHeal={pendingItem.flatHeal} " +
-                $"percentHeal={pendingItem.percentHeal} total={totalHeal} actual={actual}");
-            Debug.Log($"[MENU] After HP: {member.currentHP}/{member.MaxHP}");
+            Debug.Log($"[MENU] Healed {member.Name}: +{actual} HP → {member.currentHP}/{member.MaxHP}");
         }
         else if (pendingItem.itemType == ItemType.Buff)
         {
@@ -136,22 +145,20 @@ public class InventoryMenuPanel : MonoBehaviour
                 pendingItem.statType,
                 pendingItem.statModifier,
                 pendingItem.modifierDuration));
-            Debug.Log($"[MENU] Buff applied: {pendingItem.statType} +{pendingItem.statModifier} " +
-                $"for {pendingItem.modifierDuration} turns");
-            Debug.Log($"[MENU] statMods after: {member.statModifiers.Count}");
+            Debug.Log($"[MENU] Buffed {member.Name}: {pendingItem.statType} +{pendingItem.statModifier}");
         }
         else if (pendingItem.itemType == ItemType.ManaRestore)
         {
             int restore = pendingItem.flatHeal;
+            int before = member.currentMana;
             member.currentMana = Mathf.Min(member.MaxMana, member.currentMana + restore);
-            Debug.Log($"[MENU] Mana restored: {restore} → {member.currentMana}/{member.MaxMana}");
+            int actual = member.currentMana - before;
+            Debug.Log($"[MENU] Restored {member.Name}: +{actual} MP → {member.currentMana}/{member.MaxMana}");
         }
 
         InventoryManager.Instance.RemoveItem(pendingItem);
         pendingItem = null;
         targetPanel.SetActive(false);
         Refresh();
-
-        Debug.Log($"[MENU] Done. Item removed from inventory.");
     }
 }

@@ -11,14 +11,19 @@ public class EnemyEncounter : MonoBehaviour
         if (string.IsNullOrEmpty(uniqueID))
             uniqueID = $"enemy_{transform.position.x}_{transform.position.y}";
 
-        // Register so SaveManager tracks this flag per-save-slot
         TrackedPlayerPrefsKeys.Register(uniqueID);
+        Debug.Log($"[ENEMY ENCOUNTER] Awake - uniqueID: {uniqueID}");
     }
 
     void Start()
     {
-        if (PlayerPrefs.GetInt(uniqueID, 0) == 1)
+        int val = PlayerPrefs.GetInt(uniqueID, 0);
+        Debug.Log($"[ENEMY ENCOUNTER] Start - {uniqueID} = {val}");
+        if (val == 1)
+        {
+            Debug.Log($"[ENEMY ENCOUNTER] Already defeated, destroying");
             Destroy(gameObject);
+        }
     }
 
     void OnTriggerEnter2D(Collider2D other)
@@ -40,6 +45,7 @@ public class EnemyEncounter : MonoBehaviour
         EncounterManager.LastEncounterWasScripted = false;
         EncounterManager.LastEncounterWasRecruit = false;
 
+        Debug.Log($"[ENEMY ENCOUNTER] Triggered - setting {uniqueID} = 1");
         PlayerPrefs.SetInt(uniqueID, 1);
         PlayerPrefs.Save();
         EncounterManager.Instance.StartEncounter(enemies);

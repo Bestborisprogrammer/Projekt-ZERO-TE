@@ -29,20 +29,38 @@ public class RecruitCutsceneManager : MonoBehaviour
 
     private bool cutsceneStarted = false;
     private CharacterInstance recruitedInstance;
+    private string saveKey;
+
+    void Awake()
+    {
+        saveKey = $"recruit_cs_{gameObject.name}";
+        TrackedPlayerPrefsKeys.Register(saveKey);
+        Debug.Log($"[RECRUIT CS] Awake - saveKey: {saveKey}");
+    }
 
     void Start()
     {
         if (joinMessageText != null)
             joinMessageText.gameObject.SetActive(false);
 
-        Debug.Log($"[RECRUIT START] PendingCompletion:{EncounterManager.PendingRecruitCompletion} " +
+        int flagValue = PlayerPrefs.GetInt(saveKey, 0);
+        Debug.Log($"[RECRUIT CS] Start - {saveKey} = {flagValue}");
+
+        if (flagValue == 1)
+        {
+            Debug.Log("[RECRUIT CS] Already completed - disabling trigger");
+            if (triggerObject != null)
+                triggerObject.SetActive(false);
+        }
+
+        Debug.Log($"[RECRUIT CS] PendingCompletion:{EncounterManager.PendingRecruitCompletion} " +
             $"PendingName:{EncounterManager.PendingRecruitMemberName} " +
             $"MyMember:{newMember?.characterName}");
 
         if (EncounterManager.PendingRecruitCompletion &&
             EncounterManager.PendingRecruitMemberName == newMember.characterName)
         {
-            Debug.Log("[RECRUIT] Match! Running PostBattle");
+            Debug.Log("[RECRUIT CS] Match! Running PostBattle");
             EncounterManager.PendingRecruitCompletion = false;
             EncounterManager.PendingRecruitMemberName = "";
 
@@ -56,7 +74,17 @@ public class RecruitCutsceneManager : MonoBehaviour
     public void StartRecruitCutscene()
     {
         if (cutsceneStarted) return;
+        if (PlayerPrefs.GetInt(saveKey, 0) == 1)
+        {
+            Debug.Log("[RECRUIT CS] Already done - not starting again");
+            return;
+        }
+
         cutsceneStarted = true;
+        Debug.Log("[RECRUIT CS] Starting cutscene");
+
+        PlayerPrefs.SetInt(saveKey, 1);
+        PlayerPrefs.Save();
 
         if (triggerObject != null)
             triggerObject.SetActive(false);
@@ -88,15 +116,11 @@ public class RecruitCutsceneManager : MonoBehaviour
             && PartyManager.Instance.activeParty.Count < 4)
             PartyManager.Instance.activeParty.Add(recruitedInstance);
 
-        // Set ALL flags before encounter starts
         EncounterManager.IsRecruitBattle = true;
         EncounterManager.PendingRecruitCompletion = true;
         EncounterManager.PendingRecruitMemberName = newMember.characterName;
 
-        Debug.Log($"[RECRUIT] Flags set: IsRecruitBattle={EncounterManager.IsRecruitBattle} " +
-            $"PendingCompletion={EncounterManager.PendingRecruitCompletion} " +
-            $"PendingName={EncounterManager.PendingRecruitMemberName}");
-
+        Debug.Log($"[RECRUIT CS] Starting encounter");
         EncounterManager.Instance.StartEncounter(new List<EnemyStatsSO> { enemyToFight });
     }
 
@@ -131,7 +155,7 @@ public class RecruitCutsceneManager : MonoBehaviour
                 PartyManager.Instance.activeParty.Add(inst);
         }
 
-        Debug.Log($"[RECRUIT] {newMember.characterName} permanently joined!");
+        Debug.Log($"[RECRUIT CS] {newMember.characterName} permanently joined!");
 
         if (npcGameObject != null && npcTalkDialogue != null)
             SetupNPCTalk();
@@ -204,10 +228,8 @@ public class RecruitCutsceneManager : MonoBehaviour
     {
         var player = GameObject.FindGameObjectWithTag("Player");
         if (player == null) return;
-
         var movement = player.GetComponent<PlayerMovement2D>();
         if (movement != null) movement.enabled = !frozen;
-
         var rb = player.GetComponent<Rigidbody2D>();
         if (rb != null && frozen) rb.linearVelocity = Vector2.zero;
     }
