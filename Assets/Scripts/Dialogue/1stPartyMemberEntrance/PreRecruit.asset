@@ -15,7 +15,7 @@ MonoBehaviour:
   lines:
   - speakerName: Edward
     portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
-    text: Hmm, I hear something from the upper floor...
+    text: Hm, I hear something from the upper floor...
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

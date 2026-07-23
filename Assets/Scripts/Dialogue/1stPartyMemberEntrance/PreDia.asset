@@ -22,7 +22,7 @@ MonoBehaviour:
   - speakerName: Edward
     portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
     text: I guess I should help him, I really need more people to tag along. I probably
-      can't survive out here alone.
+      can't survive here alone.
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

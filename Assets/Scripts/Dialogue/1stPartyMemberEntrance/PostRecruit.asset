@@ -15,7 +15,7 @@ MonoBehaviour:
   lines:
   - speakerName: Hirose
     portrait: {fileID: 2378355503943272512, guid: d5c8eb7167e897d45b7fce5da898e35a, type: 3}
-    text: Hmm? Is there anything you want to say?
+    text: Hm? Is there anything you want to say?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0

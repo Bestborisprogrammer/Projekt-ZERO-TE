@@ -15,7 +15,7 @@ MonoBehaviour:
   lines:
   - speakerName: Boris
     portrait: {fileID: 4796411974396303719, guid: e640810668840b540a9a78a05e45a5c3, type: 3}
-    text: Oi Stranger! The name's Boris, I am but a humble trader.  Are you new here
+    text: Oi stranger! The name's Boris, I am but a humble trader.  Are you new here
       by any chance?
     typingSpeed: 0.1
     autoAdvance: 0
