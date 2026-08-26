@@ -1,0 +1,1 @@
+Hier gehen alle Charakter/Gegner-Sprites rein.
