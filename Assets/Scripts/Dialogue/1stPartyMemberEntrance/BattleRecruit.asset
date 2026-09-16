@@ -40,13 +40,13 @@ MonoBehaviour:
     autoAdvanceDelay: 0
   - speakerName: Hirose
     portrait: {fileID: 2378355503943272512, guid: d5c8eb7167e897d45b7fce5da898e35a, type: 3}
-    text: Quite optimistic aren't we?
+    text: What makes you think that I would join your journey?
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
   - speakerName: Edward
     portrait: {fileID: -996614095021860825, guid: fef7ca89a6483c149870e7045b110c5b, type: 3}
-    text: Just focus on the fight...
+    text: Just focus on the fight.
     typingSpeed: 0.1
     autoAdvance: 0
     autoAdvanceDelay: 0
