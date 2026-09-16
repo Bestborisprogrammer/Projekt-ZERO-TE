@@ -229,8 +229,37 @@ public class SaveManager : MonoBehaviour
         }
 
         data.sceneName = OverworldSceneName;
-        Debug.Log($"[SAVE] Queued load slot {slot}: {data.saveName}");
+        Debug.Log($"[SAVE] Loading slot {slot}: {data.saveName}");
         currentSlot = slot;
+
+        // CRITICAL FIX: wipe and restore PlayerPrefs flags RIGHT NOW,
+        // BEFORE the scene loads. This way DialogueTrigger.Start() sees
+        // the correct flag values when it runs during scene initialization,
+        // instead of seeing stale "done" flags and disabling itself.
+        var allTracked = TrackedPlayerPrefsKeys.GetAllTrackedKeys();
+        Debug.Log($"[SAVE] Pre-load: wiping {allTracked.Count} tracked keys");
+        foreach (var key in allTracked)
+        {
+            if (PlayerPrefs.HasKey(key))
+            {
+                Debug.Log($"[SAVE] Pre-load wipe: {key} (was {PlayerPrefs.GetInt(key, 0)})");
+                PlayerPrefs.DeleteKey(key);
+            }
+        }
+
+        // Restore only what this save had set
+        int restored = 0;
+        if (data.playerPrefsKeys != null)
+        {
+            for (int i = 0; i < data.playerPrefsKeys.Count; i++)
+            {
+                PlayerPrefs.SetInt(data.playerPrefsKeys[i], data.playerPrefsValues[i]);
+                Debug.Log($"[SAVE] Pre-load restore: {data.playerPrefsKeys[i]} = {data.playerPrefsValues[i]}");
+                restored++;
+            }
+        }
+        PlayerPrefs.Save();
+        Debug.Log($"[SAVE] Pre-load: restored {restored} flags. NOW loading scene.");
 
         IsLoadingSave = true;
         pendingLoadData = data;
