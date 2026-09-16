@@ -446,34 +446,39 @@ public class CombatSpriteManager : MonoBehaviour
         if (!rectMap.ContainsKey(name) || !spriteMap.ContainsKey(name)) yield break;
         var rt = rectMap[name];
         var img = spriteMap[name];
+        if (rt == null || img == null) yield break;
+
         Vector2 orig = rt.anchoredPosition;
-        img.color = Color.red;
         float t = 0f;
         while (t < 0.3f)
         {
+            if (img == null || rt == null) yield break;
             rt.anchoredPosition = orig + new Vector2(
                 Random.Range(-8f, 8f), Random.Range(-8f, 8f));
             t += Time.deltaTime;
             yield return null;
         }
-        rt.anchoredPosition = orig;
-        img.color = Color.white;
+        if (rt != null) rt.anchoredPosition = orig;
+        if (img != null) img.color = Color.white;
     }
 
     IEnumerator GreyOut(string name)
     {
         if (!spriteMap.ContainsKey(name)) yield break;
         var img = spriteMap[name];
+        if (img == null) yield break;
+
         float t = 0f;
         Color start = img.color;
         Color grey = new Color(0.3f, 0.3f, 0.3f, 0.5f);
         while (t < 0.5f)
         {
+            if (img == null) yield break;
             t += Time.deltaTime;
             img.color = Color.Lerp(start, grey, t / 0.5f);
             yield return null;
         }
-        img.color = grey;
+        if (img != null) img.color = grey;
     }
 
     public void ShowManaNumber(string targetName, int amount)

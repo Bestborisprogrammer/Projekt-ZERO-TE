@@ -232,34 +232,42 @@ public class SaveManager : MonoBehaviour
         Debug.Log($"[SAVE] Loading slot {slot}: {data.saveName}");
         currentSlot = slot;
 
-        // CRITICAL FIX: wipe and restore PlayerPrefs flags RIGHT NOW,
-        // BEFORE the scene loads. This way DialogueTrigger.Start() sees
-        // the correct flag values when it runs during scene initialization,
-        // instead of seeing stale "done" flags and disabling itself.
+        // Clear ALL static cutscene/encounter flags so nothing auto-fires on load
+        Debug.Log("[SAVE] Clearing all static sequence flags before load");
+        ResonanceCutsceneManager.WaitingForResonanceBattleReturn = false;
+        ResonanceCutsceneManager.WaitingForDuelReturn = false;
+        EncounterManager.IsResonanceBattle = false;
+        EncounterManager.IsForcedLossBattle = false;
+        EncounterManager.IsRecruitBattle = false;
+        EncounterManager.PendingRecruitCompletion = false;
+        EncounterManager.PendingRecruitMemberName = "";
+        EncounterManager.CurrentEnemies.Clear();
+        EncounterManager.PlayerReturnPosition = Vector3.zero;
+        PlayerMovement2D.ForceFrozen = false;
+
+        // Wipe and restore PlayerPrefs flags BEFORE scene loads
+        // so DialogueTrigger.Start() sees correct values immediately
         var allTracked = TrackedPlayerPrefsKeys.GetAllTrackedKeys();
         Debug.Log($"[SAVE] Pre-load: wiping {allTracked.Count} tracked keys");
         foreach (var key in allTracked)
         {
             if (PlayerPrefs.HasKey(key))
             {
-                Debug.Log($"[SAVE] Pre-load wipe: {key} (was {PlayerPrefs.GetInt(key, 0)})");
+                Debug.Log($"[SAVE] Wiping: {key} = {PlayerPrefs.GetInt(key, 0)}");
                 PlayerPrefs.DeleteKey(key);
             }
         }
 
-        // Restore only what this save had set
-        int restored = 0;
         if (data.playerPrefsKeys != null)
         {
             for (int i = 0; i < data.playerPrefsKeys.Count; i++)
             {
                 PlayerPrefs.SetInt(data.playerPrefsKeys[i], data.playerPrefsValues[i]);
-                Debug.Log($"[SAVE] Pre-load restore: {data.playerPrefsKeys[i]} = {data.playerPrefsValues[i]}");
-                restored++;
+                Debug.Log($"[SAVE] Restored: {data.playerPrefsKeys[i]} = {data.playerPrefsValues[i]}");
             }
         }
         PlayerPrefs.Save();
-        Debug.Log($"[SAVE] Pre-load: restored {restored} flags. NOW loading scene.");
+        Debug.Log("[SAVE] Pre-load PlayerPrefs done. Loading scene now.");
 
         IsLoadingSave = true;
         pendingLoadData = data;

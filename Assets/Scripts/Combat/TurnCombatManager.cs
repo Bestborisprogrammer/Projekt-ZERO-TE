@@ -1019,17 +1019,16 @@ public class TurnCombatManager : MonoBehaviour
     public void RestartCombat()
     {
         Debug.Log("[COMBAT] RestartCombat called");
-
-        // Clear any forced-loss/resonance flags so retry behaves as a normal battle restart
         resonanceMode = false;
 
-        // Hide victory/gameover panels if still visible
-        if (combatUI != null)
-        {
-            combatUI.HideAllResultPanels();
-        }
+        // Stop all sprite coroutines before rebuilding sprites
+        // to prevent GreyOut/ShakeAndFlash from accessing destroyed Images
+        if (CombatSpriteManager.Instance != null)
+            CombatSpriteManager.Instance.StopAllCoroutines();
 
-        // Re-run the exact same setup logic used on first entry
+        if (combatUI != null)
+            combatUI.HideAllResultPanels();
+
         SetupCombat();
     }
 }
