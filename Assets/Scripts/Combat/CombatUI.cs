@@ -858,4 +858,13 @@ public class CombatUI : MonoBehaviour
     {
         if (victoryPanel != null) victoryPanel.SetActive(false);
     }
+
+    public void ClearLogQueue()
+    {
+        logQueue.Clear();
+        isShowingLog = false;
+        waitingForInput = false;
+        if (combatLogText != null)
+            combatLogText.text = "";
+    }
 }

@@ -1020,34 +1020,109 @@ public class TurnCombatManager : MonoBehaviour
     public void RestartCombat()
     {
         Debug.Log("[COMBAT] RestartCombat called");
-        resonanceMode = false;
 
-        // Stop all sprite coroutines before rebuilding
+        // Stop all coroutines to kill any ongoing GreyOut/ShakeAndFlash/DOT processing
         if (CombatSpriteManager.Instance != null)
         {
             CombatSpriteManager.Instance.StopAllCoroutines();
-            // Clear any leftover damage numbers / status popups
             CombatSpriteManager.Instance.ClearAllFloatingUI();
+        }
+
+        // Clear all combat log queues so nothing from last battle bleeds through
+        combatUI?.ClearLogQueue();
+
+        // CRITICAL: reset blocking/evading/status on the actual CharacterInstance
+        // objects BEFORE SetupCombat reads them to build new Combatants
+        if (PartyManager.Instance != null)
+        {
+            foreach (var member in PartyManager.Instance.activeParty)
+            {
+                member.isBlocking = false;
+                member.isEvading = false;
+                member.activeEffects.Clear();
+                member.statModifiers.Clear();
+            }
         }
 
         if (combatUI != null)
             combatUI.HideAllResultPanels();
 
-        // Play the same cinematic fade-in as battle start for a clean reset feel
         StartCoroutine(RetryWithFadeIn());
     }
 
     IEnumerator RetryWithFadeIn()
     {
-        // Brief black screen pause before restarting
-        if (FadeTransition.Instance != null)
-            yield return StartCoroutine(FadeTransition.Instance.FadeCoroutine(0f, 1f));
+        // Use our own local black overlay so we don't depend on FadeTransition
+        // existing in this scene (it lives in OverworldScene)
+        var overlay = GetOrCreateRetryOverlay();
 
-        yield return new WaitForSeconds(0.3f);
+        // Fade to black
+        float t = 0f;
+        while (t < 0.4f)
+        {
+            t += Time.deltaTime;
+            SetOverlayAlpha(overlay, Mathf.Clamp01(t / 0.4f));
+            yield return null;
+        }
+        SetOverlayAlpha(overlay, 1f);
 
+        yield return new WaitForSeconds(0.2f);
+
+        // Now rebuild combat — everything is hidden behind black
+        resonanceMode = false;
         SetupCombat();
 
-        if (FadeTransition.Instance != null)
-            yield return StartCoroutine(FadeTransition.Instance.FadeCoroutine(1f, 0f));
+        yield return new WaitForSeconds(0.1f);
+
+        // Fade back in
+        t = 0f;
+        while (t < 0.5f)
+        {
+            t += Time.deltaTime;
+            SetOverlayAlpha(overlay, Mathf.Clamp01(1f - t / 0.5f));
+            yield return null;
+        }
+        SetOverlayAlpha(overlay, 0f);
+
+        if (overlay != null) overlay.SetActive(false);
+    }
+
+    GameObject retryOverlayObj;
+    UnityEngine.UI.Image retryOverlayImg;
+
+    GameObject GetOrCreateRetryOverlay()
+    {
+        if (retryOverlayObj != null)
+        {
+            retryOverlayObj.SetActive(true);
+            return retryOverlayObj;
+        }
+
+        // Find the main canvas in the combat scene
+        var canvas = FindFirstObjectByType<Canvas>();
+        if (canvas == null) return null;
+
+        retryOverlayObj = new GameObject("RetryOverlay");
+        retryOverlayObj.transform.SetParent(canvas.transform, false);
+
+        retryOverlayImg = retryOverlayObj.AddComponent<UnityEngine.UI.Image>();
+        retryOverlayImg.color = new Color(0, 0, 0, 0);
+        retryOverlayImg.raycastTarget = true; // block input during transition
+
+        var rt = retryOverlayObj.GetComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+
+        // Make sure it renders on top of everything
+        retryOverlayObj.transform.SetAsLastSibling();
+        return retryOverlayObj;
+    }
+
+    void SetOverlayAlpha(GameObject overlay, float alpha)
+    {
+        if (overlay == null || retryOverlayImg == null) return;
+        retryOverlayImg.color = new Color(0, 0, 0, alpha);
     }
 }

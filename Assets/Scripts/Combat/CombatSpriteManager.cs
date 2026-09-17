@@ -516,25 +516,20 @@ public class CombatSpriteManager : MonoBehaviour
 
     public void ClearAllFloatingUI()
     {
-        // Destroy all floating damage numbers and status popups
-        // that were spawned as children of the combat canvas
         if (combatCanvas == null) return;
 
-        var children = new System.Collections.Generic.List<GameObject>();
+        var toDestroy = new List<GameObject>();
         foreach (Transform child in combatCanvas.transform)
         {
-            // Only destroy our floating UI objects, not permanent canvas children
             if (child.name == "DamageNumber" ||
                 child.name == "ManaNumber" ||
                 child.name == "StatusPopup")
-            {
-                children.Add(child.gameObject);
-            }
+                toDestroy.Add(child.gameObject);
         }
 
-        foreach (var obj in children)
+        foreach (var obj in toDestroy)
             Destroy(obj);
 
-        Debug.Log($"[SPRITE MGR] Cleared {children.Count} floating UI elements");
+        Debug.Log($"[SPRITE MGR] Cleared {toDestroy.Count} floating UI elements");
     }
 }

@@ -177,19 +177,33 @@ public class MainMenuController : MonoBehaviour
     // ── BUTTONS ───────────────────────────────────
     public void StartGame()
     {
-        Debug.Log("[MAINMENU] New Game started - performing full reset");
+        Debug.Log("[MAINMENU] New Game - full reset");
 
+        // Force reset save loading state so pendingLoadData can't fire
+        SaveManager.ForceResetLoadingState();
         SaveManager.Instance.currentSlot = -2;
         SaveManager.Instance.sessionPlaytime = 0f;
 
-        // Force a full fresh-game wipe regardless of session flag,
-        // since this is an explicit "New Game" request
+        // Clear ALL encounter state
+        EncounterManager.CurrentEnemies?.Clear();
+        EncounterManager.ActiveCutscene = null;
+        EncounterManager.ActiveRecruitCutscene = null;
+        EncounterManager.IsResonanceBattle = false;
+        EncounterManager.IsForcedLossBattle = false;
+        EncounterManager.IsRecruitBattle = false;
+        EncounterManager.PendingRecruitCompletion = false;
+        EncounterManager.PendingRecruitMemberName = "";
+        EncounterManager.PlayerReturnPosition = Vector3.zero;
+        ResonanceCutsceneManager.WaitingForResonanceBattleReturn = false;
+        ResonanceCutsceneManager.WaitingForDuelReturn = false;
+        PlayerMovement2D.ForceFrozen = false;
+
         PlayerPrefs.DeleteAll();
+        TrackedPlayerPrefsKeys.ResetMasterList();
         PlayerPrefs.SetInt("session_initialized_flag", 1);
         PlayerPrefs.Save();
 
         GearMenuPanel.ResetInitialized();
-
         SceneManager.LoadScene(gameScene);
     }
 

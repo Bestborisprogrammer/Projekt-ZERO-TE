@@ -3079,6 +3079,7 @@ GameObject:
   - component: {fileID: 1202122161}
   - component: {fileID: 1202122163}
   - component: {fileID: 1202122162}
+  - component: {fileID: 1202122164}
   m_Layer: 5
   m_Name: GameOverPanel
   m_TagString: Untagged
@@ -3143,6 +3144,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1202122160}
   m_CullTransparentMesh: 1
+--- !u!225 &1202122164
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1202122160}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &1216981398
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3666,7 +3679,9 @@ MonoBehaviour:
   retryButton: {fileID: 1036859966}
   loadLastSaveButton: {fileID: 2022276905}
   mainMenuButton: {fileID: 130026849}
+  panelCanvasGroup: {fileID: 1202122164}
   mainMenuScene: MainMenu
+  fadeInDuration: 0.5
   minimumDisplayTime: 1.5
 --- !u!4 &1268851056
 Transform:

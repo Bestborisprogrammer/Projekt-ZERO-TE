@@ -432,4 +432,14 @@ public class SaveManager : MonoBehaviour
         int s = Mathf.FloorToInt(seconds % 60f);
         return h > 0 ? $"{h:00}h {m:00}m" : $"{m:00}m {s:00}s";
     }
+
+    // Add alongside the existing IsLoadingSave property
+    public static void ForceResetLoadingState()
+    {
+        IsLoadingSave = false;
+        pendingLoadData = null;
+        Debug.Log("[SAVE MANAGER] Loading state force reset");
+    }
+
+
 }
