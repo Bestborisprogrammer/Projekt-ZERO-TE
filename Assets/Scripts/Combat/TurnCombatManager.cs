@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections;
 
 public class TurnCombatManager : MonoBehaviour
 {
@@ -1021,14 +1022,32 @@ public class TurnCombatManager : MonoBehaviour
         Debug.Log("[COMBAT] RestartCombat called");
         resonanceMode = false;
 
-        // Stop all sprite coroutines before rebuilding sprites
-        // to prevent GreyOut/ShakeAndFlash from accessing destroyed Images
+        // Stop all sprite coroutines before rebuilding
         if (CombatSpriteManager.Instance != null)
+        {
             CombatSpriteManager.Instance.StopAllCoroutines();
+            // Clear any leftover damage numbers / status popups
+            CombatSpriteManager.Instance.ClearAllFloatingUI();
+        }
 
         if (combatUI != null)
             combatUI.HideAllResultPanels();
 
+        // Play the same cinematic fade-in as battle start for a clean reset feel
+        StartCoroutine(RetryWithFadeIn());
+    }
+
+    IEnumerator RetryWithFadeIn()
+    {
+        // Brief black screen pause before restarting
+        if (FadeTransition.Instance != null)
+            yield return StartCoroutine(FadeTransition.Instance.FadeCoroutine(0f, 1f));
+
+        yield return new WaitForSeconds(0.3f);
+
         SetupCombat();
+
+        if (FadeTransition.Instance != null)
+            yield return StartCoroutine(FadeTransition.Instance.FadeCoroutine(1f, 0f));
     }
 }

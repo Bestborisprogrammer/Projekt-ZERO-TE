@@ -513,4 +513,28 @@ public class CombatSpriteManager : MonoBehaviour
         Vector2 floatDir = new Vector2(Random.Range(-30f, 30f), Random.Range(80f, 120f));
         StartCoroutine(AnimateDamageNumber(dmgObj, tmp, dmgRT, floatDir, true, false));
     }
+
+    public void ClearAllFloatingUI()
+    {
+        // Destroy all floating damage numbers and status popups
+        // that were spawned as children of the combat canvas
+        if (combatCanvas == null) return;
+
+        var children = new System.Collections.Generic.List<GameObject>();
+        foreach (Transform child in combatCanvas.transform)
+        {
+            // Only destroy our floating UI objects, not permanent canvas children
+            if (child.name == "DamageNumber" ||
+                child.name == "ManaNumber" ||
+                child.name == "StatusPopup")
+            {
+                children.Add(child.gameObject);
+            }
+        }
+
+        foreach (var obj in children)
+            Destroy(obj);
+
+        Debug.Log($"[SPRITE MGR] Cleared {children.Count} floating UI elements");
+    }
 }

@@ -57,9 +57,12 @@ public class AudioManager : MonoBehaviour
             case "overworldScene":
                 PlayOverworldMusic();
                 break;
-
             case "CombatScene":
                 PlayCombatMusic();
+                break;
+            case "MainMenu":
+                // Stop combat music when returning to main menu
+                StopMusic();
                 break;
         }
     }
