@@ -27,25 +27,30 @@ public class PartyManager : MonoBehaviour
 
     void Start()
     {
-        // NEVER build the default starting party if:
-        // 1. We've already initialized once this session (DontDestroyOnLoad means
-        //    this should basically only ever happen ONCE per real game session anyway)
-        // 2. A save is actively being loaded (SaveManager will populate allMembers itself)
-        if (hasInitializedDefaultParty)
-        {
-            Debug.Log("[PARTY MANAGER] Start - already initialized, skipping default party setup");
-            return;
-        }
-
         if (SaveManager.IsLoadingSave)
         {
-            Debug.Log("[PARTY MANAGER] Start - save is loading, skipping default party setup " +
-                "(SaveManager will populate allMembers/activeParty instead)");
-            hasInitializedDefaultParty = true; // mark so we never run default setup even after load finishes
+            Debug.Log("[PARTY MANAGER] Start - save loading, skipping default party");
+            hasInitializedDefaultParty = true;
             return;
         }
 
-        Debug.Log("[PARTY MANAGER] Start - building default starting party");
+        if (hasInitializedDefaultParty)
+        {
+            Debug.Log("[PARTY MANAGER] Start - already initialized");
+            return;
+        }
+
+        BuildDefaultParty();
+    }
+
+    // PUBLIC so MainMenuController can call it on New Game
+    // to force-rebuild the party on the persistent instance
+    public void BuildDefaultParty()
+    {
+        Debug.Log("[PARTY MANAGER] BuildDefaultParty called");
+        allMembers.Clear();
+        activeParty.Clear();
+
         foreach (var data in partyDataList)
         {
             var instance = new CharacterInstance { baseData = data };
@@ -57,6 +62,14 @@ public class PartyManager : MonoBehaviour
             activeParty.Add(allMembers[i]);
 
         hasInitializedDefaultParty = true;
+        Debug.Log($"[PARTY MANAGER] Default party built: {string.Join(",", activeParty.ConvertAll(m => m.Name))}");
+    }
+
+    // Call this to fully reset for New Game
+    public void ResetForNewGame()
+    {
+        hasInitializedDefaultParty = false;
+        BuildDefaultParty();
     }
 
     public bool IsGameOver()

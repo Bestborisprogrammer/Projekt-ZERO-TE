@@ -25,11 +25,11 @@ public class MainMenuController : MonoBehaviour
     public Image flashImage;
 
     [Header("Save/Continue")]
-    public GameObject continueSavePanel; // SaveMenuPanel in isLoadOnlyMode
+    public GameObject continueSavePanel;
     public Button continueButton;
 
     [Header("Scene")]
-    public string gameScene = "OverworldScene";
+    public string gameScene = "overworldScene";
 
     private State state = State.Intro;
     private bool transitioning = false;
@@ -55,7 +55,6 @@ public class MainMenuController : MonoBehaviour
         if (continueSavePanel != null)
             continueSavePanel.SetActive(false);
 
-        // Disable continue button if no saves exist at all
         if (continueButton != null)
             continueButton.interactable = HasAnySave();
     }
@@ -72,10 +71,8 @@ public class MainMenuController : MonoBehaviour
     void Update()
     {
         if (state == State.Intro && !transitioning)
-        {
             if (Input.anyKeyDown)
                 StartCoroutine(Transition());
-        }
     }
 
     IEnumerator Transition()
@@ -85,7 +82,6 @@ public class MainMenuController : MonoBehaviour
         float t = 0f;
         Vector3 introStart = introBackground.localScale;
         Vector3 introEnd = introBaseScale * 1.20f;
-
         bool reachedPeak = false;
 
         while (t < 1f)
@@ -93,7 +89,6 @@ public class MainMenuController : MonoBehaviour
             t += Time.deltaTime / 2.2f;
             float s = Mathf.SmoothStep(0f, 1f, t);
             introBackground.localScale = Vector3.Lerp(introStart, introEnd, s);
-
             float flash = Mathf.Pow(s, 2.5f);
             SetFlash(flash);
 
@@ -104,7 +99,6 @@ public class MainMenuController : MonoBehaviour
                 mainMenuScreen.SetActive(true);
                 menuBackground.localScale = menuBaseScale * 1.12f;
             }
-
             yield return null;
         }
 
@@ -114,7 +108,6 @@ public class MainMenuController : MonoBehaviour
         t = 0f;
         Vector3 menuStart = menuBackground.localScale;
         Vector3 menuEnd = menuBaseScale;
-
         while (t < 1f)
         {
             t += Time.deltaTime / 2.0f;
@@ -147,8 +140,7 @@ public class MainMenuController : MonoBehaviour
         while (t < 1f)
         {
             t += Time.deltaTime * 1.4f;
-            buttonPanel.anchoredPosition =
-                Vector2.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
+            buttonPanel.anchoredPosition = Vector2.Lerp(start, end, Mathf.SmoothStep(0f, 1f, t));
             yield return null;
         }
         buttonPanel.anchoredPosition = end;
@@ -174,18 +166,30 @@ public class MainMenuController : MonoBehaviour
         flashImage.color = c;
     }
 
-    // ── BUTTONS ───────────────────────────────────
     public void StartGame()
     {
         Debug.Log("[MAINMENU] New Game - full reset");
 
-        // Force reset save loading state so pendingLoadData can't fire
+        // Force reset all save/load state
         SaveManager.ForceResetLoadingState();
-        SaveManager.Instance.currentSlot = -2;
-        SaveManager.Instance.sessionPlaytime = 0f;
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.currentSlot = -2;
+            SaveManager.Instance.sessionPlaytime = 0f;
+        }
 
-        // Clear ALL encounter state
-        EncounterManager.CurrentEnemies?.Clear();
+        // THE CRITICAL FIX: explicitly rebuild the party on the persistent
+        // PartyManager instance. Start() won't run again on a DontDestroyOnLoad
+        // object, so we must call this directly.
+        if (PartyManager.Instance != null)
+        {
+            Debug.Log("[MAINMENU] Calling ResetForNewGame on persistent PartyManager");
+            PartyManager.Instance.ResetForNewGame();
+        }
+
+        // Clear ALL encounter/cutscene static state
+        if (EncounterManager.CurrentEnemies != null)
+            EncounterManager.CurrentEnemies.Clear();
         EncounterManager.ActiveCutscene = null;
         EncounterManager.ActiveRecruitCutscene = null;
         EncounterManager.IsResonanceBattle = false;
@@ -204,13 +208,14 @@ public class MainMenuController : MonoBehaviour
         PlayerPrefs.Save();
 
         GearMenuPanel.ResetInitialized();
+
+        Debug.Log("[MAINMENU] All state cleared, loading game scene");
         SceneManager.LoadScene(gameScene);
     }
 
     public void OpenContinueMenu()
     {
         if (continueSavePanel == null) return;
-        Debug.Log("[MAINMENU] Opening continue/load menu");
         continueSavePanel.SetActive(true);
     }
 

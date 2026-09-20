@@ -41,6 +41,14 @@ public class TurnCombatManager : MonoBehaviour
         enemyInstanceDict.Clear();
         resonanceMode = false;
 
+        Debug.Log($"[COMBAT SETUP] SetupCombat called. CurrentEnemies count: {EncounterManager.CurrentEnemies.Count}");
+
+        if (EncounterManager.CurrentEnemies.Count == 0)
+        {
+            Debug.LogError("[COMBAT SETUP] CurrentEnemies is EMPTY! Combat cannot start.");
+            return;
+        }
+
         foreach (var member in PartyManager.Instance.activeParty)
         {
             if (member.IsAlive)
@@ -48,6 +56,7 @@ public class TurnCombatManager : MonoBehaviour
                 var c = new Combatant(member);
                 turnOrder.Add(c);
                 party.Add(c);
+                Debug.Log($"[COMBAT SETUP] Added party member: {member.Name} HP:{member.currentHP} SPD:{member.Speed}");
             }
         }
 
@@ -59,16 +68,16 @@ public class TurnCombatManager : MonoBehaviour
             turnOrder.Add(c);
             enemies.Add(c);
             enemyInstanceDict[enemyData.enemyName] = enemyInstance;
+            Debug.Log($"[COMBAT SETUP] Added enemy: {enemyData.enemyName} SPD:{enemyInstance.Speed}");
         }
 
         turnOrder = turnOrder.OrderByDescending(c => c.Speed).ToList();
         combatActive = true;
         selectedEnemyIndex = 0;
+        currentTurnIndex = 0;
 
-        Debug.Log("=== COMBAT STARTED ===");
-        Debug.Log($"[SETUP] IsResonanceBattle={EncounterManager.IsResonanceBattle}");
-        Debug.Log($"[SETUP] IsForcedLossBattle={EncounterManager.IsForcedLossBattle}");
-        Debug.Log($"[SETUP] IsResonating={ResonanceManager.IsResonating}");
+        Debug.Log($"[COMBAT SETUP] Turn order: {string.Join(" -> ", turnOrder.Select(c => $"{c.Name}(spd:{c.Speed})"))}");
+        Debug.Log($"[COMBAT SETUP] First turn: {turnOrder[0].Name} IsEnemy:{turnOrder[0].IsEnemy}");
 
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.UpdateAllHP(party, enemies);
@@ -86,7 +95,7 @@ public class TurnCombatManager : MonoBehaviour
         }
         else if (EncounterManager.IsForcedLossBattle)
         {
-            Debug.Log("[COMBAT] Forced loss duel – resonance stays active");
+            Debug.Log("[COMBAT] Forced loss duel");
             EncounterManager.IsForcedLossBattle = false;
             resonanceMode = true;
             ResonanceManager.Instance?.ShowResonanceTint();
@@ -101,10 +110,10 @@ public class TurnCombatManager : MonoBehaviour
         }
         else
         {
+            Debug.Log("[COMBAT] Normal battle - starting turn");
             StartTurn();
         }
     }
-
 
     void StartResonanceTurn()
     {
@@ -275,8 +284,6 @@ public class TurnCombatManager : MonoBehaviour
         return comboMsg;
     }
 
-    // FIXED: wasJustThawed now only true if target WAS frozen before this hit
-    // (we check this via the combo message instead of guessing from current state)
     void ApplySpellEffects(ManaAttackSO spell, Combatant attacker, Combatant target,
         int damage, bool targetWasFrozenBeforeHit = false)
     {
@@ -294,8 +301,6 @@ public class TurnCombatManager : MonoBehaviour
             }
         }
 
-        // Only skip Burn application if THIS specific hit just thawed a frozen target
-        // (Fire+Freeze combo consumes the hit as a thaw instead of applying Burn)
         bool skipStatusBecauseJustThawed = spell.affinity == SpellAffinity.Fire && targetWasFrozenBeforeHit;
 
         if (!skipStatusBecauseJustThawed && spell.statusEffect != StatusEffectType.None)
@@ -519,8 +524,6 @@ public class TurnCombatManager : MonoBehaviour
         if (selectedEnemyIndex >= enemies.Count) return;
 
         Combatant target = enemies[selectedEnemyIndex];
-
-        // Capture frozen state BEFORE combo resolution touches it
         bool targetWasFrozenBeforeHit = target.IsFrozen;
 
         float affinityMult = attacker.Affinities.Contains(spell.affinity) &&
@@ -936,8 +939,6 @@ public class TurnCombatManager : MonoBehaviour
 
     public void NextTurnPublic() => NextTurn();
 
-    // HandleResonanceDeath now ONLY fires the duel-return flag if this really
-    // is the scripted forced-loss duel. Otherwise it's a normal game over.
     void HandleResonanceDeath()
     {
         Debug.Log("[RESONANCE DEATH] Caster died from recoil");
@@ -949,9 +950,7 @@ public class TurnCombatManager : MonoBehaviour
         Debug.Log($"[RESONANCE DEATH] ScriptedResonanceActive={isScriptedDuel}");
 
         if (isScriptedDuel)
-        {
             ResonanceCutsceneManager.WaitingForDuelReturn = true;
-        }
 
         foreach (var member in PartyManager.Instance.activeParty)
             if (!member.IsAlive) member.currentHP = 1;
@@ -983,7 +982,6 @@ public class TurnCombatManager : MonoBehaviour
             EncounterManager.ActiveCutscene = null;
         }
 
-        // Only flag resonance return if this is the actual scripted resonance battle
         if (ResonanceManager.IsResonating && ResonanceManager.ScriptedResonanceActive)
         {
             Debug.Log("[VICTORY] Scripted resonance battle won – setting WaitingForResonanceBattleReturn");
@@ -1015,24 +1013,26 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.ShowVictory(totalXP, totalGold, drops);
         combatActive = false;
     }
-    // Called by GameOverManager on retry - re-runs combat setup with the same
-    // enemy list, fresh turn order, without touching the scene at all.
+
+    // ── RESTART / RETRY ──────────────────────────────────────────────────────
+
     public void RestartCombat()
     {
-        Debug.Log("[COMBAT] RestartCombat called");
+        Debug.Log($"[COMBAT] RestartCombat. CurrentEnemies: {EncounterManager.CurrentEnemies.Count}");
+        resonanceMode = false;
 
-        // Stop all coroutines to kill any ongoing GreyOut/ShakeAndFlash/DOT processing
+        StopAllCoroutines();
+
         if (CombatSpriteManager.Instance != null)
         {
             CombatSpriteManager.Instance.StopAllCoroutines();
             CombatSpriteManager.Instance.ClearAllFloatingUI();
         }
 
-        // Clear all combat log queues so nothing from last battle bleeds through
         combatUI?.ClearLogQueue();
+        combatUI?.HideAllResultPanels();
 
-        // CRITICAL: reset blocking/evading/status on the actual CharacterInstance
-        // objects BEFORE SetupCombat reads them to build new Combatants
+        // Reset ALL party member combat state before rebuilding Combatants
         if (PartyManager.Instance != null)
         {
             foreach (var member in PartyManager.Instance.activeParty)
@@ -1041,88 +1041,34 @@ public class TurnCombatManager : MonoBehaviour
                 member.isEvading = false;
                 member.activeEffects.Clear();
                 member.statModifiers.Clear();
+                Debug.Log($"[COMBAT] Reset {member.Name}: HP:{member.currentHP} Mana:{member.currentMana}");
             }
         }
 
-        if (combatUI != null)
-            combatUI.HideAllResultPanels();
-
-        StartCoroutine(RetryWithFadeIn());
-    }
-
-    IEnumerator RetryWithFadeIn()
-    {
-        // Use our own local black overlay so we don't depend on FadeTransition
-        // existing in this scene (it lives in OverworldScene)
-        var overlay = GetOrCreateRetryOverlay();
-
-        // Fade to black
-        float t = 0f;
-        while (t < 0.4f)
-        {
-            t += Time.deltaTime;
-            SetOverlayAlpha(overlay, Mathf.Clamp01(t / 0.4f));
-            yield return null;
-        }
-        SetOverlayAlpha(overlay, 1f);
-
-        yield return new WaitForSeconds(0.2f);
-
-        // Now rebuild combat — everything is hidden behind black
-        resonanceMode = false;
+        // Build combat FIRST while GameOverManager's black overlay covers the screen
         SetupCombat();
 
-        yield return new WaitForSeconds(0.1f);
-
-        // Fade back in
-        t = 0f;
-        while (t < 0.5f)
-        {
-            t += Time.deltaTime;
-            SetOverlayAlpha(overlay, Mathf.Clamp01(1f - t / 0.5f));
-            yield return null;
-        }
-        SetOverlayAlpha(overlay, 0f);
-
-        if (overlay != null) overlay.SetActive(false);
+        // THEN fade in to reveal the fresh battle
+        StartCoroutine(FadeInAfterRestart());
     }
 
-    GameObject retryOverlayObj;
-    UnityEngine.UI.Image retryOverlayImg;
-
-    GameObject GetOrCreateRetryOverlay()
+    IEnumerator FadeInAfterRestart()
     {
-        if (retryOverlayObj != null)
+        // Wait for end of frame so SetupCombat's sprite setup fully completes
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForEndOfFrame();
+
+        var go = GameOverManager.Instance;
+        if (go != null && go.blackOverlay != null)
         {
-            retryOverlayObj.SetActive(true);
-            return retryOverlayObj;
+            float t = 0f;
+            while (t < 0.5f)
+            {
+                t += Time.deltaTime;
+                go.blackOverlay.color = new Color(0, 0, 0, Mathf.Clamp01(1f - t / 0.5f));
+                yield return null;
+            }
+            go.blackOverlay.color = new Color(0, 0, 0, 0f);
         }
-
-        // Find the main canvas in the combat scene
-        var canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null) return null;
-
-        retryOverlayObj = new GameObject("RetryOverlay");
-        retryOverlayObj.transform.SetParent(canvas.transform, false);
-
-        retryOverlayImg = retryOverlayObj.AddComponent<UnityEngine.UI.Image>();
-        retryOverlayImg.color = new Color(0, 0, 0, 0);
-        retryOverlayImg.raycastTarget = true; // block input during transition
-
-        var rt = retryOverlayObj.GetComponent<RectTransform>();
-        rt.anchorMin = Vector2.zero;
-        rt.anchorMax = Vector2.one;
-        rt.offsetMin = Vector2.zero;
-        rt.offsetMax = Vector2.zero;
-
-        // Make sure it renders on top of everything
-        retryOverlayObj.transform.SetAsLastSibling();
-        return retryOverlayObj;
-    }
-
-    void SetOverlayAlpha(GameObject overlay, float alpha)
-    {
-        if (overlay == null || retryOverlayImg == null) return;
-        retryOverlayImg.color = new Color(0, 0, 0, alpha);
     }
 }

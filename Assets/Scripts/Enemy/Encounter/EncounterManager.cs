@@ -19,11 +19,9 @@ public class EncounterManager : MonoBehaviour
     public static bool ResonanceBattleDone { get; set; } = false;
     public static bool IsForcedLossBattle { get; set; } = false;
     public static bool ForcedLossBattleDone { get; set; } = false;
-
-    // Track what kind of encounter triggered this battle so retry knows what to do
-    public static string LastEncounterTriggerID { get; set; } = ""; // PlayerPrefs key for normal encounters
-    public static bool LastEncounterWasScripted { get; set; } = false; // CutsceneManager first battle
+    public static bool LastEncounterWasScripted { get; set; } = false;
     public static bool LastEncounterWasRecruit { get; set; } = false;
+    public static string LastEncounterTriggerID { get; set; } = "";
 
     void Awake()
     {
@@ -31,6 +29,7 @@ public class EncounterManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            Debug.Log("[ENCOUNTER MGR] Awake - Instance set");
         }
         else Destroy(gameObject);
     }
@@ -41,18 +40,25 @@ public class EncounterManager : MonoBehaviour
         if (player != null)
             PlayerReturnPosition = player.transform.position;
 
-        GameOverManager.SnapshotBeforeBattle();
-
         CurrentEnemies = enemies;
+        Debug.Log($"[ENCOUNTER MGR] StartEncounter called. Enemy count: {CurrentEnemies.Count}. " +
+            $"Enemies: {string.Join(",", CurrentEnemies.ConvertAll(e => e.enemyName))}");
+
+        GameOverManager.SnapshotBeforeBattle();
         StartCoroutine(BattleTransition());
     }
 
     IEnumerator BattleTransition()
     {
+        Debug.Log($"[ENCOUNTER MGR] BattleTransition start. CurrentEnemies count: {CurrentEnemies.Count}");
+
         var overlay = GetOrCreateOverlay();
         yield return StartCoroutine(FlashScreen(overlay, 6, 0.07f));
         yield return StartCoroutine(FadeToBlack(overlay));
+
+        Debug.Log($"[ENCOUNTER MGR] About to load CombatScene. CurrentEnemies count: {CurrentEnemies.Count}");
         SceneManager.LoadScene(combatSceneName);
+
         Destroy(overlay.transform.parent.gameObject, 0.1f);
         overlayImage = null;
     }
