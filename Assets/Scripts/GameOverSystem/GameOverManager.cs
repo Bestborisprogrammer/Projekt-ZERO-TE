@@ -205,12 +205,16 @@ public class GameOverManager : MonoBehaviour
     {
         if (!buttonsEnabled) return;
         Debug.Log("[GAME OVER] Main menu");
-        StartCoroutine(FadeToBlackThenDo(() =>
-        {
-            Time.timeScale = 1f;
-            ClearAllState();
-            SceneManager.LoadScene(mainMenuScene);
-        }));
+
+        // Keep black overlay fully opaque, disable panel content, load immediately
+        // No fade-out sequence needed since we're leaving this scene entirely
+        if (panelCanvasGroup != null) panelCanvasGroup.alpha = 0f;
+        if (blackOverlay != null) blackOverlay.color = Color.black;
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+
+        Time.timeScale = 1f;
+        ClearAllState();
+        SceneManager.LoadScene(mainMenuScene);
     }
 
     void RestorePreBattleState()
