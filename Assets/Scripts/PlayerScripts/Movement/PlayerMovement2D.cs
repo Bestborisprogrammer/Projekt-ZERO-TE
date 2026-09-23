@@ -8,16 +8,23 @@ public class PlayerMovement2D : MonoBehaviour
     [Header("Animator")]
     public Animator animator;
 
-    // Static flag – persists across scene loads
     public static bool ForceFrozen { get; set; } = false;
 
     private Rigidbody2D rb;
     private Vector2 moveInput;
-    private Vector2 lastMoveDir = Vector2.down;
 
-    private enum FacingDir { Down, Up, Left, Right }
-    private FacingDir currentDir = FacingDir.Down;
-    private FacingDir lastDir = FacingDir.Down;
+    // Track the last key pressed so most-recent-held wins
+    private bool lastAxisWasHorizontal = false;
+
+    // Track what's currently playing so we don't call Play() every frame
+    private string currentClip = "";
+
+    // These must match your animation clip names exactly in the Animator
+    private const string IDLE = "EdIdle";
+    private const string WALK_UP = "EdWalkUp";
+    private const string WALK_DOWN = "EdWalkDown";
+    private const string WALK_LEFT = "EdWalkLeft";
+    private const string WALK_RIGHT = "EdWalkRight";
 
     void Awake()
     {
@@ -28,41 +35,24 @@ public class PlayerMovement2D : MonoBehaviour
 
     void Start()
     {
-        // If a cutscene flagged a force freeze, disable immediately
         if (ForceFrozen)
         {
             enabled = false;
             if (rb != null) rb.linearVelocity = Vector2.zero;
-            Debug.Log("[PLAYER] ForceFrozen on start – movement disabled");
         }
+        PlayClip(IDLE);
     }
 
     void OnEnable()
     {
-        if (ForceFrozen)
-        {
-            enabled = false;
-            return;
-        }
-
-        if (animator != null)
-        {
-            animator.SetBool("IsMoving", false);
-            animator.SetFloat("MoveX", 0);
-            animator.SetFloat("MoveY", -1);
-        }
+        if (ForceFrozen) { enabled = false; return; }
+        PlayClip(IDLE);
     }
 
     void OnDisable()
     {
-        if (animator != null)
-        {
-            animator.SetBool("IsMoving", false);
-            animator.SetFloat("MoveX", 0);
-            animator.SetFloat("MoveY", -1);
-        }
-        if (rb != null)
-            rb.linearVelocity = Vector2.zero;
+        PlayClip(IDLE);
+        if (rb != null) rb.linearVelocity = Vector2.zero;
     }
 
     void Update()
@@ -70,62 +60,58 @@ public class PlayerMovement2D : MonoBehaviour
         if (ForceFrozen)
         {
             if (rb != null) rb.linearVelocity = Vector2.zero;
+            PlayClip(IDLE);
             return;
         }
 
         float x = Input.GetAxisRaw("Horizontal");
         float y = Input.GetAxisRaw("Vertical");
+
+        // Track which axis was most recently pressed
+        bool hPressed = Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow)
+                     || Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow);
+        bool vPressed = Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)
+                     || Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow);
+
+        if (hPressed && !vPressed) lastAxisWasHorizontal = true;
+        if (vPressed && !hPressed) lastAxisWasHorizontal = false;
+
+        bool hasH = Mathf.Abs(x) > 0.01f;
+        bool hasV = Mathf.Abs(y) > 0.01f;
+
         moveInput = new Vector2(x, y).normalized;
 
-        if (moveInput != Vector2.zero)
-            lastMoveDir = moveInput;
+        if (!hasH && !hasV)
+        {
+            // Nothing held — instant idle, same frame
+            PlayClip(IDLE);
+            return;
+        }
 
-        UpdateAnimator();
+        bool useHorizontal;
+        if (hasH && hasV)
+            useHorizontal = lastAxisWasHorizontal; // last pressed wins
+        else
+            useHorizontal = hasH; // only one axis active
+
+        if (useHorizontal)
+            PlayClip(x > 0 ? WALK_RIGHT : WALK_LEFT);
+        else
+            PlayClip(y > 0 ? WALK_UP : WALK_DOWN);
     }
 
     void FixedUpdate()
     {
-        if (ForceFrozen)
-        {
-            rb.linearVelocity = Vector2.zero;
-            return;
-        }
+        if (ForceFrozen) { rb.linearVelocity = Vector2.zero; return; }
         rb.linearVelocity = moveInput * moveSpeed;
     }
 
-    void UpdateAnimator()
+    void PlayClip(string clipName)
     {
         if (animator == null) return;
+        if (currentClip == clipName) return; // already playing, skip
 
-        bool isMoving = moveInput != Vector2.zero;
-        animator.SetBool("IsMoving", isMoving);
-
-        Vector2 dir = isMoving ? moveInput : lastMoveDir;
-        float absX = Mathf.Abs(dir.x);
-        float absY = Mathf.Abs(dir.y);
-
-        if (absX >= absY)
-        {
-            currentDir = dir.x < 0 ? FacingDir.Left : FacingDir.Right;
-            animator.SetFloat("MoveX", dir.x < 0 ? -1 : 1);
-            animator.SetFloat("MoveY", 0);
-        }
-        else
-        {
-            currentDir = dir.y < 0 ? FacingDir.Down : FacingDir.Up;
-            animator.SetFloat("MoveX", 0);
-            animator.SetFloat("MoveY", dir.y < 0 ? -1 : 1);
-        }
-
-        if (currentDir != lastDir)
-        {
-            lastDir = currentDir;
-            if (isMoving)
-            {
-                animator.SetBool("IsMoving", false);
-                animator.Update(0f);
-                animator.SetBool("IsMoving", true);
-            }
-        }
+        currentClip = clipName;
+        animator.Play(clipName);
     }
 }
