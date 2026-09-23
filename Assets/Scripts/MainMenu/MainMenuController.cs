@@ -24,9 +24,15 @@ public class MainMenuController : MonoBehaviour
     [Header("Flash")]
     public Image flashImage;
 
-    [Header("Save/Continue")]
-    public GameObject continueSavePanel;
-    public Button continueButton;
+    [Header("Transition overlay - fullscreen black Image in Canvas")]
+    public Image transitionOverlay;
+    public float transitionDuration = 0.5f;
+
+    [Header("Save Panels")]
+    public GameObject loadGamePanel;   // existing save slot panel, isLoadOnlyMode = true
+    public Button continueButton;      // picks most recent save automatically
+    public Button loadGameButton;      // opens all slots
+    public Button newGameButton;
 
     [Header("Scene")]
     public string gameScene = "overworldScene";
@@ -52,11 +58,19 @@ public class MainMenuController : MonoBehaviour
         SetFlash(0f);
         StartCoroutine(PulseText());
 
-        if (continueSavePanel != null)
-            continueSavePanel.SetActive(false);
+        if (loadGamePanel != null)
+            loadGamePanel.SetActive(false);
 
-        if (continueButton != null)
-            continueButton.interactable = HasAnySave();
+        if (transitionOverlay != null)
+        {
+            transitionOverlay.color = new Color(0, 0, 0, 0);
+            transitionOverlay.gameObject.SetActive(false);
+        }
+
+        // Disable Continue if no saves exist
+        bool hasSave = HasAnySave();
+        if (continueButton != null) continueButton.interactable = hasSave;
+        if (loadGameButton != null) loadGameButton.interactable = hasSave;
     }
 
     bool HasAnySave()
@@ -74,6 +88,132 @@ public class MainMenuController : MonoBehaviour
             if (Input.anyKeyDown)
                 StartCoroutine(Transition());
     }
+
+    // ── BUTTONS ──────────────────────────────────────────────────────────────
+
+    public void StartGame()
+    {
+        Debug.Log("[MAINMENU] New Game");
+        StartCoroutine(TransitionThenAction(() =>
+        {
+            SaveManager.ForceResetLoadingState();
+            if (SaveManager.Instance != null)
+            {
+                SaveManager.Instance.currentSlot = -2;
+                SaveManager.Instance.sessionPlaytime = 0f;
+            }
+
+            if (PartyManager.Instance != null)
+                PartyManager.Instance.ResetForNewGame();
+
+            if (EncounterManager.CurrentEnemies != null)
+                EncounterManager.CurrentEnemies.Clear();
+            EncounterManager.ActiveCutscene = null;
+            EncounterManager.ActiveRecruitCutscene = null;
+            EncounterManager.IsResonanceBattle = false;
+            EncounterManager.IsForcedLossBattle = false;
+            EncounterManager.IsRecruitBattle = false;
+            EncounterManager.PendingRecruitCompletion = false;
+            EncounterManager.PendingRecruitMemberName = "";
+            EncounterManager.PlayerReturnPosition = Vector3.zero;
+            ResonanceCutsceneManager.WaitingForResonanceBattleReturn = false;
+            ResonanceCutsceneManager.WaitingForDuelReturn = false;
+            PlayerMovement2D.ForceFrozen = false;
+
+            PlayerPrefs.DeleteAll();
+            TrackedPlayerPrefsKeys.ResetMasterList();
+            PlayerPrefs.SetInt("session_initialized_flag", 1);
+            PlayerPrefs.Save();
+
+            GearMenuPanel.ResetInitialized();
+
+            Debug.Log("[MAINMENU] All state cleared, loading game scene");
+            SceneManager.LoadScene(gameScene);
+        }));
+    }
+
+    // Continue: automatically loads the most recent save
+    public void ContinueMostRecent()
+    {
+        int slot = FindMostRecentSlot();
+        if (slot == int.MinValue)
+        {
+            Debug.LogWarning("[MAINMENU] Continue pressed but no save found");
+            return;
+        }
+
+        Debug.Log($"[MAINMENU] Continue - loading most recent slot: {slot}");
+        StartCoroutine(TransitionThenAction(() =>
+        {
+            SaveManager.Instance.LoadFromSlot(slot);
+        }));
+    }
+
+    // Load Game: opens the slot selection panel
+    public void OpenLoadGamePanel()
+    {
+        if (loadGamePanel != null)
+            loadGamePanel.SetActive(true);
+    }
+
+    public void CloseLoadGamePanel()
+    {
+        if (loadGamePanel != null)
+            loadGamePanel.SetActive(false);
+    }
+
+    // Called by SaveMenuPanel when player picks a slot in load-only mode
+    // (wire this up on the SaveMenuPanel itself to call LoadWithTransition)
+    public void LoadSlotWithTransition(int slot)
+    {
+        StartCoroutine(TransitionThenAction(() =>
+        {
+            SaveManager.Instance.LoadFromSlot(slot);
+        }));
+    }
+
+    int FindMostRecentSlot()
+    {
+        int bestSlot = int.MinValue;
+        System.DateTime bestTime = System.DateTime.MinValue;
+
+        for (int i = SaveManager.AutoSaveSlot; i < SaveManager.MaxSlots; i++)
+        {
+            var preview = SaveManager.Instance.LoadSlotPreview(i);
+            if (preview == null || preview.isEmpty) continue;
+            if (System.DateTime.TryParse(preview.dateTime, out var parsed))
+                if (parsed > bestTime) { bestTime = parsed; bestSlot = i; }
+        }
+        return bestSlot;
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+
+    // ── TRANSITION ────────────────────────────────────────────────────────────
+
+    IEnumerator TransitionThenAction(System.Action action)
+    {
+        if (transitionOverlay != null)
+        {
+            transitionOverlay.gameObject.SetActive(true);
+            float t = 0f;
+            while (t < transitionDuration)
+            {
+                t += Time.deltaTime;
+                transitionOverlay.color = new Color(0, 0, 0, Mathf.Clamp01(t / transitionDuration));
+                yield return null;
+            }
+            transitionOverlay.color = Color.black;
+        }
+        else yield return new WaitForSeconds(0.1f);
+
+        action?.Invoke();
+    }
+
+    // ── CINEMATIC INTRO ───────────────────────────────────────────────────────
 
     IEnumerator Transition()
     {
@@ -166,67 +306,6 @@ public class MainMenuController : MonoBehaviour
         flashImage.color = c;
     }
 
-    public void StartGame()
-    {
-        Debug.Log("[MAINMENU] New Game - full reset");
-
-        // Force reset all save/load state
-        SaveManager.ForceResetLoadingState();
-        if (SaveManager.Instance != null)
-        {
-            SaveManager.Instance.currentSlot = -2;
-            SaveManager.Instance.sessionPlaytime = 0f;
-        }
-
-        // THE CRITICAL FIX: explicitly rebuild the party on the persistent
-        // PartyManager instance. Start() won't run again on a DontDestroyOnLoad
-        // object, so we must call this directly.
-        if (PartyManager.Instance != null)
-        {
-            Debug.Log("[MAINMENU] Calling ResetForNewGame on persistent PartyManager");
-            PartyManager.Instance.ResetForNewGame();
-        }
-
-        // Clear ALL encounter/cutscene static state
-        if (EncounterManager.CurrentEnemies != null)
-            EncounterManager.CurrentEnemies.Clear();
-        EncounterManager.ActiveCutscene = null;
-        EncounterManager.ActiveRecruitCutscene = null;
-        EncounterManager.IsResonanceBattle = false;
-        EncounterManager.IsForcedLossBattle = false;
-        EncounterManager.IsRecruitBattle = false;
-        EncounterManager.PendingRecruitCompletion = false;
-        EncounterManager.PendingRecruitMemberName = "";
-        EncounterManager.PlayerReturnPosition = Vector3.zero;
-        ResonanceCutsceneManager.WaitingForResonanceBattleReturn = false;
-        ResonanceCutsceneManager.WaitingForDuelReturn = false;
-        PlayerMovement2D.ForceFrozen = false;
-
-        PlayerPrefs.DeleteAll();
-        TrackedPlayerPrefsKeys.ResetMasterList();
-        PlayerPrefs.SetInt("session_initialized_flag", 1);
-        PlayerPrefs.Save();
-
-        GearMenuPanel.ResetInitialized();
-
-        Debug.Log("[MAINMENU] All state cleared, loading game scene");
-        SceneManager.LoadScene(gameScene);
-    }
-
-    public void OpenContinueMenu()
-    {
-        if (continueSavePanel == null) return;
-        continueSavePanel.SetActive(true);
-    }
-
-    public void CloseContinueMenu()
-    {
-        if (continueSavePanel == null) return;
-        continueSavePanel.SetActive(false);
-    }
-
-    public void QuitGame()
-    {
-        Application.Quit();
-    }
+    public void OpenContinueMenu() => OpenLoadGamePanel();
+    public void CloseContinueMenu() => CloseLoadGamePanel();
 }
