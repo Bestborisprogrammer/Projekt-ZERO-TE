@@ -194,9 +194,9 @@ public class CombatUI : MonoBehaviour
         if (actionTaken) return;
         if (!basicAttackButton.interactable) return;
 
-        if (Input.GetKeyDown(KeyCode.E)) OnBasicAttack();
-        if (Input.GetKeyDown(KeyCode.R)) ToggleSkillPanel();
-        if (Input.GetKeyDown(KeyCode.F) && blockButton.interactable)
+        if (Input.GetKeyDown(KeyCode.F)) OnBasicAttack();
+        if (Input.GetKeyDown(KeyCode.E)) ToggleSkillPanel();
+        if (Input.GetKeyDown(KeyCode.G) && blockButton.interactable)
             blockButton.onClick.Invoke();
         if (Input.GetKeyDown(KeyCode.I)) ToggleItemPanel();
     }
