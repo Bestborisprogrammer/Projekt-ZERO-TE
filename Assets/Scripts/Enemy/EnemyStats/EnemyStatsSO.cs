@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 [System.Serializable]
@@ -50,4 +50,15 @@ public class EnemyStatsSO : ScriptableObject
     [Header("Drops")]
     public List<ItemDrop> itemDrops = new();
     public List<GearDrop> gearDrops = new();
+
+    // ── Combat Animations ────────────────────────────────────────────────────
+    // Drag your AnimationClips straight in here — one per action.
+    // Leave a slot empty if you don't have that animation yet; it degrades gracefully.
+    [Header("Combat Animations")]
+    public AnimationClip animIdle;
+    public AnimationClip animDash;
+    public AnimationClip animAttack;
+    public AnimationClip animManaAttack;
+    public AnimationClip animGuard;
+    public AnimationClip animItem;
 }

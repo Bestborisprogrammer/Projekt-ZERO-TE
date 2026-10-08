@@ -33,6 +33,8 @@ public class TurnCombatManager : MonoBehaviour
 
     void Start() => SetupCombat();
 
+    // ── Setup ─────────────────────────────────────────────────────────────────
+
     void SetupCombat()
     {
         turnOrder.Clear();
@@ -41,11 +43,11 @@ public class TurnCombatManager : MonoBehaviour
         enemyInstanceDict.Clear();
         resonanceMode = false;
 
-        Debug.Log($"[COMBAT SETUP] SetupCombat called. CurrentEnemies count: {EncounterManager.CurrentEnemies.Count}");
+        Debug.Log($"[COMBAT SETUP] SetupCombat called. CurrentEnemies: {EncounterManager.CurrentEnemies.Count}");
 
         if (EncounterManager.CurrentEnemies.Count == 0)
         {
-            Debug.LogError("[COMBAT SETUP] CurrentEnemies is EMPTY! Combat cannot start.");
+            Debug.LogError("[COMBAT SETUP] CurrentEnemies is EMPTY!");
             return;
         }
 
@@ -56,7 +58,7 @@ public class TurnCombatManager : MonoBehaviour
                 var c = new Combatant(member);
                 turnOrder.Add(c);
                 party.Add(c);
-                Debug.Log($"[COMBAT SETUP] Added party member: {member.Name} HP:{member.currentHP} SPD:{member.Speed}");
+                Debug.Log($"[COMBAT SETUP] Party: {member.Name} HP:{member.currentHP} SPD:{member.Speed}");
             }
         }
 
@@ -68,7 +70,7 @@ public class TurnCombatManager : MonoBehaviour
             turnOrder.Add(c);
             enemies.Add(c);
             enemyInstanceDict[enemyData.enemyName] = enemyInstance;
-            Debug.Log($"[COMBAT SETUP] Added enemy: {enemyData.enemyName} SPD:{enemyInstance.Speed}");
+            Debug.Log($"[COMBAT SETUP] Enemy: {enemyData.enemyName} SPD:{enemyInstance.Speed}");
         }
 
         turnOrder = turnOrder.OrderByDescending(c => c.Speed).ToList();
@@ -77,12 +79,13 @@ public class TurnCombatManager : MonoBehaviour
         currentTurnIndex = 0;
 
         Debug.Log($"[COMBAT SETUP] Turn order: {string.Join(" -> ", turnOrder.Select(c => $"{c.Name}(spd:{c.Speed})"))}");
-        Debug.Log($"[COMBAT SETUP] First turn: {turnOrder[0].Name} IsEnemy:{turnOrder[0].IsEnemy}");
 
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.UpdateAllHP(party, enemies);
         combatUI.SetupCombatSprites(party, enemies);
-        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+        // SetupCombatSprites → SetupSprites → RegisterCombatant + SetAllIdle
+        // rectMap and animMap are now populated — do NOT clear after this
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);   
         UpdateStatusIndicators();
 
         if (EncounterManager.IsResonanceBattle)
@@ -110,10 +113,12 @@ public class TurnCombatManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("[COMBAT] Normal battle - starting turn");
+            Debug.Log("[COMBAT] Normal battle");
             StartTurn();
         }
     }
+
+    // ── Resonance ─────────────────────────────────────────────────────────────
 
     void StartResonanceTurn()
     {
@@ -125,18 +130,20 @@ public class TurnCombatManager : MonoBehaviour
         currentTurnIndex = turnOrder.IndexOf(edward);
         if (currentTurnIndex < 0) currentTurnIndex = 0;
 
+        // Clear guard pose for this combatant at turn start
+        CombatAnimator.Instance?.OnTurnStart(edward.Name);
+
         combatUI.UpdateTurnText($"{edward.Name} [RESONANCE]");
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         UpdateStatusIndicators();
 
-        var resonanceSpells = ResonanceManager.Instance?.resonanceSkills
-            ?? new List<ManaAttackSO>();
+        var resonanceSpells = ResonanceManager.Instance?.resonanceSkills ?? new List<ManaAttackSO>();
         combatUI.ShowSpellButtons(resonanceSpells, edward.GetCurrentMana());
         combatUI.SetPlayerButtonsActive(true, edward.CombatStyle);
         combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
 
-        Debug.Log($"[RESONANCE TURN] Edward's turn. Skills available: {resonanceSpells.Count}");
+        Debug.Log($"[RESONANCE TURN] {edward.Name}. Skills: {resonanceSpells.Count}");
     }
 
     public void ResonanceNextTurn()
@@ -166,6 +173,8 @@ public class TurnCombatManager : MonoBehaviour
         CombatSpriteManager.Instance?.UpdateStatusIndicators(all);
     }
 
+    // ── Turn start ────────────────────────────────────────────────────────────
+
     void StartTurn()
     {
         if (!combatActive) return;
@@ -173,6 +182,9 @@ public class TurnCombatManager : MonoBehaviour
         Combatant current = turnOrder[currentTurnIndex];
         current.SetBlocking(false);
         current.SetEvading(false);
+
+        // Clear guard/evade animation pose for the combatant whose turn it now is
+        CombatAnimator.Instance?.OnTurnStart(current.Name);
 
         combatUI.UpdateTurnText(current.Name);
         combatUI.UpdateAllHP(party, enemies);
@@ -213,8 +225,8 @@ public class TurnCombatManager : MonoBehaviour
             var inst = GetEnemyInstance(combatant.Name);
             return inst?.TickStatModifiers() ?? new List<string>();
         }
-        var member = PartyManager.Instance.activeParty.Find(m => m.Name == combatant.Name);
-        return member?.TickStatModifiers() ?? new List<string>();
+        return PartyManager.Instance.activeParty
+            .Find(m => m.Name == combatant.Name)?.TickStatModifiers() ?? new List<string>();
     }
 
     void ContinueStartTurn(Combatant current)
@@ -259,6 +271,8 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
     }
 
+    // ── Elemental combos (unchanged) ──────────────────────────────────────────
+
     string HandleElementalCombos(Combatant attacker, Combatant target,
         SpellAffinity affinity, ref float damageMult)
     {
@@ -284,6 +298,8 @@ public class TurnCombatManager : MonoBehaviour
         return comboMsg;
     }
 
+    // ── Spell effect helpers (unchanged) ─────────────────────────────────────
+
     void ApplySpellEffects(ManaAttackSO spell, Combatant attacker, Combatant target,
         int damage, bool targetWasFrozenBeforeHit = false)
     {
@@ -301,19 +317,15 @@ public class TurnCombatManager : MonoBehaviour
             }
         }
 
-        bool skipStatusBecauseJustThawed = spell.affinity == SpellAffinity.Fire && targetWasFrozenBeforeHit;
-
-        if (!skipStatusBecauseJustThawed && spell.statusEffect != StatusEffectType.None)
+        bool skipStatus = spell.affinity == SpellAffinity.Fire && targetWasFrozenBeforeHit;
+        if (!skipStatus && spell.statusEffect != StatusEffectType.None)
         {
             int speedReduction = spell.affinity == SpellAffinity.Water ? 3 : 0;
             target.ApplyStatusEffect(spell.statusEffect, spell.statusChance,
                 spell.statusDuration, spell.dotPercent, spell.defenseReduction, speedReduction);
-            bool wasApplied = target.HasStatusEffect(spell.statusEffect);
-
-            Debug.Log($"[STATUS APPLY] {spell.spellName} -> {spell.statusEffect} on {target.Name}. " +
-                $"chance={spell.statusChance} applied={wasApplied} skippedDueToThaw={skipStatusBecauseJustThawed}");
-
-            if (wasApplied)
+            bool applied = target.HasStatusEffect(spell.statusEffect);
+            Debug.Log($"[STATUS] {spell.spellName} -> {spell.statusEffect} on {target.Name} applied={applied}");
+            if (applied)
                 combatUI.ShowCombatLog($"{target.Name} afflicted with {spell.statusEffect} for {spell.statusDuration} turns!");
             else
                 combatUI.ShowCombatLog($"{spell.spellName} effect missed!");
@@ -330,15 +342,45 @@ public class TurnCombatManager : MonoBehaviour
                 CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
                 combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
                 combatUI.UpdateAllHP(party, enemies);
-                Debug.Log($"[SPELL RECOIL] {attacker.Name} HP:{casterRef.currentHP}/{casterRef.MaxHP}");
-
                 if (!casterRef.IsAlive)
                 {
                     CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
-                    combatUI.ShowCombatLog($"{attacker.Name} collapsed from the strain!",
-                        () => HandleResonanceDeath());
+                    combatUI.ShowCombatLog($"{attacker.Name} collapsed!", () => HandleResonanceDeath());
                 }
             }
+        }
+
+        UpdateStatusIndicators();
+    }
+
+    void ApplySpellEffectsNoSelfDamage(ManaAttackSO spell, Combatant attacker,
+        Combatant target, int damage, bool targetWasFrozenBeforeHit)
+    {
+        if (spell.affinity == SpellAffinity.Light)
+        {
+            int healAmount = Mathf.RoundToInt(damage * 0.3f);
+            var charRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
+            if (charRef != null)
+            {
+                charRef.currentHP = Mathf.Min(charRef.MaxHP, charRef.currentHP + healAmount);
+                attacker.Refresh();
+                CombatSpriteManager.Instance?.ShowDamageNumber(attacker.Name, healAmount, true);
+                combatUI.ShowCombatLog($"{attacker.Name} absorbs {healAmount} HP!");
+                combatUI.UpdateAllHP(party, enemies);
+            }
+        }
+
+        bool skipStatus = spell.affinity == SpellAffinity.Fire && targetWasFrozenBeforeHit;
+        if (!skipStatus && spell.statusEffect != StatusEffectType.None)
+        {
+            int speedReduction = spell.affinity == SpellAffinity.Water ? 3 : 0;
+            target.ApplyStatusEffect(spell.statusEffect, spell.statusChance,
+                spell.statusDuration, spell.dotPercent, spell.defenseReduction, speedReduction);
+            bool applied = target.HasStatusEffect(spell.statusEffect);
+            if (applied)
+                combatUI.ShowCombatLog($"{target.Name} afflicted with {spell.statusEffect}!");
+            else
+                combatUI.ShowCombatLog($"Effect missed on {target.Name}!");
         }
 
         UpdateStatusIndicators();
@@ -357,6 +399,8 @@ public class TurnCombatManager : MonoBehaviour
         }
         UpdateStatusIndicators();
     }
+
+    // ── Resolve attack (unchanged) ────────────────────────────────────────────
 
     bool ResolveAttack(Combatant attacker, Combatant target,
         int damage, string attackName, bool canCrit = false)
@@ -378,8 +422,7 @@ public class TurnCombatManager : MonoBehaviour
             int reduced = Mathf.RoundToInt(damage * (1f - target.BlockReduction));
             target.TakeDamage(reduced);
             CombatSpriteManager.Instance?.PlayHitEffect(target.Name, reduced, isCrit);
-            combatUI.ShowCombatLog(
-                $"{attacker.Name} hits {target.Name} for {damage}!{critTag} (B! → {reduced})");
+            combatUI.ShowCombatLog($"{attacker.Name} hits {target.Name} for {damage}!{critTag} (B! → {reduced})");
         }
         else
         {
@@ -391,6 +434,10 @@ public class TurnCombatManager : MonoBehaviour
         return true;
     }
 
+    // ── Player actions — animation-wrapped ───────────────────────────────────
+    // Each action: disable buttons → play animation → existing logic fires at
+    // the right moment inside the callback → continue turn.
+
     public void PlayerBasicAttack()
     {
         Combatant attacker = turnOrder[currentTurnIndex];
@@ -401,57 +448,124 @@ public class TurnCombatManager : MonoBehaviour
 
         Combatant target = enemies[selectedEnemyIndex];
         int damage = Mathf.Max(1, attacker.Attack - target.Defense);
-        bool hit = ResolveAttack(attacker, target, damage, "basic attack", true);
 
-        if (resonanceMode && hit && ResonanceManager.Instance != null)
+        var anim = CombatAnimator.Instance;
+        if (anim != null)
         {
-            var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
-            if (casterRef != null)
-            {
-                float pct = ResonanceManager.Instance.basicAttackSelfDamagePercent;
-                int selfDmg = Mathf.Max(1, Mathf.RoundToInt(attacker.MaxHP * pct));
-                casterRef.currentHP = Mathf.Max(0, casterRef.currentHP - selfDmg);
-                attacker.Refresh();
-                CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
-                combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
-                combatUI.UpdateAllHP(party, enemies);
-                Debug.Log($"[BASIC RECOIL] {attacker.Name} HP:{casterRef.currentHP}/{casterRef.MaxHP}");
-
-                if (!casterRef.IsAlive)
+            combatUI.SetPlayerButtonsActive(false);
+            anim.PlayAttack(attacker.Name, target.Name,
+                onDamagePoint: () =>
                 {
-                    CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
-                    combatUI.ShowCombatLog($"{attacker.Name} collapsed from the strain!");
-                    HandleResonanceDeath();
-                    return;
+                    bool hit = ResolveAttack(attacker, target, damage, "basic attack", true);
+
+                    if (resonanceMode && hit && ResonanceManager.Instance != null)
+                    {
+                        var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
+                        if (casterRef != null)
+                        {
+                            float pct = ResonanceManager.Instance.basicAttackSelfDamagePercent;
+                            int selfDmg = Mathf.Max(1, Mathf.RoundToInt(attacker.MaxHP * pct));
+                            casterRef.currentHP = Mathf.Max(0, casterRef.currentHP - selfDmg);
+                            attacker.Refresh();
+                            CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
+                            combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
+                            combatUI.UpdateAllHP(party, enemies);
+                            if (!casterRef.IsAlive)
+                            {
+                                CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
+                                combatUI.ShowCombatLog($"{attacker.Name} collapsed!");
+                            }
+                        }
+                    }
+
+                    combatUI.UpdateAllHP(party, enemies);
+                    combatUI.BuildEnemyTargetButtons(enemies);
+                    combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+                    CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+                    UpdateStatusIndicators();
+
+                    if (hit && !target.IsAlive)
+                        CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
+                },
+                onComplete: () =>
+                {
+                    // Check if resonance recoil killed the caster mid-sequence
+                    var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
+                    if (resonanceMode && casterRef != null && !casterRef.IsAlive)
+                    {
+                        HandleResonanceDeath();
+                        return;
+                    }
+
+                    if (!target.IsAlive)
+                    {
+                        if (enemies.All(e => !e.IsAlive))
+                        {
+                            combatUI.ShowCombatLog($"{target.Name} defeated!", () => HandleVictory());
+                            return;
+                        }
+                        combatUI.ShowCombatLog($"{target.Name} defeated!");
+                        selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+                        combatUI.BuildEnemyTargetButtons(enemies);
+                        combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+                    }
+
+                    combatUI.ShowCombatLog(" ", () =>
+                    {
+                        if (resonanceMode) ResonanceNextTurn();
+                        else NextTurn();
+                    });
+                });
+        }
+        else
+        {
+            // Fallback — no animator, instant as before
+            bool hit = ResolveAttack(attacker, target, damage, "basic attack", true);
+
+            if (resonanceMode && hit && ResonanceManager.Instance != null)
+            {
+                var casterRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
+                if (casterRef != null)
+                {
+                    float pct = ResonanceManager.Instance.basicAttackSelfDamagePercent;
+                    int selfDmg = Mathf.Max(1, Mathf.RoundToInt(attacker.MaxHP * pct));
+                    casterRef.currentHP = Mathf.Max(0, casterRef.currentHP - selfDmg);
+                    attacker.Refresh();
+                    CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
+                    combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
+                    combatUI.UpdateAllHP(party, enemies);
+                    if (!casterRef.IsAlive)
+                    {
+                        CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
+                        combatUI.ShowCombatLog($"{attacker.Name} collapsed!", () => HandleResonanceDeath());
+                        return;
+                    }
                 }
             }
-        }
 
-        combatUI.UpdateAllHP(party, enemies);
-        combatUI.BuildEnemyTargetButtons(enemies);
-        combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
-        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
-        UpdateStatusIndicators();
-
-        if (hit && !target.IsAlive)
-        {
-            CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
-            if (enemies.All(e => !e.IsAlive))
-            {
-                combatUI.ShowCombatLog($"{target.Name} defeated!", () => HandleVictory());
-                return;
-            }
-            combatUI.ShowCombatLog($"{target.Name} defeated!");
-            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+            combatUI.UpdateAllHP(party, enemies);
             combatUI.BuildEnemyTargetButtons(enemies);
             combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
-        }
+            CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+            UpdateStatusIndicators();
 
-        combatUI.ShowCombatLog(" ", () =>
-        {
-            if (resonanceMode) ResonanceNextTurn();
-            else NextTurn();
-        });
+            if (hit && !target.IsAlive)
+            {
+                CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
+                if (enemies.All(e => !e.IsAlive))
+                { combatUI.ShowCombatLog($"{target.Name} defeated!", () => HandleVictory()); return; }
+                combatUI.ShowCombatLog($"{target.Name} defeated!");
+                selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+                combatUI.BuildEnemyTargetButtons(enemies);
+                combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+            }
+
+            combatUI.ShowCombatLog(" ", () =>
+            {
+                if (resonanceMode) ResonanceNextTurn();
+                else NextTurn();
+            });
+        }
     }
 
     public void PlayerBlock()
@@ -461,13 +575,26 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         UpdateStatusIndicators();
-        combatUI.ShowCombatLog(
-            $"{blocker.Name} guards! {blocker.BlockReduction * 100f:F1}% reduction",
-            () => combatUI.ShowCombatLog(" ", () =>
-            {
-                if (resonanceMode) ResonanceNextTurn();
-                else NextTurn();
-            }));
+
+        CombatAnimator.Instance?.PlayGuard(blocker.Name, () =>
+        {
+            combatUI.ShowCombatLog(
+                $"{blocker.Name} guards! {blocker.BlockReduction * 100f:F1}% reduction",
+                () => combatUI.ShowCombatLog(" ", () =>
+                {
+                    if (resonanceMode) ResonanceNextTurn();
+                    else NextTurn();
+                }));
+        });
+
+        if (CombatAnimator.Instance == null)
+            combatUI.ShowCombatLog(
+                $"{blocker.Name} guards! {blocker.BlockReduction * 100f:F1}% reduction",
+                () => combatUI.ShowCombatLog(" ", () =>
+                {
+                    if (resonanceMode) ResonanceNextTurn();
+                    else NextTurn();
+                }));
     }
 
     public void PlayerEvade()
@@ -477,13 +604,26 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.UpdateAllHP(party, enemies);
         CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         UpdateStatusIndicators();
-        combatUI.ShowCombatLog(
-            $"{evader.Name} readies evade! {evader.EvadeChance * 100f:F1}% dodge",
-            () => combatUI.ShowCombatLog(" ", () =>
-            {
-                if (resonanceMode) ResonanceNextTurn();
-                else NextTurn();
-            }));
+
+        CombatAnimator.Instance?.PlayEvade(evader.Name, () =>
+        {
+            combatUI.ShowCombatLog(
+                $"{evader.Name} readies evade! {evader.EvadeChance * 100f:F1}% dodge",
+                () => combatUI.ShowCombatLog(" ", () =>
+                {
+                    if (resonanceMode) ResonanceNextTurn();
+                    else NextTurn();
+                }));
+        });
+
+        if (CombatAnimator.Instance == null)
+            combatUI.ShowCombatLog(
+                $"{evader.Name} readies evade! {evader.EvadeChance * 100f:F1}% dodge",
+                () => combatUI.ShowCombatLog(" ", () =>
+                {
+                    if (resonanceMode) ResonanceNextTurn();
+                    else NextTurn();
+                }));
     }
 
     public void PlayerManaAttack(ManaAttackSO spell)
@@ -499,26 +639,64 @@ public class TurnCombatManager : MonoBehaviour
         if (spell.spellType == SpellType.Heal)
         {
             combatUI.OpenSpellMemberSelect(spell, attacker,
-                (m) => ExecuteHealSpell(spell, attacker, m));
-            return;
-        }
-        if (spell.spellType == SpellType.Buff)
-        {
-            combatUI.OpenSpellMemberSelect(spell, attacker,
-                (m) => ExecuteBuffSpell(spell, attacker, m));
-            return;
-        }
-        if (spell.spellType == SpellType.Debuff)
-        {
-            ExecuteDebuffSpell(spell, attacker);
-            return;
-        }
-        if (spell.isAOE)
-        {
-            ExecuteAOESpell(spell, attacker);
+                (m) =>
+                {
+                    var anim = CombatAnimator.Instance;
+                    if (anim != null)
+                        anim.PlaySupportMana(attacker.Name,
+                            onEffectPoint: () => ExecuteHealSpell(spell, attacker, m),
+                            onComplete: () => { });
+                    else
+                        ExecuteHealSpell(spell, attacker, m);
+                });
             return;
         }
 
+        if (spell.spellType == SpellType.Buff)
+        {
+            combatUI.OpenSpellMemberSelect(spell, attacker,
+                (m) =>
+                {
+                    var anim = CombatAnimator.Instance;
+                    if (anim != null)
+                        anim.PlaySupportMana(attacker.Name,
+                            onEffectPoint: () => ExecuteBuffSpell(spell, attacker, m),
+                            onComplete: () => { });
+                    else
+                        ExecuteBuffSpell(spell, attacker, m);
+                });
+            return;
+        }
+
+        if (spell.spellType == SpellType.Debuff)
+        {
+            var anim = CombatAnimator.Instance;
+            if (anim != null)
+                anim.PlaySupportMana(attacker.Name,
+                    onEffectPoint: () => ExecuteDebuffSpell(spell, attacker),
+                    onComplete: () => { });
+            else
+                ExecuteDebuffSpell(spell, attacker);
+            return;
+        }
+
+        if (spell.isAOE)
+        {
+            // AOE — in-place mana anim then the full AOE logic
+            var anim = CombatAnimator.Instance;
+            if (anim != null)
+            {
+                combatUI.SetPlayerButtonsActive(false);
+                anim.PlaySupportMana(attacker.Name,
+                    onEffectPoint: () => ExecuteAOESpell(spell, attacker),
+                    onComplete: () => { });
+            }
+            else
+                ExecuteAOESpell(spell, attacker);
+            return;
+        }
+
+        // Damage spell — dash toward target
         while (selectedEnemyIndex < enemies.Count && !enemies[selectedEnemyIndex].IsAlive)
             selectedEnemyIndex++;
         if (selectedEnemyIndex >= enemies.Count) return;
@@ -538,35 +716,77 @@ public class TurnCombatManager : MonoBehaviour
         if (spell.spellSound != null) AudioManager.Instance?.PlaySFX(spell.spellSound);
         if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
 
-        bool hit = ResolveAttack(attacker, target, damage, spell.spellName);
-        if (hit) ApplySpellEffects(spell, attacker, target, damage, targetWasFrozenBeforeHit);
-
-        combatUI.UpdateAllHP(party, enemies);
-        combatUI.BuildEnemyTargetButtons(enemies);
-        combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
-        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
-        UpdateStatusIndicators();
-
-        if (hit && !target.IsAlive)
+        var animInst = CombatAnimator.Instance;
+        if (animInst != null)
         {
-            CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
-            if (enemies.All(e => !e.IsAlive))
-            {
-                combatUI.ShowCombatLog($"{target.Name} defeated!", () => HandleVictory());
-                return;
-            }
-            combatUI.ShowCombatLog($"{target.Name} defeated!");
-            selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+            combatUI.SetPlayerButtonsActive(false);
+            animInst.PlayOffensiveMana(attacker.Name, target.Name,
+                onEffectPoint: () =>
+                {
+                    bool hit = ResolveAttack(attacker, target, damage, spell.spellName);
+                    if (hit) ApplySpellEffects(spell, attacker, target, damage, targetWasFrozenBeforeHit);
+
+                    combatUI.UpdateAllHP(party, enemies);
+                    combatUI.BuildEnemyTargetButtons(enemies);
+                    combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+                    CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+                    UpdateStatusIndicators();
+
+                    if (hit && !target.IsAlive)
+                        CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
+                },
+                onComplete: () =>
+                {
+                    if (!target.IsAlive)
+                    {
+                        if (enemies.All(e => !e.IsAlive))
+                        {
+                            combatUI.ShowCombatLog($"{target.Name} defeated!", () => HandleVictory());
+                            return;
+                        }
+                        combatUI.ShowCombatLog($"{target.Name} defeated!");
+                        selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+                        combatUI.BuildEnemyTargetButtons(enemies);
+                        combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+                    }
+                    combatUI.ShowCombatLog(" ", () =>
+                    {
+                        if (resonanceMode) ResonanceNextTurn();
+                        else NextTurn();
+                    });
+                });
+        }
+        else
+        {
+            // Fallback
+            bool hit = ResolveAttack(attacker, target, damage, spell.spellName);
+            if (hit) ApplySpellEffects(spell, attacker, target, damage, targetWasFrozenBeforeHit);
+
+            combatUI.UpdateAllHP(party, enemies);
             combatUI.BuildEnemyTargetButtons(enemies);
             combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
-        }
+            CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+            UpdateStatusIndicators();
 
-        combatUI.ShowCombatLog(" ", () =>
-        {
-            if (resonanceMode) ResonanceNextTurn();
-            else NextTurn();
-        });
+            if (hit && !target.IsAlive)
+            {
+                CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
+                if (enemies.All(e => !e.IsAlive))
+                { combatUI.ShowCombatLog($"{target.Name} defeated!", () => HandleVictory()); return; }
+                combatUI.ShowCombatLog($"{target.Name} defeated!");
+                selectedEnemyIndex = enemies.FindIndex(e => e.IsAlive);
+                combatUI.BuildEnemyTargetButtons(enemies);
+                combatUI.HighlightSelectedEnemy(selectedEnemyIndex);
+            }
+            combatUI.ShowCombatLog(" ", () =>
+            {
+                if (resonanceMode) ResonanceNextTurn();
+                else NextTurn();
+            });
+        }
     }
+
+    // ── Spell execution helpers (unchanged logic) ─────────────────────────────
 
     public void ExecuteHealSpell(ManaAttackSO spell, Combatant caster, CharacterInstance target)
     {
@@ -574,8 +794,7 @@ public class TurnCombatManager : MonoBehaviour
         heal = Mathf.Max(0, Mathf.Min(heal, target.MaxHP - target.currentHP));
         target.currentHP = Mathf.Min(target.MaxHP, target.currentHP + heal);
 
-        var combatant = party.Find(p => p.Name == target.Name);
-        combatant?.Refresh();
+        party.Find(p => p.Name == target.Name)?.Refresh();
 
         if (spell.spellSound != null) AudioManager.Instance?.PlaySFX(spell.spellSound);
         CombatSpriteManager.Instance?.ShowDamageNumber(target.Name, heal, true);
@@ -591,10 +810,8 @@ public class TurnCombatManager : MonoBehaviour
 
     public void ExecuteBuffSpell(ManaAttackSO spell, Combatant caster, CharacterInstance target)
     {
-        target.statModifiers.Add(new StatModifier(
-            spell.statType, spell.statModifier, spell.modifierDuration));
-        var combatant = party.Find(p => p.Name == target.Name);
-        combatant?.Refresh();
+        target.statModifiers.Add(new StatModifier(spell.statType, spell.statModifier, spell.modifierDuration));
+        party.Find(p => p.Name == target.Name)?.Refresh();
 
         if (spell.spellSound != null) AudioManager.Instance?.PlaySFX(spell.spellSound);
         combatUI.ShowCombatLog($"{caster.Name} uses {spell.spellName} on {target.Name}! " +
@@ -660,13 +877,13 @@ public class TurnCombatManager : MonoBehaviour
         bool anyDefeated = false;
         foreach (var target in aliveEnemies)
         {
-            bool targetWasFrozenBeforeHit = target.IsFrozen;
+            bool frozenBefore = target.IsFrozen;
             float mult = affinityMult;
-            string comboMsg = HandleElementalCombos(attacker, target, spell.affinity, ref mult);
+            string combo = HandleElementalCombos(attacker, target, spell.affinity, ref mult);
             int scaledDamage = Mathf.RoundToInt(spell.flatDamage * (1f + attacker.Magic * 0.015f));
             int damage = Mathf.Max(1, Mathf.RoundToInt((scaledDamage - target.Defense) * mult));
 
-            if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
+            if (!string.IsNullOrEmpty(combo)) combatUI.ShowCombatLog(combo);
 
             if (target.CombatStyle == CombatStyle.Evade && target.TryEvade())
             { combatUI.ShowCombatLog($"{target.Name} evaded!"); continue; }
@@ -687,7 +904,7 @@ public class TurnCombatManager : MonoBehaviour
                 combatUI.ShowCombatLog($"{target.Name} takes {damage}!");
             }
 
-            ApplySpellEffectsNoSelfDamage(spell, attacker, target, damage, targetWasFrozenBeforeHit);
+            ApplySpellEffectsNoSelfDamage(spell, attacker, target, damage, frozenBefore);
 
             if (!target.IsAlive)
             {
@@ -707,12 +924,10 @@ public class TurnCombatManager : MonoBehaviour
                 attacker.Refresh();
                 CombatSpriteManager.Instance?.PlayHitEffect(attacker.Name, selfDmg);
                 combatUI.ShowCombatLog($"{attacker.Name} takes {selfDmg} recoil!");
-
                 if (!casterRef.IsAlive)
                 {
                     CombatSpriteManager.Instance?.PlayPartyDefeatedEffect(attacker.Name);
-                    combatUI.ShowCombatLog($"{attacker.Name} collapsed from the strain!",
-                        () => HandleResonanceDeath());
+                    combatUI.ShowCombatLog($"{attacker.Name} collapsed!", () => HandleResonanceDeath());
                     return;
                 }
             }
@@ -742,39 +957,7 @@ public class TurnCombatManager : MonoBehaviour
         });
     }
 
-    void ApplySpellEffectsNoSelfDamage(ManaAttackSO spell, Combatant attacker,
-        Combatant target, int damage, bool targetWasFrozenBeforeHit)
-    {
-        if (spell.affinity == SpellAffinity.Light)
-        {
-            int healAmount = Mathf.RoundToInt(damage * 0.3f);
-            var charRef = PartyManager.Instance.activeParty.Find(m => m.Name == attacker.Name);
-            if (charRef != null)
-            {
-                charRef.currentHP = Mathf.Min(charRef.MaxHP, charRef.currentHP + healAmount);
-                attacker.Refresh();
-                CombatSpriteManager.Instance?.ShowDamageNumber(attacker.Name, healAmount, true);
-                combatUI.ShowCombatLog($"{attacker.Name} absorbs {healAmount} HP!");
-                combatUI.UpdateAllHP(party, enemies);
-            }
-        }
-
-        bool skipStatusBecauseJustThawed = spell.affinity == SpellAffinity.Fire && targetWasFrozenBeforeHit;
-
-        if (!skipStatusBecauseJustThawed && spell.statusEffect != StatusEffectType.None)
-        {
-            int speedReduction = spell.affinity == SpellAffinity.Water ? 3 : 0;
-            target.ApplyStatusEffect(spell.statusEffect, spell.statusChance,
-                spell.statusDuration, spell.dotPercent, spell.defenseReduction, speedReduction);
-            bool wasApplied = target.HasStatusEffect(spell.statusEffect);
-            if (wasApplied)
-                combatUI.ShowCombatLog($"{target.Name} afflicted with {spell.statusEffect}!");
-            else
-                combatUI.ShowCombatLog($"Effect missed on {target.Name}!");
-        }
-
-        UpdateStatusIndicators();
-    }
+    // ── Enemy turn (animation-wrapped) ───────────────────────────────────────
 
     void EnemyTurn()
     {
@@ -790,15 +973,23 @@ public class TurnCombatManager : MonoBehaviour
             {
                 attacker.SetBlocking(true);
                 UpdateStatusIndicators();
-                combatUI.ShowCombatLog($"{attacker.Name} guards!",
-                    () => ProcessDotsAndNextTurn(attacker));
+                CombatAnimator.Instance?.PlayGuard(attacker.Name, () =>
+                    combatUI.ShowCombatLog($"{attacker.Name} guards!",
+                        () => ProcessDotsAndNextTurn(attacker)));
+                if (CombatAnimator.Instance == null)
+                    combatUI.ShowCombatLog($"{attacker.Name} guards!",
+                        () => ProcessDotsAndNextTurn(attacker));
             }
             else
             {
                 attacker.SetEvading(true);
                 UpdateStatusIndicators();
-                combatUI.ShowCombatLog($"{attacker.Name} readies evade!",
-                    () => ProcessDotsAndNextTurn(attacker));
+                CombatAnimator.Instance?.PlayEvade(attacker.Name, () =>
+                    combatUI.ShowCombatLog($"{attacker.Name} readies evade!",
+                        () => ProcessDotsAndNextTurn(attacker)));
+                if (CombatAnimator.Instance == null)
+                    combatUI.ShowCombatLog($"{attacker.Name} readies evade!",
+                        () => ProcessDotsAndNextTurn(attacker));
             }
             return;
         }
@@ -806,7 +997,7 @@ public class TurnCombatManager : MonoBehaviour
         Combatant target = aliveParty[Random.Range(0, aliveParty.Count)];
         var availableSpells = GetEnemyAvailableSpells();
         bool useSpell = availableSpells != null &&
-            availableSpells.Count > 0 && Random.value > 0.5f;
+                                  availableSpells.Count > 0 && Random.value > 0.5f;
 
         if (useSpell)
         {
@@ -821,21 +1012,63 @@ public class TurnCombatManager : MonoBehaviour
             combatUI.ShowCombatLog($"{attacker.Name} uses {spell.spellName}!");
             if (!string.IsNullOrEmpty(comboMsg)) combatUI.ShowCombatLog(comboMsg);
 
-            bool hit = ResolveAttack(attacker, target, damage, spell.spellName);
-            if (hit) ApplyEnemySpellEffects(spell, attacker, target, damage);
+            var animInst = CombatAnimator.Instance;
+            if (animInst != null)
+            {
+                animInst.PlayOffensiveMana(attacker.Name, target.Name,
+                    onEffectPoint: () =>
+                    {
+                        bool hit = ResolveAttack(attacker, target, damage, spell.spellName);
+                        if (hit) ApplyEnemySpellEffects(spell, attacker, target, damage);
+                        combatUI.UpdateAllHP(party, enemies);
+                        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+                        UpdateStatusIndicators();
+                    },
+                    onComplete: () =>
+                        combatUI.ShowCombatLog(" ", () => ProcessDotsAndNextTurn(attacker)));
+            }
+            else
+            {
+                bool hit = ResolveAttack(attacker, target, damage, spell.spellName);
+                if (hit) ApplyEnemySpellEffects(spell, attacker, target, damage);
+                combatUI.UpdateAllHP(party, enemies);
+                CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+                UpdateStatusIndicators();
+                combatUI.ShowCombatLog(" ", () => ProcessDotsAndNextTurn(attacker));
+            }
         }
         else
         {
             int damage = Mathf.Max(1, attacker.Attack - target.Defense);
-            ResolveAttack(attacker, target, damage, "basic attack", true);
+
+            var animInst = CombatAnimator.Instance;
+            if (animInst != null)
+            {
+                animInst.PlayAttack(attacker.Name, target.Name,
+                    onDamagePoint: () =>
+                    {
+                        ResolveAttack(attacker, target, damage, "basic attack", true);
+                        combatUI.UpdateAllHP(party, enemies);
+                        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+                        UpdateStatusIndicators();
+                        if (!target.IsAlive)
+                            CombatSpriteManager.Instance?.PlayDefeatedEffect(target.Name);
+                    },
+                    onComplete: () =>
+                        combatUI.ShowCombatLog(" ", () => ProcessDotsAndNextTurn(attacker)));
+            }
+            else
+            {
+                ResolveAttack(attacker, target, damage, "basic attack", true);
+                combatUI.UpdateAllHP(party, enemies);
+                CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
+                UpdateStatusIndicators();
+                combatUI.ShowCombatLog(" ", () => ProcessDotsAndNextTurn(attacker));
+            }
         }
-
-        combatUI.UpdateAllHP(party, enemies);
-        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
-        UpdateStatusIndicators();
-
-        combatUI.ShowCombatLog(" ", () => ProcessDotsAndNextTurn(attacker));
     }
+
+    // ── DOTs / next turn (unchanged) ─────────────────────────────────────────
 
     void ProcessDotsAndNextTurn(Combatant attacker)
     {
@@ -939,6 +1172,8 @@ public class TurnCombatManager : MonoBehaviour
 
     public void NextTurnPublic() => NextTurn();
 
+    // ── Resonance death (unchanged) ───────────────────────────────────────────
+
     void HandleResonanceDeath()
     {
         Debug.Log("[RESONANCE DEATH] Caster died from recoil");
@@ -948,7 +1183,6 @@ public class TurnCombatManager : MonoBehaviour
 
         bool isScriptedDuel = ResonanceManager.ScriptedResonanceActive;
         Debug.Log($"[RESONANCE DEATH] ScriptedResonanceActive={isScriptedDuel}");
-
         if (isScriptedDuel)
             ResonanceCutsceneManager.WaitingForDuelReturn = true;
 
@@ -961,6 +1195,8 @@ public class TurnCombatManager : MonoBehaviour
             UnityEngine.SceneManagement.SceneManager.LoadScene(combatUI.overworldScene);
         });
     }
+
+    // ── Victory (unchanged) ───────────────────────────────────────────────────
 
     void HandleVictory()
     {
@@ -984,7 +1220,7 @@ public class TurnCombatManager : MonoBehaviour
 
         if (ResonanceManager.IsResonating && ResonanceManager.ScriptedResonanceActive)
         {
-            Debug.Log("[VICTORY] Scripted resonance battle won – setting WaitingForResonanceBattleReturn");
+            Debug.Log("[VICTORY] Scripted resonance won – WaitingForResonanceBattleReturn=true");
             ResonanceCutsceneManager.WaitingForResonanceBattleReturn = true;
         }
 
@@ -1014,7 +1250,7 @@ public class TurnCombatManager : MonoBehaviour
         combatActive = false;
     }
 
-    // ── RESTART / RETRY ──────────────────────────────────────────────────────
+    // ── Restart / retry (unchanged) ───────────────────────────────────────────
 
     public void RestartCombat()
     {
@@ -1029,10 +1265,11 @@ public class TurnCombatManager : MonoBehaviour
             CombatSpriteManager.Instance.ClearAllFloatingUI();
         }
 
+        CombatAnimator.Instance?.Clear();
+
         combatUI?.ClearLogQueue();
         combatUI?.HideAllResultPanels();
 
-        // Reset ALL party member combat state before rebuilding Combatants
         if (PartyManager.Instance != null)
         {
             foreach (var member in PartyManager.Instance.activeParty)
@@ -1045,16 +1282,12 @@ public class TurnCombatManager : MonoBehaviour
             }
         }
 
-        // Build combat FIRST while GameOverManager's black overlay covers the screen
         SetupCombat();
-
-        // THEN fade in to reveal the fresh battle
         StartCoroutine(FadeInAfterRestart());
     }
 
     IEnumerator FadeInAfterRestart()
     {
-        // Wait for end of frame so SetupCombat's sprite setup fully completes
         yield return new WaitForEndOfFrame();
         yield return new WaitForEndOfFrame();
 

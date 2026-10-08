@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -39,15 +38,14 @@ public class CombatSpriteManager : MonoBehaviour
 
     void SetFont(TextMeshProUGUI tmp)
     {
-        if (combatFont != null && tmp != null)
-            tmp.font = combatFont;
+        if (combatFont != null && tmp != null) tmp.font = combatFont;
     }
 
     public void SetupSprites(List<Combatant> party, List<Combatant> enemies)
     {
-        if (combatSpritePrefab == null) { Debug.LogError("combatSpritePrefab NULL!"); return; }
-        if (partySpritesParent == null) { Debug.LogError("partySpritesParent NULL!"); return; }
-        if (enemySpritesParent == null) { Debug.LogError("enemySpritesParent NULL!"); return; }
+        if (combatSpritePrefab == null) { Debug.LogError("[CSM] combatSpritePrefab NULL"); return; }
+        if (partySpritesParent == null) { Debug.LogError("[CSM] partySpritesParent NULL"); return; }
+        if (enemySpritesParent == null) { Debug.LogError("[CSM] enemySpritesParent NULL"); return; }
 
         spriteMap.Clear();
         rectMap.Clear();
@@ -56,10 +54,12 @@ public class CombatSpriteManager : MonoBehaviour
         statusTextMap.Clear();
         enemyNameOrder.Clear();
 
+        CombatAnimator.Instance?.Clear();
+
         foreach (Transform child in partySpritesParent) Destroy(child.gameObject);
         foreach (Transform child in enemySpritesParent) Destroy(child.gameObject);
 
-        // ── Party ──────────────────────────────────
+        // ── Party ─────────────────────────────────────────────────────────────
         foreach (var member in party)
         {
             var so = PartyManager.Instance.allMembers
@@ -78,6 +78,7 @@ public class CombatSpriteManager : MonoBehaviour
             cLayout.childForceExpandHeight = false;
             cLayout.childForceExpandWidth = true;
 
+            // Status text
             GameObject statusObj = new GameObject("Status");
             statusObj.transform.SetParent(container.transform, false);
             var statusRT = statusObj.AddComponent<RectTransform>();
@@ -91,18 +92,28 @@ public class CombatSpriteManager : MonoBehaviour
             SetFont(statusTMP);
             statusTextMap[member.Name] = statusTMP;
 
+            // Sprite object — Image drives visuals; CombatAnimator writes to it directly
             GameObject spriteObj = Instantiate(combatSpritePrefab, container.transform);
             spriteObj.name = member.Name;
+
             var img = spriteObj.GetComponent<Image>();
             if (so != null && so.portrait != null) img.sprite = so.portrait;
+
             var sRT = spriteObj.GetComponent<RectTransform>();
             sRT.sizeDelta = new Vector2(155, 155);
 
             spriteMap[member.Name] = img;
             rectMap[member.Name] = sRT;
+
+            // Register with CombatAnimator — pass Image and clips from SO
+            // No Animator component needed; we drive Image.sprite manually
+            CombatAnimator.Instance?.RegisterCombatant(
+                member.Name, sRT, img,
+                so?.animIdle, so?.animDash, so?.animAttack,
+                so?.animManaAttack, so?.animGuard, so?.animItem);
         }
 
-        // ── Enemies ────────────────────────────────
+        // ── Enemies ───────────────────────────────────────────────────────────
         for (int i = 0; i < enemies.Count; i++)
         {
             var enemy = enemies[i];
@@ -180,6 +191,7 @@ public class CombatSpriteManager : MonoBehaviour
             // Sprite
             GameObject spriteObj = Instantiate(combatSpritePrefab, container.transform);
             spriteObj.name = enemy.Name;
+
             var spriteImg = spriteObj.GetComponent<Image>();
             spriteImg.raycastTarget = false;
             var spriteRT = spriteObj.GetComponent<RectTransform>();
@@ -188,11 +200,22 @@ public class CombatSpriteManager : MonoBehaviour
 
             spriteMap[enemy.Name] = spriteImg;
             rectMap[enemy.Name] = spriteRT;
+
+            CombatAnimator.Instance?.RegisterCombatant(
+                enemy.Name, spriteRT, spriteImg,
+                so?.animIdle, so?.animDash, so?.animAttack,
+                so?.animManaAttack, so?.animGuard, so?.animItem);
         }
 
         if (enemies.Count > 0)
             HighlightSelectedEnemy(0);
+
+        var tcm = TurnCombatManager.Instance;
+        if (tcm != null)
+            CombatAnimator.Instance?.SetAllIdle(tcm.party, tcm.enemies);
     }
+
+    // ── Status indicators ─────────────────────────────────────────────────────
 
     public void UpdateStatusIndicators(List<Combatant> allCombatants)
     {
@@ -202,14 +225,15 @@ public class CombatSpriteManager : MonoBehaviour
 
             List<string> parts = new();
 
-            if (combatant.IsBlocking) parts.Add("B!");
-            else if (combatant.CombatStyle == CombatStyle.Evade && combatant.IsEvading) parts.Add("E!");
+            if (combatant.IsBlocking)
+                parts.Add("B!");
+            else if (combatant.CombatStyle == CombatStyle.Evade && combatant.IsEvading)
+                parts.Add("E!");
 
-            List<StatModifier> mods = GetModifiers(combatant);
-            foreach (var mod in mods)
+            foreach (var mod in GetModifiers(combatant))
             {
                 if (mod.turnsRemaining <= 0) continue;
-                string label = mod.statType switch
+                string lbl = mod.statType switch
                 {
                     StatType.ATK => mod.modifier > 0 ? "ATK+" : "ATK-",
                     StatType.DEF => mod.modifier > 0 ? "DEF+" : "DEF-",
@@ -218,14 +242,13 @@ public class CombatSpriteManager : MonoBehaviour
                     StatType.MP => mod.modifier > 0 ? "MP+" : "MP-",
                     _ => mod.modifier > 0 ? "UP" : "DWN"
                 };
-                parts.Add($"{label}({mod.turnsRemaining})");
+                parts.Add($"{lbl}({mod.turnsRemaining})");
             }
 
-            List<ActiveStatusEffect> effects = GetEffects(combatant);
-            foreach (var effect in effects)
+            foreach (var effect in GetEffects(combatant))
             {
                 if (effect.turnsRemaining <= 0) continue;
-                string label = effect.type switch
+                string lbl = effect.type switch
                 {
                     StatusEffectType.Burn => "BRN",
                     StatusEffectType.Poison => "PSN",
@@ -235,7 +258,7 @@ public class CombatSpriteManager : MonoBehaviour
                     StatusEffectType.Dark => "DRK",
                     _ => effect.type.ToString()
                 };
-                parts.Add($"{label}({effect.turnsRemaining})");
+                parts.Add($"{lbl}({effect.turnsRemaining})");
             }
 
             statusTextMap[combatant.Name].text = string.Join(" ", parts);
@@ -249,8 +272,8 @@ public class CombatSpriteManager : MonoBehaviour
             var inst = TurnCombatManager.Instance?.GetEnemyInstance(combatant.Name);
             return inst?.statModifiers ?? new List<StatModifier>();
         }
-        var member = PartyManager.Instance.activeParty.Find(m => m.Name == combatant.Name);
-        return member?.statModifiers ?? new List<StatModifier>();
+        return PartyManager.Instance.activeParty
+            .Find(m => m.Name == combatant.Name)?.statModifiers ?? new List<StatModifier>();
     }
 
     List<ActiveStatusEffect> GetEffects(Combatant combatant)
@@ -260,8 +283,8 @@ public class CombatSpriteManager : MonoBehaviour
             var inst = TurnCombatManager.Instance?.GetEnemyInstance(combatant.Name);
             return inst?.activeEffects ?? new List<ActiveStatusEffect>();
         }
-        var member = PartyManager.Instance.activeParty.Find(m => m.Name == combatant.Name);
-        return member?.activeEffects ?? new List<ActiveStatusEffect>();
+        return PartyManager.Instance.activeParty
+            .Find(m => m.Name == combatant.Name)?.activeEffects ?? new List<ActiveStatusEffect>();
     }
 
     public void UpdateEnemyLabels(List<Combatant> enemies)
@@ -289,6 +312,8 @@ public class CombatSpriteManager : MonoBehaviour
         }
     }
 
+    // ── Hit / defeated effects ────────────────────────────────────────────────
+
     public void PlayHitEffect(string name, int damage = 0, bool isCrit = false)
     {
         if (!spriteMap.ContainsKey(name)) return;
@@ -300,15 +325,14 @@ public class CombatSpriteManager : MonoBehaviour
     public void ShowDamageNumber(string targetName, int damage,
         bool isHeal = false, bool isCrit = false)
     {
-        if (combatCanvas == null) return;
-        if (!rectMap.ContainsKey(targetName)) return;
+        if (combatCanvas == null || !rectMap.ContainsKey(targetName)) return;
 
         var rt = rectMap[targetName];
 
-        GameObject dmgObj = new GameObject("DamageNumber");
-        dmgObj.transform.SetParent(combatCanvas.transform, false);
+        GameObject obj = new GameObject("DamageNumber");
+        obj.transform.SetParent(combatCanvas.transform, false);
 
-        var tmp = dmgObj.AddComponent<TextMeshProUGUI>();
+        var tmp = obj.AddComponent<TextMeshProUGUI>();
         tmp.text = isHeal ? $"+{damage}" : $"-{damage}";
         tmp.fontSize = isCrit ? 48 : 38;
         tmp.fontStyle = FontStyles.Bold;
@@ -320,25 +344,25 @@ public class CombatSpriteManager : MonoBehaviour
         else if (isCrit) tmp.color = new Color(1f, 0.85f, 0f);
         else tmp.color = Color.red;
 
-        var dmgRT = dmgObj.GetComponent<RectTransform>();
+        var dmgRT = obj.GetComponent<RectTransform>();
         dmgRT.sizeDelta = new Vector2(isCrit ? 200 : 150, 60);
 
         Vector3[] corners = new Vector3[4];
         rt.GetWorldCorners(corners);
-        Vector3 topCenter = (corners[1] + corners[2]) / 2f;
-        topCenter.y += 40f;
-        topCenter.x += Random.Range(-30f, 30f);
-        dmgRT.position = topCenter;
+        Vector3 top = (corners[1] + corners[2]) / 2f;
+        top.y += 40f;
+        top.x += Random.Range(-30f, 30f);
+        dmgRT.position = top;
 
         Vector2 floatDir = new Vector2(
             Random.Range(-40f, 40f),
             Random.Range(isCrit ? 120f : 80f, isCrit ? 180f : 140f));
 
-        StartCoroutine(AnimateDamageNumber(dmgObj, tmp, dmgRT, floatDir, isHeal, isCrit));
+        StartCoroutine(AnimateDamageNumber(obj, tmp, dmgRT, floatDir, isHeal, isCrit));
     }
 
     IEnumerator AnimateDamageNumber(GameObject obj, TextMeshProUGUI tmp,
-        RectTransform rt, Vector2 floatDir, bool isHeal = false, bool isCrit = false)
+        RectTransform rt, Vector2 floatDir, bool isHeal, bool isCrit)
     {
         float duration = isCrit ? 1.6f : 1.2f;
         float elapsed = 0f;
@@ -348,7 +372,7 @@ public class CombatSpriteManager : MonoBehaviour
         float nextFlash = 0f;
 
         Color colorA = isHeal ? Color.green
-            : isCrit ? new Color(1f, 0.85f, 0f) : Color.red;
+                     : isCrit ? new Color(1f, 0.85f, 0f) : Color.red;
         Color colorB = Color.white;
 
         while (elapsed < duration)
@@ -375,8 +399,39 @@ public class CombatSpriteManager : MonoBehaviour
 
             yield return null;
         }
-
         Destroy(obj);
+    }
+
+    public void ShowManaNumber(string targetName, int amount)
+    {
+        if (combatCanvas == null || !rectMap.ContainsKey(targetName)) return;
+
+        var rt = rectMap[targetName];
+
+        GameObject obj = new GameObject("ManaNumber");
+        obj.transform.SetParent(combatCanvas.transform, false);
+
+        var tmp = obj.AddComponent<TextMeshProUGUI>();
+        tmp.text = $"+{amount} MP";
+        tmp.fontSize = 32;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = new Color(0.3f, 0.5f, 1f);
+        tmp.raycastTarget = false;
+        SetFont(tmp);
+
+        var dmgRT = obj.GetComponent<RectTransform>();
+        dmgRT.sizeDelta = new Vector2(150, 60);
+
+        Vector3[] corners = new Vector3[4];
+        rt.GetWorldCorners(corners);
+        Vector3 top = (corners[1] + corners[2]) / 2f;
+        top.y += 40f;
+        top.x += Random.Range(-20f, 20f);
+        dmgRT.position = top;
+
+        Vector2 floatDir = new Vector2(Random.Range(-30f, 30f), Random.Range(80f, 120f));
+        StartCoroutine(AnimateDamageNumber(obj, tmp, dmgRT, floatDir, true, false));
     }
 
     public void ShowStatusTextAboveSprite(string name, string text)
@@ -402,9 +457,9 @@ public class CombatSpriteManager : MonoBehaviour
 
         Vector3[] corners = new Vector3[4];
         rt.GetWorldCorners(corners);
-        Vector3 topCenter = (corners[1] + corners[2]) / 2f;
-        topCenter.y += 40f;
-        popRT.position = topCenter;
+        Vector3 top = (corners[1] + corners[2]) / 2f;
+        top.y += 40f;
+        popRT.position = top;
 
         StartCoroutine(AnimateStatusPopup(obj, tmp, popRT));
     }
@@ -423,7 +478,6 @@ public class CombatSpriteManager : MonoBehaviour
             tmp.color = new Color(tmp.color.r, tmp.color.g, tmp.color.b, 1f - t);
             yield return null;
         }
-
         Destroy(obj);
     }
 
@@ -481,55 +535,14 @@ public class CombatSpriteManager : MonoBehaviour
         if (img != null) img.color = grey;
     }
 
-    public void ShowManaNumber(string targetName, int amount)
-    {
-        if (combatCanvas == null) return;
-        if (!rectMap.ContainsKey(targetName)) return;
-
-        var rt = rectMap[targetName];
-
-        GameObject dmgObj = new GameObject("ManaNumber");
-        dmgObj.transform.SetParent(combatCanvas.transform, false);
-
-        var tmp = dmgObj.AddComponent<TextMeshProUGUI>();
-        tmp.text = $"+{amount} MP";
-        tmp.fontSize = 32;
-        tmp.fontStyle = FontStyles.Bold;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.color = new Color(0.3f, 0.5f, 1f);
-        tmp.raycastTarget = false;
-        SetFont(tmp);
-
-        var dmgRT = dmgObj.GetComponent<RectTransform>();
-        dmgRT.sizeDelta = new Vector2(150, 60);
-
-        Vector3[] corners = new Vector3[4];
-        rt.GetWorldCorners(corners);
-        Vector3 topCenter = (corners[1] + corners[2]) / 2f;
-        topCenter.y += 40f;
-        topCenter.x += Random.Range(-20f, 20f);
-        dmgRT.position = topCenter;
-
-        Vector2 floatDir = new Vector2(Random.Range(-30f, 30f), Random.Range(80f, 120f));
-        StartCoroutine(AnimateDamageNumber(dmgObj, tmp, dmgRT, floatDir, true, false));
-    }
-
     public void ClearAllFloatingUI()
     {
         if (combatCanvas == null) return;
-
         var toDestroy = new List<GameObject>();
         foreach (Transform child in combatCanvas.transform)
-        {
-            if (child.name == "DamageNumber" ||
-                child.name == "ManaNumber" ||
-                child.name == "StatusPopup")
+            if (child.name is "DamageNumber" or "ManaNumber" or "StatusPopup")
                 toDestroy.Add(child.gameObject);
-        }
-
-        foreach (var obj in toDestroy)
-            Destroy(obj);
-
-        Debug.Log($"[SPRITE MGR] Cleared {toDestroy.Count} floating UI elements");
+        foreach (var obj in toDestroy) Destroy(obj);
+        Debug.Log($"[CSM] Cleared {toDestroy.Count} floating UI elements");
     }
 }

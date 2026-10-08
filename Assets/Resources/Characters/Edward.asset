@@ -36,3 +36,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ac80df4eb998cc440b14aa48c374c4c8, type: 2}
   - {fileID: 11400000, guid: 213af501dc308bb468259791fe486a15, type: 2}
   combatStyle: 0
+  animIdle: {fileID: -7058108873884702020, guid: 1ddc0f8238059ae4f95008d1feec2d12, type: 3}
+  animDash: {fileID: -4668830199036083435, guid: cf374647982ada342b9b5d24c90dbec3, type: 3}
+  animAttack: {fileID: -2653517086937933062, guid: 679ef56d42b287d4f84bff4b0e15ecde, type: 3}
+  animManaAttack: {fileID: -1746668076223124182, guid: 62fc167d7ddbe0c4d9768c7d463216ba, type: 3}
+  animGuard: {fileID: 8302359521868298678, guid: 780fd6b1fb5479a42a1c9a5f2b46a03f, type: 3}
+  animItem: {fileID: -7857706467603971939, guid: 9effbd8a512c9a34d8e060cae23d672c, type: 3}

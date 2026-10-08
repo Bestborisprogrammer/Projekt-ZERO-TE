@@ -1953,6 +1953,65 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 808659369}
   m_CullTransparentMesh: 1
+--- !u!1 &851597889
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 851597891}
+  - component: {fileID: 851597890}
+  m_Layer: 0
+  m_Name: CombatAnimator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &851597890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851597889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dc151a935b2a5b458a0c4fbfa187331, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dashSpeed: 650
+  returnSpeed: 650
+  dashStopDistance: 100
+  postHitPause: 0.12
+  postAttackPause: 0.08
+  inPlaceHoldTime: 0.24
+  zoomAmount: 1.1
+  zoomInDuration: 0.18
+  zoomOutDuration: 0.26
+  zoomCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!4 &851597891
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 851597889}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 142.78116, y: 734.4695, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &926279146
 GameObject:
   m_ObjectHideFlags: 0
@@ -6350,3 +6409,4 @@ SceneRoots:
   - {fileID: 1216981398}
   - {fileID: 1268851056}
   - {fileID: 308908446}
+  - {fileID: 851597891}

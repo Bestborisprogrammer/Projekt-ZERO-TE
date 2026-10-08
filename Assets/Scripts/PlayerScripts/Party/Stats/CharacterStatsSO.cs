@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 public enum CombatStyle { Block, Evade }
@@ -45,4 +45,15 @@ public class CharacterStatsSO : ScriptableObject
 
     [Header("Combat Style")]
     public CombatStyle combatStyle = CombatStyle.Block;
+
+    // ── Combat Animations ────────────────────────────────────────────────────
+    // Drag your AnimationClips straight in here — one per action.
+    // Leave a slot empty if you don't have that animation yet; it degrades gracefully.
+    [Header("Combat Animations")]
+    public AnimationClip animIdle;
+    public AnimationClip animDash;
+    public AnimationClip animAttack;
+    public AnimationClip animManaAttack;
+    public AnimationClip animGuard;
+    public AnimationClip animItem;
 }
