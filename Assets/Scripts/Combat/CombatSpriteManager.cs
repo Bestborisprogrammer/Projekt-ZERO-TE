@@ -105,10 +105,13 @@ public class CombatSpriteManager : MonoBehaviour
             spriteMap[member.Name] = img;
             rectMap[member.Name] = sRT;
 
-            // Register with CombatAnimator — pass Image and clips from SO
-            // No Animator component needed; we drive Image.sprite manually
+            // Register with CombatAnimator.
+            // IMPORTANT: pass cRT (the container) not sRT (the sprite child).
+            // sRT is inside a VerticalLayoutGroup — Unity recalculates its
+            // anchoredPosition every frame, fighting our dash movement.
+            // Moving the container moves the whole character as one unit.
             CombatAnimator.Instance?.RegisterCombatant(
-                member.Name, sRT, img,
+                member.Name, cRT, img,
                 so?.animIdle, so?.animDash, so?.animAttack,
                 so?.animManaAttack, so?.animGuard, so?.animItem);
         }
@@ -201,8 +204,9 @@ public class CombatSpriteManager : MonoBehaviour
             spriteMap[enemy.Name] = spriteImg;
             rectMap[enemy.Name] = spriteRT;
 
+            // Same as party: pass cRT (container) not spriteRT (child inside layout group)
             CombatAnimator.Instance?.RegisterCombatant(
-                enemy.Name, spriteRT, spriteImg,
+                enemy.Name, cRT, spriteImg,
                 so?.animIdle, so?.animDash, so?.animAttack,
                 so?.animManaAttack, so?.animGuard, so?.animItem);
         }
