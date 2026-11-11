@@ -540,50 +540,63 @@ public class CombatUI : MonoBehaviour
         if (pendingItem == null) return;
 
         string userName = GetCurrentTurnMemberName();
-        string logMsg = "";
-
-        if (pendingItem.itemData.itemType == ItemType.Heal)
-        {
-            int totalHeal = pendingItem.itemData.flatHeal +
-                Mathf.RoundToInt(member.MaxHP * pendingItem.itemData.percentHeal);
-            totalHeal = Mathf.Max(0, totalHeal);
-            int before = member.currentHP;
-            member.currentHP = Mathf.Min(member.MaxHP, member.currentHP + totalHeal);
-            int actual = member.currentHP - before;
-
-            var combatant = TurnCombatManager.Instance.party.Find(p => p.Name == member.Name);
-            combatant?.Refresh();
-
-            CombatSpriteManager.Instance?.ShowDamageNumber(member.Name, actual, true);
-            logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! Recovered {actual} HP!";
-        }
-        else if (pendingItem.itemData.itemType == ItemType.ManaRestore)
-        {
-            int manaRestore = pendingItem.itemData.flatHeal; // reuse flatHeal field for mana amount
-            int before = member.currentMana;
-            member.currentMana = Mathf.Min(member.MaxMana, member.currentMana + manaRestore);
-            int actual = member.currentMana - before;
-
-            var combatant = TurnCombatManager.Instance.party.Find(p => p.Name == member.Name);
-            combatant?.Refresh();
-
-            // Show blue damage number for mana
-            CombatSpriteManager.Instance?.ShowManaNumber(member.Name, actual);
-            logMsg = $"{userName} uses {pendingItem.itemData.itemName} on {member.Name}! Restored {actual} MP!";
-        }
-
-        InventoryManager.Instance.RemoveItem(pendingItem.itemData);
+        var capturedItem = pendingItem;
+        var capturedMem = member;
         pendingItem = null;
         memberSelectPopup.SetActive(false);
 
-        UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
-        TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
-
-        ShowCombatLog(logMsg, () =>
+        void ApplyAllyEffect()
         {
-            combatLogText.text = "";
-            TurnCombatManager.Instance.NextTurnPublic();
-        });
+            string logMsg = "";
+
+            if (capturedItem.itemData.itemType == ItemType.Heal)
+            {
+                int totalHeal = capturedItem.itemData.flatHeal +
+                    Mathf.RoundToInt(capturedMem.MaxHP * capturedItem.itemData.percentHeal);
+                totalHeal = Mathf.Max(0, totalHeal);
+                int before = capturedMem.currentHP;
+                capturedMem.currentHP = Mathf.Min(capturedMem.MaxHP, capturedMem.currentHP + totalHeal);
+                int actual = capturedMem.currentHP - before;
+
+                TurnCombatManager.Instance.party.Find(p => p.Name == capturedMem.Name)?.Refresh();
+                CombatSpriteManager.Instance?.ShowDamageNumber(capturedMem.Name, actual, true);
+                logMsg = $"{userName} uses {capturedItem.itemData.itemName} on {capturedMem.Name}! Recovered {actual} HP!";
+            }
+            else if (capturedItem.itemData.itemType == ItemType.ManaRestore)
+            {
+                int manaRestore = capturedItem.itemData.flatHeal;
+                int before = capturedMem.currentMana;
+                capturedMem.currentMana = Mathf.Min(capturedMem.MaxMana, capturedMem.currentMana + manaRestore);
+                int actual = capturedMem.currentMana - before;
+
+                TurnCombatManager.Instance.party.Find(p => p.Name == capturedMem.Name)?.Refresh();
+                CombatSpriteManager.Instance?.ShowManaNumber(capturedMem.Name, actual);
+                logMsg = $"{userName} uses {capturedItem.itemData.itemName} on {capturedMem.Name}! Restored {actual} MP!";
+            }
+
+            InventoryManager.Instance.RemoveItem(capturedItem.itemData);
+            UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
+            TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
+
+            ShowCombatLog(logMsg, () =>
+            {
+                combatLogText.text = "";
+                TurnCombatManager.Instance.NextTurnPublic();
+            });
+        }
+
+        var anim = CombatAnimator.Instance;
+        if (anim != null)
+        {
+            Debug.Log($"[COMBATUI] UseItemOnAlly: playing item anim for {userName}");
+            anim.PlayItem(userName,
+                onEffectPoint: () => ApplyAllyEffect(),
+                onComplete: () => { });
+        }
+        else
+        {
+            ApplyAllyEffect();
+        }
     }
 
     void UseItemOnEnemy(InventoryItem item)
@@ -592,43 +605,62 @@ public class CombatUI : MonoBehaviour
         if (target == null) return;
 
         string userName = GetCurrentTurnMemberName();
-        string logMsg = $"{userName} uses {item.itemData.itemName} on {target.Name}!";
+        var capturedItem = item;
+        var capturedTarget = target;
 
-        if (item.itemData.statModifier != 0)
+        void ApplyEnemyEffect()
         {
-            int mod = item.itemData.itemType == ItemType.Debuff
-                ? -Mathf.Abs(item.itemData.statModifier)
-                : item.itemData.statModifier;
+            string logMsg = $"{userName} uses {capturedItem.itemData.itemName} on {capturedTarget.Name}!";
 
-            var enemyInst = TurnCombatManager.Instance.GetEnemyInstance(target.Name);
-            if (enemyInst != null)
+            if (capturedItem.itemData.statModifier != 0)
             {
-                enemyInst.statModifiers.Add(new StatModifier(
-                    item.itemData.statType, mod, item.itemData.modifierDuration));
-                target.Refresh();
-                logMsg += $" {item.itemData.statType} {(mod > 0 ? "+" : "")}{mod} " +
-                    $"for {item.itemData.modifierDuration} turns!";
+                int mod = capturedItem.itemData.itemType == ItemType.Debuff
+                    ? -Mathf.Abs(capturedItem.itemData.statModifier)
+                    : capturedItem.itemData.statModifier;
+
+                var enemyInst = TurnCombatManager.Instance.GetEnemyInstance(capturedTarget.Name);
+                if (enemyInst != null)
+                {
+                    enemyInst.statModifiers.Add(new StatModifier(
+                        capturedItem.itemData.statType, mod, capturedItem.itemData.modifierDuration));
+                    capturedTarget.Refresh();
+                    logMsg += $" {capturedItem.itemData.statType} {(mod > 0 ? "+" : "")}{mod} " +
+                        $"for {capturedItem.itemData.modifierDuration} turns!";
+                }
             }
+
+            if (capturedItem.itemData.statusEffect != StatusEffectType.None)
+            {
+                capturedTarget.ApplyStatusEffect(capturedItem.itemData.statusEffect,
+                    capturedItem.itemData.statusChance, capturedItem.itemData.statusDuration,
+                    capturedItem.itemData.dotPercent, 0f, 0);
+                if (capturedTarget.HasStatusEffect(capturedItem.itemData.statusEffect))
+                    logMsg += $" {capturedItem.itemData.statusEffect} applied!";
+            }
+
+            InventoryManager.Instance.RemoveItem(capturedItem.itemData);
+            UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
+            TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
+
+            ShowCombatLog(logMsg, () =>
+            {
+                combatLogText.text = "";
+                TurnCombatManager.Instance.NextTurnPublic();
+            });
         }
 
-        if (item.itemData.statusEffect != StatusEffectType.None)
+        var anim = CombatAnimator.Instance;
+        if (anim != null)
         {
-            target.ApplyStatusEffect(item.itemData.statusEffect,
-                item.itemData.statusChance, item.itemData.statusDuration,
-                item.itemData.dotPercent, 0f, 0);
-            if (target.HasStatusEffect(item.itemData.statusEffect))
-                logMsg += $" {item.itemData.statusEffect} applied!";
+            Debug.Log($"[COMBATUI] UseItemOnEnemy: playing item anim for {userName}");
+            anim.PlayItem(userName,
+                onEffectPoint: () => ApplyEnemyEffect(),
+                onComplete: () => { });
         }
-
-        InventoryManager.Instance.RemoveItem(item.itemData);
-        UpdateAllHP(TurnCombatManager.Instance.party, TurnCombatManager.Instance.enemies);
-        TurnCombatManager.Instance.UpdateStatusIndicatorsPublic();
-
-        ShowCombatLog(logMsg, () =>
+        else
         {
-            combatLogText.text = "";
-            TurnCombatManager.Instance.NextTurnPublic();
-        });
+            ApplyEnemyEffect();
+        }
     }
 
     string GetCurrentTurnMemberName()

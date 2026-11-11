@@ -83,9 +83,10 @@ public class TurnCombatManager : MonoBehaviour
         combatUI.BuildEnemyTargetButtons(enemies);
         combatUI.UpdateAllHP(party, enemies);
         combatUI.SetupCombatSprites(party, enemies);
-        // SetupCombatSprites → SetupSprites → RegisterCombatant + SetAllIdle
-        // rectMap and animMap are now populated — do NOT clear after this
-        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);   
+        // SetupCombatSprites already calls CombatAnimator.Clear() before
+        // registering combatants — do NOT call Clear() again here or it
+        // wipes all just-registered data and kills every animation.
+        CombatSpriteManager.Instance?.UpdateEnemyLabels(enemies);
         UpdateStatusIndicators();
 
         if (EncounterManager.IsResonanceBattle)
