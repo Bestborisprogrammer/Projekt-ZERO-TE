@@ -8,38 +8,41 @@ public class CombatAnimator : MonoBehaviour
     public static CombatAnimator Instance;
 
     [Header("Dash / Movement")]
-    public float dashSpeed        = 850f;
-    public float returnSpeed      = 650f;
+    public float dashSpeed = 850f;
+    public float returnSpeed = 650f;
     public float dashStopDistance = 75f;
 
     [Header("Timing (seconds)")]
-    public float postHitPause    = 0.12f;
+    public float postHitPause = 0.12f;
     public float postAttackPause = 0.08f;
     public float inPlaceHoldTime = 0.24f;
 
     [Header("Camera Zoom")]
-    public float zoomAmount      = 1.10f;
-    public float zoomInDuration  = 0.18f;
+    public float zoomAmount = 1.10f;
+    public float zoomInDuration = 0.18f;
     public float zoomOutDuration = 0.26f;
     public AnimationCurve zoomCurve;
 
     private class CombatantData
     {
-        public RectTransform rect;
-        public Image         image;
+        public RectTransform rect;      // container RT — what we slide
+        public Image image;     // the Image we write sprites to
         public AnimationClip idle;
         public AnimationClip dash;
         public AnimationClip attack;
         public AnimationClip mana;
         public AnimationClip guard;
         public AnimationClip item;
-        public Coroutine     animCoroutine;
+        public Coroutine animCoroutine;
     }
 
-    private Dictionary<string, CombatantData> dataMap       = new();
-    private HashSet<string>                   guardingNames = new();
-    private float  _baseCamSize = -1f;
+    private Dictionary<string, CombatantData> dataMap = new();
+    private HashSet<string> guardingNames = new();
+    private float _baseCamSize = -1f;
     private Camera _cam;
+
+    // All LayoutGroups we disabled this sequence (restored after)
+    private List<LayoutGroup> _disabledLayouts = new();
 
     static string ClipName(AnimationClip c) => (c != null && c) ? c.name : "NULL";
     static AnimationClip ValidClip(AnimationClip c) => (c != null && c) ? c : null;
@@ -52,42 +55,40 @@ public class CombatAnimator : MonoBehaviour
 
     // ── Registration ──────────────────────────────────────────────────────────
 
-    public void RegisterCombatant(string name, RectTransform rect, Image image,
-        AnimationClip idle,  AnimationClip dash,  AnimationClip attack,
-        AnimationClip mana,  AnimationClip guard, AnimationClip item)
+    public void RegisterCombatant(string name, RectTransform containerRect, Image image,
+        AnimationClip idle, AnimationClip dash, AnimationClip attack,
+        AnimationClip mana, AnimationClip guard, AnimationClip item)
     {
-        idle   = ValidClip(idle);
-        dash   = ValidClip(dash);
-        attack = ValidClip(attack);
-        mana   = ValidClip(mana);
-        guard  = ValidClip(guard);
-        item   = ValidClip(item);
-
         dataMap[name] = new CombatantData
         {
-            rect = rect, image = image,
-            idle = idle, dash = dash, attack = attack,
-            mana = mana, guard = guard, item = item
+            rect = containerRect,
+            image = image,
+            idle = ValidClip(idle),
+            dash = ValidClip(dash),
+            attack = ValidClip(attack),
+            mana = ValidClip(mana),
+            guard = ValidClip(guard),
+            item = ValidClip(item),
         };
 
-        // Log the actual GameObject path so we know WHICH Image we're writing to
         string imgPath = image != null ? GetPath(image.gameObject) : "NULL";
-        Debug.Log($"[ANIM] Registered: {name} | image path: {imgPath} | " +
-            $"idle={ClipName(idle)} dash={ClipName(dash)} attack={ClipName(attack)} " +
-            $"mana={ClipName(mana)} guard={ClipName(guard)} item={ClipName(item)}");
+        Debug.Log($"[ANIM] Registered: {name} | img={imgPath} | " +
+            $"idle={ClipName(dataMap[name].idle)} dash={ClipName(dataMap[name].dash)} " +
+            $"attack={ClipName(dataMap[name].attack)} mana={ClipName(dataMap[name].mana)} " +
+            $"guard={ClipName(dataMap[name].guard)} item={ClipName(dataMap[name].item)}");
     }
 
     static string GetPath(GameObject go)
     {
-        string path = go.name;
+        string p = go.name;
         Transform t = go.transform.parent;
-        while (t != null) { path = t.name + "/" + path; t = t.parent; }
-        return path;
+        while (t != null) { p = t.name + "/" + p; t = t.parent; }
+        return p;
     }
 
     public void SetAllIdle(List<Combatant> party, List<Combatant> enemies)
     {
-        foreach (var c in party)   SwitchAnim(c.Name, Get(c.Name)?.idle, loop: true);
+        foreach (var c in party) SwitchAnim(c.Name, Get(c.Name)?.idle, loop: true);
         foreach (var c in enemies) SwitchAnim(c.Name, Get(c.Name)?.idle, loop: true);
     }
 
@@ -97,6 +98,7 @@ public class CombatAnimator : MonoBehaviour
         dataMap.Clear();
         guardingNames.Clear();
         _baseCamSize = -1f;
+        RestoreAllLayouts();
     }
 
     public void OnTurnStart(string name)
@@ -139,7 +141,48 @@ public class CombatAnimator : MonoBehaviour
         StartCoroutine(InPlaceSequence(name, "item", onEffectPoint, onComplete));
     }
 
+    // ── Layout freeze helpers ─────────────────────────────────────────────────
+    // Disables ALL LayoutGroups in the hierarchy of the given RectTransform
+    // (walks up to Canvas root) so that writing Image.sprite doesn't trigger
+    // a layout recalculation that resets our hand-driven position.
+
+    void FreezeLayouts(RectTransform rt)
+    {
+        Transform t = rt.transform;
+        while (t != null)
+        {
+            var lg = t.GetComponent<LayoutGroup>();
+            if (lg != null && lg.enabled)
+            {
+                lg.enabled = false;
+                _disabledLayouts.Add(lg);
+            }
+            // Stop at Canvas root
+            if (t.GetComponent<Canvas>() != null) break;
+            t = t.parent;
+        }
+        // Also check children of the container itself
+        foreach (var lg in rt.GetComponentsInChildren<LayoutGroup>())
+        {
+            if (lg.enabled)
+            {
+                lg.enabled = false;
+                if (!_disabledLayouts.Contains(lg))
+                    _disabledLayouts.Add(lg);
+            }
+        }
+    }
+
+    void RestoreAllLayouts()
+    {
+        foreach (var lg in _disabledLayouts)
+            if (lg != null) lg.enabled = true;
+        _disabledLayouts.Clear();
+    }
+
     // ── Attack sequence ───────────────────────────────────────────────────────
+    // Strict order: freeze layouts → dash slide → attack clip at dash pos →
+    //               damage → return slide → restore layouts → idle
 
     IEnumerator AttackSequence(string attackerName, string targetName,
         bool isMana, System.Action onDamagePoint, System.Action onComplete)
@@ -149,8 +192,8 @@ public class CombatAnimator : MonoBehaviour
 
         if (a == null || t == null)
         {
-            Debug.LogWarning($"[ANIM] AttackSequence missing data: " +
-                $"attacker={attackerName}({a != null}) target={targetName}({t != null})");
+            Debug.LogWarning($"[ANIM] AttackSequence: missing data for " +
+                $"attacker='{attackerName}'({a != null}) target='{targetName}'({t != null})");
             onDamagePoint?.Invoke();
             onComplete?.Invoke();
             yield break;
@@ -158,58 +201,80 @@ public class CombatAnimator : MonoBehaviour
 
         AnimationClip attackClip = isMana ? a.mana : a.attack;
 
-        yield return null; // let layout settle
+        // Let layout settle one frame before we freeze it
+        yield return null;
 
-        Vector3 aw   = a.rect.position;
-        Vector3 tw   = t.rect.position;
-        Vector3 dir  = (tw - aw).normalized;
-        float   dist = Vector3.Distance(aw, tw);
+        // ── Freeze ALL layout groups that could fight us ───────────────────
+        FreezeLayouts(a.rect);
 
-        Vector2 originAP = a.rect.anchoredPosition;
-        Vector2 dashAP   = originAP + ScreenDeltaToAnchored(a.rect,
-            (Vector2)(dir * Mathf.Max(0f, dist - dashStopDistance)));
-
-        bool goingRight = tw.x > aw.x;
+        // Sample positions NOW (layout is frozen, positions are stable)
+        Vector3 originWorld = a.rect.position;
+        Vector3 targetWorld = t.rect.position;
+        Vector3 dir = (targetWorld - originWorld).normalized;
+        float dist = Vector3.Distance(originWorld, targetWorld);
+        Vector3 dashWorld = originWorld + dir * Mathf.Max(0f, dist - dashStopDistance);
+        bool goingRight = targetWorld.x > originWorld.x;
 
         Debug.Log($"[ANIM] AttackSequence {attackerName}->{targetName} | " +
-            $"clip={ClipName(attackClip)} originAP={originAP} dashAP={dashAP}");
+            $"clip={ClipName(attackClip)} | origin={originWorld:F1} dash={dashWorld:F1}");
 
-        // ── 1. Dash ───────────────────────────────────────────────────────────
-        SwitchAnim(attackerName, a.dash, loop: true);
+        // ── 1. Dash slide (loop dash anim during movement) ────────────────
+        StopAnimOnly(attackerName);
         SetFlipX(a.image, !goingRight);
+        // Show first frame of dash clip immediately
+        if (a.dash != null) SampleSprite(a.image, a.dash, 0f);
+        // Start dash anim loop and slide simultaneously
+        a.animCoroutine = StartCoroutine(LoopClip(a, a.dash));
         StartCoroutine(ZoomCamera(zoomAmount, zoomInDuration));
-        yield return StartCoroutine(SlideRect(a.rect, originAP, dashAP, dashSpeed));
+        yield return StartCoroutine(SlideWorld(a.rect, originWorld, dashWorld, dashSpeed));
 
-        Debug.Log($"[ANIM] {attackerName} reached target. anchoredPos={a.rect.anchoredPosition} " +
-            $"worldPos={a.rect.position}  imageGO={a.image?.gameObject.name ?? "NULL"}");
+        // Dash done — snap to exact dash position, stop dash anim
+        a.rect.position = dashWorld;
+        StopAnimOnly(attackerName);
 
-        // ── 2. Attack anim ────────────────────────────────────────────────────
-        float attackDur = (attackClip != null) ? attackClip.length : 0.2f;
-        SwitchAnim(attackerName, attackClip, loop: false, hold: false);
+        Debug.Log($"[ANIM] Dash done. rect.position={a.rect.position:F1}  now playing attack clip");
 
-        // Verify the first sprite sample immediately
-        if (attackClip != null && a.image != null)
+        // ── 2. Attack clip plays AT dash position ─────────────────────────
+        // We manually sample every frame so we control both the sprite AND
+        // the position each frame — layout can't interfere
+        if (attackClip != null && attackClip.length > 0f)
         {
-            Sprite first = SampleSprite(a.image, attackClip, 0f);
-            Debug.Log($"[ANIM] First frame sample: sprite={first?.name ?? "NULL"} " +
-                $"image.sprite now={a.image.sprite?.name ?? "NULL"}");
+            float e = 0f;
+            while (e < attackClip.length)
+            {
+                a.rect.position = dashWorld; // pin position every frame
+                SampleSprite(a.image, attackClip, e);
+                e += Time.deltaTime;
+                yield return null;
+            }
+            // Hold last frame briefly
+            a.rect.position = dashWorld;
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.25f);
         }
 
-        yield return new WaitForSeconds(attackDur);
-
-        // ── 3. Damage ─────────────────────────────────────────────────────────
+        // ── 3. Damage point ───────────────────────────────────────────────
         onDamagePoint?.Invoke();
         yield return new WaitForSeconds(postHitPause);
 
-        // ── 4. Return ─────────────────────────────────────────────────────────
-        SwitchAnim(attackerName, a.dash, loop: true);
+        // ── 4. Return slide ───────────────────────────────────────────────
         SetFlipX(a.image, goingRight);
+        if (a.dash != null) SampleSprite(a.image, a.dash, 0f);
+        a.animCoroutine = StartCoroutine(LoopClip(a, a.dash));
         yield return new WaitForSeconds(postAttackPause);
-        yield return StartCoroutine(SlideRect(a.rect, dashAP, originAP, returnSpeed));
-        a.rect.anchoredPosition = originAP;
+        yield return StartCoroutine(SlideWorld(a.rect, dashWorld, originWorld, returnSpeed));
+
+        // Snap back and clean up
+        a.rect.position = originWorld;
+        StopAnimOnly(attackerName);
         SetFlipX(a.image, false);
 
-        // ── 5. Zoom out + idle ────────────────────────────────────────────────
+        // ── 5. Restore layouts (Unity snaps container to its slot) ────────
+        RestoreAllLayouts();
+
+        // ── 6. Zoom out + idle ────────────────────────────────────────────
         StartCoroutine(ZoomCamera(1f, zoomOutDuration));
         if (!guardingNames.Contains(attackerName))
             SwitchAnim(attackerName, a.idle, loop: true);
@@ -217,7 +282,7 @@ public class CombatAnimator : MonoBehaviour
         onComplete?.Invoke();
     }
 
-    // ── In-place sequence ─────────────────────────────────────────────────────
+    // ── In-place sequence (mana support / item) ───────────────────────────────
 
     IEnumerator InPlaceSequence(string name, string clipKey,
         System.Action onEffectPoint, System.Action onComplete)
@@ -232,24 +297,35 @@ public class CombatAnimator : MonoBehaviour
         }
 
         AnimationClip clip = clipKey == "item" ? d.item : d.mana;
-        float dur = (clip != null) ? clip.length : inPlaceHoldTime;
+        float dur = (clip != null && clip.length > 0f) ? clip.length : inPlaceHoldTime;
 
-        Debug.Log($"[ANIM] InPlaceSequence: {name} key={clipKey} " +
-            $"clip={ClipName(clip)} dur={dur:F2}s  image={d.image?.gameObject.name ?? "NULL"}");
+        Debug.Log($"[ANIM] InPlaceSequence: {name} key={clipKey} clip={ClipName(clip)} dur={dur:F2}s");
 
-        if (clip != null)
+        FreezeLayouts(d.rect);
+        Vector3 stayPos = d.rect.position;
+
+        StopAnimOnly(name);
+
+        if (clip != null && clip.length > 0f)
         {
-            SwitchAnim(name, clip, loop: false, hold: false);
-            // Sample frame 0 immediately so we can confirm it's working
-            Sprite s0 = SampleSprite(d.image, clip, 0f);
-            Debug.Log($"[ANIM] InPlace frame0 sample: {s0?.name ?? "NULL"}  " +
-                $"image.sprite={d.image?.sprite?.name ?? "NULL"}");
+            float e = 0f;
+            while (e < clip.length)
+            {
+                d.rect.position = stayPos;
+                SampleSprite(d.image, clip, e);
+                e += Time.deltaTime;
+                yield return null;
+            }
         }
-
-        yield return new WaitForSeconds(dur);
+        else
+        {
+            yield return new WaitForSeconds(dur);
+        }
 
         onEffectPoint?.Invoke();
         yield return new WaitForSeconds(0.08f);
+
+        RestoreAllLayouts();
 
         if (!guardingNames.Contains(name))
             SwitchAnim(name, d.idle, loop: true);
@@ -266,9 +342,9 @@ public class CombatAnimator : MonoBehaviour
         StopAnimOnly(name);
         if (clip == null || d.image == null) return;
 
-        if (loop)        d.animCoroutine = StartCoroutine(LoopClip(d, clip));
-        else if (hold)   d.animCoroutine = StartCoroutine(PlayOnceHold(d, clip));
-        else             d.animCoroutine = StartCoroutine(PlayOnceThenIdle(d, clip));
+        if (loop) d.animCoroutine = StartCoroutine(LoopClip(d, clip));
+        else if (hold) d.animCoroutine = StartCoroutine(PlayOnceHold(d, clip));
+        else d.animCoroutine = StartCoroutine(PlayOnceThenIdle(d, clip));
     }
 
     void StopAnimOnly(string name)
@@ -281,7 +357,7 @@ public class CombatAnimator : MonoBehaviour
         }
     }
 
-    // ── Coroutines ────────────────────────────────────────────────────────────
+    // ── Animation coroutines ──────────────────────────────────────────────────
 
     IEnumerator LoopClip(CombatantData d, AnimationClip clip)
     {
@@ -300,7 +376,7 @@ public class CombatAnimator : MonoBehaviour
 
     IEnumerator PlayOnceThenIdle(CombatantData d, AnimationClip clip)
     {
-        if (clip != null)
+        if (clip != null && clip.length > 0f)
         {
             float e = 0f;
             while (e < clip.length)
@@ -315,15 +391,18 @@ public class CombatAnimator : MonoBehaviour
 
     IEnumerator PlayOnceHold(CombatantData d, AnimationClip clip)
     {
+        if (clip == null || clip.length <= 0f) yield break;
         Sprite last = null;
-        float  e    = 0f;
+        float e = 0f;
         while (e < clip.length)
         {
             last = SampleSprite(d.image, clip, e);
             e += Time.deltaTime;
             yield return null;
         }
-        if (last != null && d.image != null) d.image.sprite = last;
+        // Freeze last frame — coroutine ends, sprite stays
+        if (last != null && d.image != null)
+            d.image.sprite = last;
     }
 
     // ── Sprite sampler ────────────────────────────────────────────────────────
@@ -352,30 +431,28 @@ public class CombatAnimator : MonoBehaviour
                 return chosen;
             }
         }
-
-        // If no object reference curve found, the clip likely animates
-        // SpriteRenderer not Image — log this so we know
-        Debug.LogWarning($"[ANIM] SampleSprite: clip '{ClipName(clip)}' has no m_Sprite " +
-            $"object reference curve. It probably targets SpriteRenderer, not Image. " +
-            $"Re-create the clip targeting the Image component instead.");
+        Debug.LogWarning($"[ANIM] SampleSprite: '{ClipName(clip)}' has no m_Sprite " +
+            $"object-reference curve. Clip likely targets SpriteRenderer not Image.");
 #endif
         return null;
     }
 
     // ── Movement ──────────────────────────────────────────────────────────────
 
-    IEnumerator SlideRect(RectTransform rect, Vector2 from, Vector2 to, float speed)
+    IEnumerator SlideWorld(RectTransform rect, Vector3 from, Vector3 to, float speed)
     {
-        float dur = (speed > 0f) ? Vector2.Distance(from, to) / speed : 0f;
-        if (dur <= 0f) { rect.anchoredPosition = to; yield break; }
+        float dist = Vector3.Distance(from, to);
+        float dur = (speed > 0f && dist > 0.1f) ? dist / speed : 0f;
+        if (dur <= 0f) { rect.position = to; yield break; }
+
         float elapsed = 0f;
         while (elapsed < dur)
         {
             elapsed += Time.deltaTime;
-            rect.anchoredPosition = Vector2.Lerp(from, to, Mathf.Clamp01(elapsed / dur));
+            rect.position = Vector3.Lerp(from, to, Mathf.Clamp01(elapsed / dur));
             yield return null;
         }
-        rect.anchoredPosition = to;
+        rect.position = to;
     }
 
     // ── Camera zoom ───────────────────────────────────────────────────────────
@@ -385,15 +462,17 @@ public class CombatAnimator : MonoBehaviour
         if (_cam == null) _cam = Camera.main;
         if (_cam == null) yield break;
         if (_baseCamSize < 0f) _baseCamSize = _cam.orthographicSize;
+
         float start = _cam.orthographicSize;
         float target = _baseCamSize / mult;
         float e = 0f;
+
         while (e < dur)
         {
             e += Time.deltaTime;
-            float t = Mathf.Clamp01(e / dur);
+            float tt = Mathf.Clamp01(e / dur);
             float et = (zoomCurve != null && zoomCurve.length > 1)
-                ? zoomCurve.Evaluate(t) : Mathf.SmoothStep(0f, 1f, t);
+                ? zoomCurve.Evaluate(tt) : Mathf.SmoothStep(0f, 1f, tt);
             _cam.orthographicSize = Mathf.Lerp(start, target, et);
             yield return null;
         }
@@ -404,13 +483,6 @@ public class CombatAnimator : MonoBehaviour
 
     CombatantData Get(string name) =>
         dataMap.TryGetValue(name, out var d) ? d : null;
-
-    Vector2 ScreenDeltaToAnchored(RectTransform rect, Vector2 screenDelta)
-    {
-        Canvas canvas = rect.GetComponentInParent<Canvas>();
-        float sf = (canvas != null && canvas.scaleFactor > 0f) ? canvas.scaleFactor : 1f;
-        return screenDelta / sf;
-    }
 
     void SetFlipX(Image img, bool flip)
     {
